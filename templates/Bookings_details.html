@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  {% extends "base.html" %}
+{% block content %}
+<div style="padding: 40px 10%; background: #f8f9fa;">
+    <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 40px; color: #aaa; font-weight: 600;">
+        <span style="color: #28a745;"><i class="fas fa-check-circle"></i> Book</span>
+        <span style="color: var(--primary); border-bottom: 2px solid var(--primary);">2. Verify</span>
+        <span>3. Pay</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px;">
+        <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: var(--card-shadow);">
+            <h2>Identify Yourself</h2>
+            <p style="color: #666; margin-bottom: 30px;">Please provide details for manual admin verification.</p>
+
+            <div style="border: 2px dashed #ddd; padding: 40px; text-align: center; border-radius: 12px; margin-bottom: 20px;">
+                <i class="fas fa-camera" style="font-size: 2rem; color: #ccc;"></i>
+                <p>Click to start camera</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="search-group">
+                    <label>Aadhaar (Last 4)</label>
+                    <input type="text" placeholder="XXXX">
+                </div>
+                <div class="search-group">
+                    <label>PAN Number</label>
+                    <input type="text" placeholder="ABCDE1234F">
+                </div>
+            </div>
+            
+            <form method="POST" style="margin-top: 20px;">
+                <button class="btn-login" style="width: 100%; padding: 15px; background: #aaa;">Confirm & Finalize Payment <i class="fas fa-arrow-right"></i></button>
+                <p style="font-size: 0.8rem; color: #999; margin-top: 10px;">*Note: This is a demo. Clicking submits the booking.</p>
+            </form>
+        </div>
+
+        <div style="background: white; padding: 30px; border-radius: 16px; height: fit-content; box-shadow: var(--card-shadow);">
+            <h3>Price Breakdown</h3>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #555;">
+                <span>Rate (24 hrs)</span>
+                <span>₹{{ car.price_per_hr * 24 }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #555;">
+                <span>Taxes & Fees</span>
+                <span>₹648</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; color: #28a745;">
+                <span>Insurance</span>
+                <span>Free</span>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #eee;">
+            <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 1.2rem; font-weight: 800;">
+                <span>Total Estimate</span>
+                <span style="color: var(--primary);">₹{{ (car.price_per_hr * 24) + 648 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+</body>
+
+</html>
