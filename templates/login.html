@@ -8,18 +8,40 @@
 </head>
 
 <body>
-  {% extends "base.html" %}
+{% extends "base.html" %}
+{% set hide_nav = True %}
 {% block content %}
-<div class="container auth-box">
-    <h2>Login or Register</h2>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <div class="actions">
-            <button type="submit" name="action" value="login" class="btn">Login</button>
-            <button type="submit" name="action" value="register" class="btn-outline">Register</button>
+<div class="auth-container">
+    <div class="auth-box">
+        <div class="auth-header">
+            <div class="logo" style="justify-content: center; margin-bottom: 20px; font-size: 2rem;"><i class="fas fa-car-side"></i> Drive<span>X</span></div>
+            <h2>Welcome back</h2>
+            <p style="color: #666;">Please enter your details to sign in.</p>
         </div>
-    </form>
+
+        <form method="POST">
+            <div class="toggle-btn">
+                <button type="button" class="active">I want to Rent</button>
+                <button type="button">I want to Host</button>
+            </div>
+
+            <div class="search-group" style="margin-bottom: 15px;">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="you@example.com" required>
+            </div>
+
+            <div class="search-group" style="margin-bottom: 20px;">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-login" style="width: 100%; padding: 12px;">Sign in <i class="fas fa-arrow-right"></i></button>
+        </form>
+
+        <p style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
+            Don't have an account? <a href="{{ url_for('register') }}" style="color: var(--primary);">Sign up for free</a>
+        </p>
+    </div>
 </div>
 {% endblock %}
 
