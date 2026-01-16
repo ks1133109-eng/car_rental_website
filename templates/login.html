@@ -19,7 +19,15 @@
             <p style="color: #666;">Please enter your details to sign in.</p>
         </div>
 
-        <form method="POST">
+                {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div style="background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
             <div class="toggle-btn">
                 <button type="button" class="active">I want to Rent</button>
                 <button type="button">I want to Host</button>
@@ -35,8 +43,11 @@
                 <input type="password" name="password" placeholder="••••••••" required>
             </div>
 
-            <button type="submit" class="btn-login" style="width: 100%; padding: 12px;">Sign in <i class="fas fa-arrow-right"></i></button>
+            <button type="submit" class="btn-login" style="width: 100%; padding: 12px;">
+                Sign in <i class="fas fa-arrow-right"></i>
+            </button>
         </form>
+>
 
         <p style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
             Don't have an account? <a href="{{ url_for('register') }}" style="color: var(--primary);">Sign up for free</a>
