@@ -8,30 +8,62 @@
 </head>
 
 <body>
-  {% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
+
 <header class="hero">
-    <h1>Rent your freedom.</h1>
-    <p>Premium cars at affordable daily rates.</p>
+    <div class="badge">PREMIUM MOBILITY NETWORK 2.0</div>
+    <h1>Driving the<br><span style="color: #60a5fa;">Future.</span></h1>
+    <p>India's first truly intelligent car ecosystem. Seamless access to luxury, from self-drive adventures to professional chauffeur services.</p>
+    <div style="margin-top: 20px;">
+        <button class="btn-login" style="padding: 12px 30px; font-size: 1rem;">Explore Fleet <i class="fas fa-arrow-right"></i></button>
+    </div>
+
+    <div class="search-container">
+        <div class="search-group">
+            <label>Location</label>
+            <select><option>Mumbai</option><option>Delhi</option><option>Bangalore</option></select>
+        </div>
+        <div class="search-group">
+            <label>Pick-up Date</label>
+            <input type="datetime-local">
+        </div>
+        <div class="search-group">
+            <label>Return Date</label>
+            <input type="datetime-local">
+        </div>
+        <button class="btn-search">Search</button>
+    </div>
 </header>
 
-<div class="container">
-    <h2>Available Fleet</h2>
-    <div class="grid">
-        {% for car in cars %}
-        <div class="card">
-            <img src="{{ car.image_url }}" alt="{{ car.name }}">
-            <div class="details">
-                <h3>{{ car.name }}</h3>
-                <p class="price">${{ car.price }} / day</p>
-                <p>{{ car.type }}</p>
-                <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn">Book Now</a>
+<h2 class="section-title">Designed for every narrative.</h2>
+<div class="car-grid">
+    {% for car in cars %}
+    <div class="car-card">
+        <div class="car-header">
+            <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
+            <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> {{ car.rating }}</div>
+        </div>
+        <div class="car-body">
+            <h3 class="car-title">{{ car.name }}</h3>
+            <span class="car-subtitle">{{ car.trips_completed }}+ VOYAGES COMPLETE</span>
+            
+            <div class="specs">
+                <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
+                <div class="spec-chip"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
+                <div class="spec-chip"><i class="fas fa-user"></i> {{ car.seats }}</div>
+            </div>
+
+            <div class="car-footer">
+                <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
+                <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
-        {% endfor %}
     </div>
+    {% endfor %}
 </div>
 {% endblock %}
+
 
 </body>
 
