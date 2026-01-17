@@ -152,7 +152,7 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- Seeder (Auto-runs on server start) ---
+# --- Seeder ---
 def seed_data():
     with app.app_context():
         db.create_all()
@@ -173,6 +173,8 @@ def seed_data():
             db.session.commit()
             print("Database initialized successfully!")
 
+# --- EXECUTE SEEDER (This runs every time the app starts) ---
+seed_data()
+
 if __name__ == '__main__':
-    seed_data()
     app.run(debug=True)
