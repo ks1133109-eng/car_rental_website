@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  {% extends "base.html" %}
+{% block content %}
+<div style="display: flex;">
+    <div style="width: 250px; background: #0b121f; min-height: 100vh; padding: 20px; color: white;">
+        <h3 style="margin-bottom: 30px;">Admin Panel</h3>
+        <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
+        <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Manage Cars</a>
+        <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Bookings</a>
+        <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Users</a>
+    </div>
+
+    <div style="flex: 1; padding: 40px; background: #f8f9fa;">
+        <h2>Fleet Management</h2>
+        
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <h4>Add New Vehicle</h4>
+            <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; align-items: end;">
+                <input type="text" name="name" placeholder="Car Name (e.g. BMW X5)" required style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                <input type="number" name="price" placeholder="Price/hr (₹)" required style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                <select name="category" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <option>SUV</option><option>Sedan</option><option>Hatchback</option><option>Luxury</option>
+                </select>
+                <input type="text" name="image" placeholder="Image URL" required style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                <button type="submit" style="grid-column: span 4; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">+ Add to Fleet</button>
+            </form>
+        </div>
+
+        <div style="background: white; border-radius: 10px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #eee; text-align: left;">
+                    <th style="padding: 15px;">Image</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+                {% for car in cars %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;"><img src="{{ car.image_url }}" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
+                    <td>{{ car.name }}</td>
+                    <td>₹{{ car.price_per_hr }}/hr</td>
+                    <td>
+                        <a href="{{ url_for('delete_car', id=car.id) }}" style="color: red; text-decoration: none; font-weight: bold;" onclick="return confirm('Delete this car?')">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+</body>
+
+</html>
