@@ -70,7 +70,27 @@ def load_user(user_id):
 def home():
     cars = Car.query.filter_by(is_available=True).all()
     return render_template('index.html', cars=cars)
-
+@app.route('/fleet')
+def fleet():
+    # 1. Get the filter from the URL (e.g., /fleet?category=SUV)
+    category_filter = request.args.get('category')
+    
+    # 2. Start the query: "Select all cars that are available"
+    query = Car.query.filter_by(is_available=True)
+    
+    # 3. If a filter is selected (and isn't 'All'), add it to the query
+    if category_filter and category_filter != 'All':
+        query = query.filter_by(category=category_filter)
+        
+    # 4. Run the query
+    cars = query.all()
+    
+    # 5. Get list of unique categories for the dropdown menu
+    # (This effectively looks at your DB and finds: 'SUV', 'Sedan', 'Hatchback')
+    categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
+    
+    return render_template('fleet.html', cars=cars, categories=categories, current_category=category_filter)
+    
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
