@@ -9,7 +9,7 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 
-# Get the Cloud Database URL from Render (Environment Variable)
+# Get the Cloud Database URL from Render
 database_url = os.environ.get('DATABASE_URL')
 
 if database_url:
@@ -23,7 +23,7 @@ else:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# --- Initialize Extensions (This was missing!) ---
+# --- Initialize Extensions ---
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -152,7 +152,7 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- Database Creation & Seeding ---
+# --- Seeder (Auto-runs on server start) ---
 def seed_data():
     with app.app_context():
         db.create_all()
@@ -175,124 +175,4 @@ def seed_data():
 
 if __name__ == '__main__':
     seed_data()
-    app.run(debug=True)
-        else:
-            hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
-            new_user = User(name=name, email=email, password=hashed_pw)
-            db.session.add(new_user)
-            db.session.commit()
-            login_user(new_user)
-            return redirect(url_for('home'))
-            
-    return render_template('register.html')
-
-@app.route('/book/<int:car_id>', methods=['GET', 'POST'])
-@login_required
-def book_car(car_id):
-    car = Car.query.get_or_404(car_id)
-    if request.method == 'POST':
-        # Create the booking
-        new_booking = Booking(
-            user_id=current_user.id, 
-            car_id=car.id, 
-            total_cost=(car.price_per_hr * 24), # Cost for 24 hours
-            status="Completed" # Mark as completed for demo
-        )
-        db.session.add(new_booking)
-        db.session.commit()
-        
-        flash(f'Booking confirmed for {car.name}!')
-        return redirect(url_for('dashboard'))
-        
-    return render_template('booking_details.html', car=car)
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.date_booked.desc()).all()
-    return render_template('dashboard.html', bookings=bookings)
-
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-    stats = {
-        'total_fleet': Car.query.count(),
-        'active_bookings': Booking.query.count(),
-        'revenue': "7,200"
-    }
-    cars = Car.query.all()
-    return render_template('admin.html', stats=stats, cars=cars)
-
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-# --------------------
-# Database Initialization (Render-safe)
-# --------------------
-with app.app_context():
-    db.create_all()
-
-    if not Car.query.first():
-        cars = [
-            Car(name="Maruti Suzuki Swift", 
-                category="Hatchback",
-                price_per_hr=75,
-                transmission="Manual",
-                fuel_type="Petrol",
-                seats=5,
-    
-             image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
- 
-            Car(name="Hyundai i20",
-                category="Hatchback",
-                price_per_hr=95,
-                transmission="Auto",
-                fuel_type="Petrol",
-                seats=5,
-          
-            image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
-     
-           Car(name="Honda City",
-                category="Sedan",
-                price_per_hr=140,
-                transmission="Auto",
-                fuel_type="Petrol",
-                seats=5,
-               
-            image_url="https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600"),
-  
-           Car(name="Mahindra Thar",
-               category="SUV",
-               price_per_hr=180,
-               transmission="Manual",
-               fuel_type="Diesel",
-               seats=4,
-              
-           image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600"),
-         
-          Car(name="Tata Nexon EV",
-              category="SUV",
-              price_per_hr=160,
-              transmission="Auto",
-              fuel_type="Electric",
-              seats=5,
-             
-          image_url="https://images.unsplash.com/photo-1678721245345-429a6568858a?w=600")
-        ]
-        db.session.add_all(cars)
-
-        admin = User(
-            name="Admin User",
-            email="admin@drivex.com",
-            password=generate_password_hash("admin123"),
-            is_admin=True
-        )
-        db.session.add(admin)
-        db.session.commit()
-
-if __name__ == '__main__':
     app.run(debug=True)
