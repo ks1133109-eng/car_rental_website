@@ -109,50 +109,7 @@ def register():
     return render_template('register.html')
 
 # --- BOOKING LOGIC (UPDATED) ---
-@app.route('/book/<int:car_id>', methods=['GET', 'POST'])
-@login_required
-def book_car(car_id):
-    car = Car.query.get_or_404(car_id)
-    
-    if request.method == 'POST':
-        # 1. Calculate Base Cost (24 hours standard)
-        base_price = car.price_per_hr * 24
-        
-        # 2. Check Driver Option
-        needs_driver = 'with_driver' in request.form
-        driver_fee = 500 if needs_driver else 0
-        
-        # 3. Check Coupon
-        coupon_code = request.form.get('coupon_code').strip().upper()
-        discount_value = 0
-        
-        if coupon_code:
-            coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
-            if coupon:
-                discount_value = coupon.discount_amount
-                flash(f'Coupon Applied! Saved ₹{discount_value}')
-            else:
-                flash('Invalid Coupon Code')
-        
-        # 4. Final Total
-        final_total = (base_price + driver_fee + 648) - discount_value # 648 is Tax
-        
-        # 5. Create Booking
-        new_booking = Booking(
-            user_id=current_user.id,
-            car_id=car.id,
-            base_cost=base_price,
-            driver_cost=driver_fee,
-            discount=discount_value,
-            total_cost=final_total,
-            with_driver=needs_driver,
-            status="Confirmed"
-        )
-        db.session.add(new_booking)
-        db.session.commit()
-        return redirect(url_for('dashboard'))
-        
-    return render_template('booking_details.html', car=car)
+
 
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
@@ -195,7 +152,54 @@ def admin_dashboard():
         'revenue': db.session.query(db.func.sum(Booking.total_cost)).scalar() or 0
     }
     return render_template('admin.html', stats=stats)
-
+@app.route('/book/<int:car_id>', methods=['GET', 'POST'])
+@login_required
+def book_car(car_id):
+    car = Car.query.get_or_404(car_id)
+    
+    if request.method == 'POST':
+        # 1. Calculate Base Cost
+        base_price = car.price_per_hr * 24
+        
+        # 2. Check Driver Option
+        needs_driver = 'with_driver' in request.form
+        driver_fee = 500 if needs_driver else 0
+        
+        # 3. Check Coupon (FIXED: Safe Handling)
+        coupon_input = request.form.get('coupon_code')
+        coupon_code = coupon_input.strip().upper() if coupon_input else None
+        
+        discount_value = 0
+        
+        if coupon_code:
+            # Check if coupon exists in DB
+            coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
+            if coupon:
+                discount_value = coupon.discount_amount
+                flash(f'Coupon Applied! Saved ₹{discount_value}')
+            else:
+                flash('Invalid Coupon Code')
+        
+        # 4. Final Total
+        final_total = (base_price + driver_fee + 648) - discount_value
+        
+        # 5. Create Booking
+        new_booking = Booking(
+            user_id=current_user.id,
+            car_id=car.id,
+            base_cost=base_price,
+            driver_cost=driver_fee,
+            discount=discount_value,
+            total_cost=final_total,
+            with_driver=needs_driver,
+            status="Confirmed"
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+        return redirect(url_for('dashboard'))
+        
+    return render_template('booking_details.html', car=car)
+    
 # (Keeping your other Admin routes for Cars/Users/Bookings...)
 @app.route('/admin/bookings')
 @login_required
