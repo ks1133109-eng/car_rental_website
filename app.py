@@ -9,8 +9,10 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 
+# Database Configuration
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
+    # Fix for Render's URL format
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
@@ -19,11 +21,12 @@ else:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize Extensions
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- Models ---
+# --- Database Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
@@ -47,7 +50,7 @@ class Car(db.Model):
 class Coupon(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(20), unique=True, nullable=False)
-    discount_amount = db.Column(db.Integer, nullable=False) # e.g., 500 (Rupees)
+    discount_amount = db.Column(db.Integer, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
 class Booking(db.Model):
@@ -56,16 +59,16 @@ class Booking(db.Model):
     car_id = db.Column(db.Integer, db.ForeignKey('car.id'))
     status = db.Column(db.String(50), default='Upcoming')
     
-    # Cost Breakdown
-    base_cost = db.Column(db.Integer) # Car rental cost
-    driver_cost = db.Column(db.Integer, default=0) # Chauffeur cost
-    discount = db.Column(db.Integer, default=0) # Coupon discount
-    total_cost = db.Column(db.Integer) # Final Amount
+    # Financial Details
+    base_cost = db.Column(db.Integer)
+    driver_cost = db.Column(db.Integer, default=0)
+    discount = db.Column(db.Integer, default=0)
+    total_cost = db.Column(db.Integer)
     
-    # Details
     with_driver = db.Column(db.Boolean, default=False)
     date_booked = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Relationships
     car = db.relationship('Car')
     user = db.relationship('User')
 
@@ -73,7 +76,8 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Routes ---
+# --- Public Routes ---
+
 @app.route('/')
 def home():
     cars = Car.query.filter_by(is_available=True).all()
@@ -108,24 +112,6 @@ def register():
         return redirect(url_for('home'))
     return render_template('register.html')
 
-# --- BOOKING LOGIC (UPDATED) ---
-
-
-@app.route('/booking/invoice/<int:booking_id>')
-@login_required
-def invoice(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-    # Security: Ensure user owns this booking
-    if booking.user_id != current_user.id and not current_user.is_admin:
-        return redirect(url_for('dashboard'))
-    return render_template('invoice.html', booking=booking)
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    recent_bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.date_booked.desc()).limit(3).all()
-    return render_template('dashboard.html', bookings=recent_bookings)
-
 @app.route('/fleet')
 def fleet():
     category_filter = request.args.get('category')
@@ -136,43 +122,27 @@ def fleet():
     categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
     return render_template('fleet.html', cars=cars, categories=categories, current_category=category_filter)
 
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
+# --- Booking System ---
 
-# --- ADMIN & UTILS ---
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    if not current_user.is_admin: return redirect(url_for('home'))
-    stats = {
-        'total_fleet': Car.query.count(),
-        'active_bookings': Booking.query.count(),
-        'revenue': db.session.query(db.func.sum(Booking.total_cost)).scalar() or 0
-    }
-    return render_template('admin.html', stats=stats)
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car(car_id):
     car = Car.query.get_or_404(car_id)
     
     if request.method == 'POST':
-        # 1. Calculate Base Cost
+        # 1. Base Cost
         base_price = car.price_per_hr * 24
         
-        # 2. Check Driver Option
+        # 2. Driver Fee
         needs_driver = 'with_driver' in request.form
         driver_fee = 500 if needs_driver else 0
         
-        # 3. Check Coupon (FIXED: Safe Handling)
+        # 3. Coupon Logic (Safe Handling)
         coupon_input = request.form.get('coupon_code')
         coupon_code = coupon_input.strip().upper() if coupon_input else None
-        
         discount_value = 0
         
         if coupon_code:
-            # Check if coupon exists in DB
             coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
             if coupon:
                 discount_value = coupon.discount_amount
@@ -180,10 +150,10 @@ def book_car(car_id):
             else:
                 flash('Invalid Coupon Code')
         
-        # 4. Final Total
+        # 4. Total Calculation
         final_total = (base_price + driver_fee + 648) - discount_value
         
-        # 5. Create Booking
+        # 5. Save Booking
         new_booking = Booking(
             user_id=current_user.id,
             car_id=car.id,
@@ -199,15 +169,135 @@ def book_car(car_id):
         return redirect(url_for('dashboard'))
         
     return render_template('booking_details.html', car=car)
-    
-# (Keeping your other Admin routes for Cars/Users/Bookings...)
+
+@app.route('/booking/invoice/<int:booking_id>')
+@login_required
+def invoice(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if booking.user_id != current_user.id and not current_user.is_admin:
+        return redirect(url_for('dashboard'))
+    return render_template('invoice.html', booking=booking)
+
+# --- Account & Dashboard Routes (These were missing!) ---
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    recent_bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.date_booked.desc()).limit(3).all()
+    return render_template('dashboard.html', bookings=recent_bookings)
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        current_user.name = request.form.get('name')
+        current_user.phone = request.form.get('phone')
+        current_user.address = request.form.get('address')
+        db.session.commit()
+        flash('Profile updated!')
+        return redirect(url_for('profile'))
+    return render_template('profile.html')
+
+@app.route('/my-bookings')
+@login_required
+def my_bookings():
+    all_bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.date_booked.desc()).all()
+    return render_template('my_bookings.html', bookings=all_bookings)
+
+@app.route('/security', methods=['GET', 'POST'])
+@login_required
+def security():
+    if request.method == 'POST':
+        new_pw = request.form.get('new_password')
+        current_user.password = generate_password_hash(new_pw, method='pbkdf2:sha256')
+        db.session.commit()
+        flash('Password changed successfully.')
+    return render_template('security.html')
+
+@app.route('/help')
+def help_support():
+    return render_template('help.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# --- Admin Routes ---
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin: return redirect(url_for('home'))
+    stats = {
+        'total_fleet': Car.query.count(),
+        'active_bookings': Booking.query.filter(Booking.status != 'Cancelled').count(),
+        'total_users': User.query.count(),
+        'revenue': db.session.query(db.func.sum(Booking.total_cost)).filter(Booking.status != 'Cancelled').scalar() or 0
+    }
+    return render_template('admin.html', stats=stats)
+
+@app.route('/admin/cars', methods=['GET', 'POST'])
+@login_required
+def manage_cars():
+    if not current_user.is_admin: return redirect(url_for('home'))
+    if request.method == 'POST':
+        db.session.add(Car(
+            name=request.form.get('name'), 
+            price_per_hr=int(request.form.get('price')), 
+            image_url=request.form.get('image'), 
+            category=request.form.get('category'), 
+            transmission="Auto", fuel_type="Petrol", seats=5
+        ))
+        db.session.commit()
+    cars = Car.query.all()
+    return render_template('manage_cars.html', cars=cars)
+
+@app.route('/admin/cars/delete/<int:id>')
+@login_required
+def delete_car(id):
+    if not current_user.is_admin: return redirect(url_for('home'))
+    car = Car.query.get(id)
+    if car:
+        db.session.delete(car)
+        db.session.commit()
+    return redirect(url_for('manage_cars'))
+
 @app.route('/admin/bookings')
 @login_required
 def manage_bookings():
     if not current_user.is_admin: return redirect(url_for('home'))
-    return render_template('manage_bookings.html', bookings=Booking.query.order_by(Booking.date_booked.desc()).all())
+    bookings = Booking.query.order_by(Booking.date_booked.desc()).all()
+    return render_template('manage_bookings.html', bookings=bookings)
 
-# --- RESET DB (With Coupon Seeding) ---
+@app.route('/admin/booking/update/<int:id>/<status>')
+@login_required
+def update_booking(id, status):
+    if not current_user.is_admin: return redirect(url_for('home'))
+    booking = Booking.query.get(id)
+    if booking:
+        booking.status = status
+        db.session.commit()
+    return redirect(url_for('manage_bookings'))
+
+@app.route('/admin/users')
+@login_required
+def manage_users():
+    if not current_user.is_admin: return redirect(url_for('home'))
+    users = User.query.all()
+    return render_template('manage_users.html', users=users)
+
+@app.route('/admin/users/delete/<int:id>')
+@login_required
+def delete_user(id):
+    if not current_user.is_admin: return redirect(url_for('home'))
+    user = User.query.get(id)
+    if user and not user.is_admin:
+        db.session.delete(user)
+        db.session.commit()
+    return redirect(url_for('manage_users'))
+
+# --- Database Reset & Seeding ---
 @app.route('/reset-db')
 def reset_db():
     with app.app_context():
@@ -218,8 +308,11 @@ def reset_db():
         if not Car.query.first():
             cars = [
                 Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
+                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
                 Car(name="Honda City", category="Sedan", price_per_hr=140, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600"),
-                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600")
+                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600"),
+                Car(name="Tata Nexon EV", category="SUV", price_per_hr=160, transmission="Auto", fuel_type="Electric", seats=5, image_url="https://images.unsplash.com/photo-1678721245345-429a6568858a?w=600"),
+                Car(name="Toyota Innova Crysta", category="SUV", price_per_hr=220, transmission="Manual", fuel_type="Diesel", seats=7, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600")
             ]
             db.session.add_all(cars)
             
@@ -227,14 +320,13 @@ def reset_db():
             admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True)
             db.session.add(admin)
             
-            # Seed Coupons (Idea 2)
+            # Seed Coupons
             c1 = Coupon(code="WELCOME20", discount_amount=200)
             c2 = Coupon(code="DRIVEX500", discount_amount=500)
             db.session.add_all([c1, c2])
             
             db.session.commit()
-    return "Database reset! Coupons 'WELCOME20' and 'DRIVEX500' are active. <a href='/register'>Register Now</a>"
+    return "Database has been reset! Please <a href='/register'>Register Again</a>."
 
 if __name__ == '__main__':
     app.run(debug=True)
-        
