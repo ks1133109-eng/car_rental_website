@@ -8,6 +8,8 @@ from datetime import datetime
 # --- Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
+# Increase upload limit to 16MB just in case
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
 # Database Configuration
 database_url = os.environ.get('DATABASE_URL')
@@ -33,10 +35,12 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
     
-    # KYC FIELDS (New)
+    # KYC FIELDS (Updated for Images)
     gov_id = db.Column(db.String(50)) 
-    id_image_url = db.Column(db.String(500)) # Link to document image
-    kyc_status = db.Column(db.String(20), default='Unverified') # Unverified, Pending, Verified, Rejected
+    # We use db.Text to store the Image Data (Base64 string)
+    gov_id_image = db.Column(db.Text) 
+    user_selfie = db.Column(db.Text) 
+    kyc_status = db.Column(db.String(20), default='Unverified')
     
     is_admin = db.Column(db.Boolean, default=False)
 
@@ -107,7 +111,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
-        return redirect(url_for('dashboard')) # Redirect to Dashboard to see KYC status
+        return redirect(url_for('dashboard'))
     return render_template('register.html')
 
 @app.route('/fleet')
@@ -125,20 +129,26 @@ def fleet():
 @app.route('/kyc', methods=['GET', 'POST'])
 @login_required
 def kyc():
-    # If already verified, don't show this page
     if current_user.kyc_status == 'Verified':
         flash('You are already verified!')
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        current_user.gov_id = request.form.get('gov_id')
-        current_user.id_image_url = request.form.get('id_image') # In real app, this is a file upload
+        # Get form data
         current_user.phone = request.form.get('phone')
         current_user.address = request.form.get('address')
+        current_user.gov_id = request.form.get('gov_id')
         
-        # Set status to Pending so Admin can see it
+        # Get the Base64 Image Strings (Hidden Inputs)
+        current_user.gov_id_image = request.form.get('gov_id_image_data')
+        current_user.user_selfie = request.form.get('user_selfie_data')
+        
+        # Validate that images were provided
+        if not current_user.gov_id_image or not current_user.user_selfie:
+            flash('⚠️ Please upload both your ID and take a selfie.')
+            return redirect(url_for('kyc'))
+
         current_user.kyc_status = 'Pending'
-        
         db.session.commit()
         flash('KYC Submitted! Please wait for Admin approval.')
         return redirect(url_for('dashboard'))
@@ -148,15 +158,14 @@ def kyc():
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car(car_id):
-    # --- KYC GATEKEEPER ---
+    # KYC Gatekeeper
     if current_user.kyc_status != 'Verified':
         if current_user.kyc_status == 'Pending':
-            flash('⏳ Your KYC is Pending Approval. Please wait for the Admin to verify you.')
+            flash('⏳ Your KYC is Pending Approval.')
             return redirect(url_for('dashboard'))
         else:
-            flash('⚠️ Security Alert: You must complete e-KYC Verification before booking.')
+            flash('⚠️ You must complete e-KYC Verification before booking.')
             return redirect(url_for('kyc'))
-    # ----------------------
 
     car = Car.query.get_or_404(car_id)
     if request.method == 'POST':
@@ -190,7 +199,7 @@ def invoice(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('invoice.html', booking=booking)
 
-# --- Account ---
+# --- Account Routes ---
 
 @app.route('/dashboard')
 @login_required
@@ -205,6 +214,7 @@ def profile():
         current_user.name = request.form.get('name')
         current_user.phone = request.form.get('phone')
         current_user.address = request.form.get('address')
+        current_user.gov_id = request.form.get('gov_id')
         db.session.commit()
         flash('Profile updated!')
         return redirect(url_for('profile'))
@@ -246,7 +256,7 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- Admin ---
+# --- Admin Routes ---
 
 @app.route('/admin')
 @login_required
@@ -255,10 +265,9 @@ def admin_dashboard():
     stats = {
         'total_fleet': Car.query.count(),
         'active_bookings': Booking.query.filter(Booking.status != 'Cancelled').count(),
-        'pending_kyc': User.query.filter_by(kyc_status='Pending').count(), # NEW STAT
+        'pending_kyc': User.query.filter_by(kyc_status='Pending').count(),
         'revenue': db.session.query(db.func.sum(Booking.total_cost)).filter(Booking.status != 'Cancelled').scalar() or 0
     }
-    # Pass pending users to dashboard
     pending_users = User.query.filter_by(kyc_status='Pending').all()
     return render_template('admin.html', stats=stats, pending_users=pending_users)
 
@@ -270,7 +279,7 @@ def approve_kyc(user_id):
     if user:
         user.kyc_status = 'Verified'
         db.session.commit()
-        flash(f'User {user.name} has been verified!')
+        flash(f'User {user.name} verified!')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reject-kyc/<int:user_id>')
@@ -284,8 +293,6 @@ def reject_kyc(user_id):
         flash(f'User {user.name} KYC rejected.')
     return redirect(url_for('admin_dashboard'))
 
-# (Keeping existing Admin Car/Booking routes, paste them here if you need to re-add them, 
-# but for brevity I'm including the key ones below)
 @app.route('/admin/cars', methods=['GET', 'POST'])
 @login_required
 def manage_cars():
@@ -319,13 +326,13 @@ def update_booking(id, status):
         booking.status = status
         db.session.commit()
     return redirect(url_for('manage_bookings'))
-    
+
 @app.route('/admin/users')
 @login_required
 def manage_users():
     if not current_user.is_admin: return redirect(url_for('home'))
     return render_template('manage_users.html', users=User.query.all())
-    
+
 @app.route('/admin/users/delete/<int:id>')
 @login_required
 def delete_user(id):
@@ -336,30 +343,23 @@ def delete_user(id):
         db.session.commit()
     return redirect(url_for('manage_users'))
 
+# --- Reset DB ---
 @app.route('/reset-db')
 def reset_db():
     with app.app_context():
         db.drop_all()
         db.create_all()
-        
-        # Seed Cars
         if not Car.query.first():
             cars = [
                 Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
                 Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
-                Car(name="Honda City", category="Sedan", price_per_hr=140, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600"),
                 Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600")
             ]
             db.session.add_all(cars)
-            
-            # Seed Admin
             admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True, kyc_status='Verified')
             db.session.add(admin)
-            
-            # Seed Coupons
             c1 = Coupon(code="WELCOME20", discount_amount=200)
             db.session.add(c1)
-            
             db.session.commit()
     return "Database has been reset! Please <a href='/register'>Register Again</a>."
 
