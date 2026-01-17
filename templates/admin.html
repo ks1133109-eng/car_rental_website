@@ -10,46 +10,6 @@
     {% extends "base.html" %}
 {% block content %}
 <div style="padding: 40px 5%; background: #f8f9fa; min-height: 100vh;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <div>
-            <h1 style="margin: 0;">Admin Dashboard</h1>
-            <p style="color: #666; margin: 5px 0 0;">Overview of your platform's performance.</p>
-        </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <a href="{{ url_for('manage_cars') }}" style="background: #0b121f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">Manage Cars</a>
-            <a href="{{ url_for('manage_bookings') }}" style="background: white; border: 1px solid #ddd; color: #333; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">Bookings</a>
-        </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
-        
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #007bff;">
-            <h3 style="margin: 0; color: #888; font-size: 0.9rem; text-transform: uppercase;">Total Fleet</h3>
-            <div style="font-size: 2.5rem; font-weight: 700; margin: 10px 0;">{{ stats.total_fleet }}</div>
-            <span style="color: #007bff; font-size: 0.9rem;">Cars available</span>
-        </div>
-
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #28a745;">
-            <h3 style="margin: 0; color: #888; font-size: 0.9rem; text-transform: uppercase;">Active Bookings</h3>
-            <div style="font-size: 2.5rem; font-weight: 700; margin: 10px 0;">{{ stats.active_bookings }}</div>
-            <span style="color: #28a745; font-size: 0.9rem;">Current trips</span>
-        </div>
-
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #ffc107;">
-            <h3 style="margin: 0; color: #888; font-size: 0.9rem; text-transform: uppercase;">Pending KYC</h3>
-            <div style="font-size: 2.5rem; font-weight: 700; margin: 10px 0;">{{ stats.pending_kyc }}</div>
-            <span style="color: #d39e00; font-size: 0.9rem;">Need verification</span>
-        </div>
-
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #6610f2;">
-            <h3 style="margin: 0; color: #888; font-size: 0.9rem; text-transform: uppercase;">Total Revenue</h3>
-            <div style="font-size: 2.5rem; font-weight: 700; margin: 10px 0;">₹{{ stats.revenue }}</div>
-            <span style="color: #6610f2; font-size: 0.9rem;">Lifetime earnings</span>
-        </div>
-    </div>
-
     <div style="margin-top: 40px;">
         <h3 style="margin-bottom: 20px;">Pending Verification Requests</h3>
         
@@ -58,8 +18,8 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <tr style="background: #f8f9fa; text-align: left;">
                     <th style="padding: 15px;">User</th>
-                    <th>Govt ID Number</th>
-                    <th>Document</th>
+                    <th>ID Details</th>
+                    <th>Proofs</th>
                     <th>Actions</th>
                 </tr>
                 {% for user in pending_users %}
@@ -69,10 +29,16 @@
                         <small style="color: #666;">{{ user.email }}</small>
                     </td>
                     <td>
-                        <span style="background: #eee; padding: 4px 8px; border-radius: 4px; font-family: monospace;">{{ user.gov_id }}</span>
+                        ID: {{ user.gov_id }}<br>
+                        Ph: {{ user.phone }}
                     </td>
                     <td>
-                        <a href="{{ user.id_image_url }}" target="_blank" style="color: #007bff; text-decoration: none;">View Doc <i class="fas fa-external-link-alt"></i></a>
+                        <button onclick="openImage('{{ user.gov_id_image }}')" style="border: 1px solid #007bff; color: #007bff; background: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            <i class="far fa-id-card"></i> ID
+                        </button>
+                        <button onclick="openImage('{{ user.user_selfie }}')" style="border: 1px solid #6610f2; color: #6610f2; background: white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                            <i class="far fa-user"></i> Selfie
+                        </button>
                     </td>
                     <td>
                         <a href="{{ url_for('approve_kyc', user_id=user.id) }}" style="padding: 8px 15px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;">Approve</a>
@@ -83,14 +49,19 @@
             </table>
         </div>
         {% else %}
-            <div style="text-align: center; padding: 40px; color: #999; border: 2px dashed #ddd; border-radius: 12px;">
-                <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                <p>All clear! No pending verification requests.</p>
-            </div>
+            <p>No pending requests.</p>
         {% endif %}
     </div>
-
 </div>
+
+<script>
+    function openImage(base64Data) {
+        var image = new Image();
+        image.src = base64Data;
+        var w = window.open("");
+        w.document.write(image.outerHTML);
+    }
+</script>
 {% endblock %}
 
 </body>
