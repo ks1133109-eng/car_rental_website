@@ -61,6 +61,31 @@
                     {% endfor %}
                 </table>
             </div>
+                        <h3 style="margin-top: 40px;">Registered Users</h3>
+            <div style="background: white; border-radius: 12px; overflow: hidden; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #eee;">
+                        <th style="padding: 15px;">User ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                    </tr>
+                    {% for user in users %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 15px; color: #888;">#{{ user.id }}</td>
+                        <td><strong>{{ user.name }}</strong></td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.is_admin %}
+                                <span style="background: #e2e8f0; color: #2d3748; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Admin</span>
+                            {% else %}
+                                <span style="background: #ebf8ff; color: #3182ce; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Customer</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
     </div>
 </body>
