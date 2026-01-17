@@ -8,7 +8,7 @@
 </head>
 
 <body>
-  {% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 <div style="max-width: 500px; margin: 50px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
     <h2 style="margin-bottom: 10px;">Security</h2>
@@ -23,13 +23,14 @@
             <label style="display: block; margin-bottom: 5px; font-weight: 600;">New Password</label>
             <input type="password" name="new_password" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
         </div>
-        <button type="submit" style="background: var(--primary); color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; width: 100%;">Update Password</button>
+        <button type="submit" style="background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; width: 100%;">Update Password</button>
     </form>
     <div style="text-align: center; margin-top: 20px;">
         <a href="{{ url_for('dashboard') }}" style="color: #666; text-decoration: none;">Cancel</a>
     </div>
 </div>
 {% endblock %}
+
 
 </body>
 
