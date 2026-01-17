@@ -148,25 +148,69 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- Seeder ---
-def seed_data():
-    with app.app_context():
-        db.create_all()
-        if not Car.query.first():
-            cars = [
-                Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
-                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
-                Car(name="Honda City", category="Sedan", price_per_hr=140, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600"),
-                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600"),
-                Car(name="Tata Nexon EV", category="SUV", price_per_hr=160, transmission="Auto", fuel_type="Electric", seats=5, image_url="https://images.unsplash.com/photo-1678721245345-429a6568858a?w=600")
-            ]
-            db.session.add_all(cars)
-            # Create Admin
-            admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True)
-            db.session.add(admin)
-            db.session.commit()
-            print("Database seeded!")
+# --------------------
+# Database Initialization (Render-safe)
+# --------------------
+with app.app_context():
+    db.create_all()
+
+    if not Car.query.first():
+        cars = [
+            Car(name="Maruti Suzuki Swift", 
+                category="Hatchback",
+                price_per_hr=75,
+                transmission="Manual",
+                fuel_type="Petrol",
+                seats=5,
+    
+             image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
+ 
+            Car(name="Hyundai i20",
+                category="Hatchback",
+                price_per_hr=95,
+                transmission="Auto",
+                fuel_type="Petrol",
+                seats=5,
+          
+            image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
+     
+           Car(name="Honda City",
+                category="Sedan",
+                price_per_hr=140,
+                transmission="Auto",
+                fuel_type="Petrol",
+                seats=5,
+               
+            image_url="https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600"),
+  
+           Car(name="Mahindra Thar",
+               category="SUV",
+               price_per_hr=180,
+               transmission="Manual",
+               fuel_type="Diesel",
+               seats=4,
+              
+           image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600"),
+         
+          Car(name="Tata Nexon EV",
+              category="SUV",
+              price_per_hr=160,
+              transmission="Auto",
+              fuel_type="Electric",
+              seats=5,
+             
+          image_url="https://images.unsplash.com/photo-1678721245345-429a6568858a?w=600")
+        ]
+        db.session.add_all(cars)
+
+        admin = User(
+            name="Admin User",
+            email="admin@drivex.com",
+            password=generate_password_hash("admin123"),
+            is_admin=True
+        )
+        db.session.add(admin)
+        db.session.commit()
 
 if __name__ == '__main__':
-    seed_data()
     app.run(debug=True)
