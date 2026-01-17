@@ -8,6 +8,7 @@
 </head>
 
 <body>
+
 {% extends "base.html" %}
 {% block content %}
 
@@ -21,7 +22,20 @@
             <div>
                 <h2 style="margin: 0; font-size: 1.8rem;">Welcome, {{ current_user.name }}!</h2>
                 <p style="margin: 5px 0 10px; color: #666;">{{ current_user.email }}</p>
-                <span style="background: #eee; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #555;">Member</span>
+                
+                {% if current_user.kyc_status == 'Verified' %}
+                    <span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                        <i class="fas fa-check-circle"></i> KYC Verified
+                    </span>
+                {% elif current_user.kyc_status == 'Pending' %}
+                    <span style="background: #fff3cd; color: #856404; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                        <i class="fas fa-clock"></i> Verification Pending
+                    </span>
+                {% else %}
+                    <a href="{{ url_for('kyc') }}" style="background: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+                        <i class="fas fa-exclamation-circle"></i> Complete KYC
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -52,22 +66,6 @@
                 <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">Manage password settings</p>
             </div>
         </a>
-
-        <div class="dash-card" style="opacity: 0.7;">
-            <div class="dash-icon"><i class="far fa-bell"></i></div>
-            <div>
-                <h4 style="margin: 0; font-size: 1rem;">Notifications</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">Manage your email alerts (Coming Soon)</p>
-            </div>
-        </div>
-
-        <div class="dash-card" style="opacity: 0.7;">
-            <div class="dash-icon"><i class="far fa-credit-card"></i></div>
-            <div>
-                <h4 style="margin: 0; font-size: 1rem;">Payments</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">Saved cards and billing (Coming Soon)</p>
-            </div>
-        </div>
 
         <a href="{{ url_for('help_support') }}" class="dash-card" style="text-decoration: none; color: inherit;">
             <div class="dash-icon"><i class="far fa-question-circle"></i></div>
