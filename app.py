@@ -1,4 +1,4 @@
-import os
+import os  # FIXED: Lowercase 'import'
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -9,16 +9,20 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 
+# Database Configuration
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
+    # Fix for Render's URL format (postgres:// -> postgresql://)
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
+    # Fallback to local file for testing
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drivex.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize Extensions
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -29,7 +33,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100))
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    # NEW FIELDS
+    # Account Details
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
     is_admin = db.Column(db.Boolean, default=False)
@@ -53,6 +57,7 @@ class Booking(db.Model):
     total_cost = db.Column(db.Integer)
     date_booked = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Relationships (Critical for Admin Panel)
     car = db.relationship('Car')
     user = db.relationship('User')
 
@@ -114,12 +119,12 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- ACCOUNT FEATURES (NEW) ---
+# --- ACCOUNT FEATURES ---
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Only show top 3 bookings on dashboard
+    # Only show top 3 recent bookings on dashboard
     recent_bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.date_booked.desc()).limit(3).all()
     return render_template('dashboard.html', bookings=recent_bookings)
 
@@ -156,25 +161,35 @@ def help_support():
     return render_template('help.html')
 
 # --- ADMIN ROUTES ---
+
 @app.route('/admin')
 @login_required
 def admin_dashboard():
     if not current_user.is_admin: return redirect(url_for('home'))
+    
+    # Calculate revenue safely
+    revenue_query = db.session.query(db.func.sum(Booking.total_cost)).filter(Booking.status != 'Cancelled').scalar()
+    
     stats = {
         'total_fleet': Car.query.count(),
         'active_bookings': Booking.query.filter(Booking.status != 'Cancelled').count(),
         'total_users': User.query.count(),
-        'revenue': db.session.query(db.func.sum(Booking.total_cost)).filter(Booking.status != 'Cancelled').scalar() or 0
+        'revenue': revenue_query or 0
     }
     return render_template('admin.html', stats=stats)
 
-# (Keeping your existing Admin routes shortened for brevity, assume they are here...)
 @app.route('/admin/cars', methods=['GET', 'POST'])
 @login_required
 def manage_cars():
     if not current_user.is_admin: return redirect(url_for('home'))
     if request.method == 'POST':
-        db.session.add(Car(name=request.form.get('name'), price_per_hr=int(request.form.get('price')), image_url=request.form.get('image'), category=request.form.get('category'), transmission="Auto", fuel_type="Petrol", seats=5))
+        db.session.add(Car(
+            name=request.form.get('name'), 
+            price_per_hr=int(request.form.get('price')), 
+            image_url=request.form.get('image'), 
+            category=request.form.get('category'), 
+            transmission="Auto", fuel_type="Petrol", seats=5
+        ))
         db.session.commit()
     cars = Car.query.all()
     return render_template('manage_cars.html', cars=cars)
@@ -183,21 +198,37 @@ def manage_cars():
 @login_required
 def delete_car(id):
     if not current_user.is_admin: return redirect(url_for('home'))
-    db.session.delete(Car.query.get(id))
-    db.session.commit()
+    car = Car.query.get(id)
+    if car:
+        db.session.delete(car)
+        db.session.commit()
     return redirect(url_for('manage_cars'))
 
 @app.route('/admin/bookings')
 @login_required
 def manage_bookings():
     if not current_user.is_admin: return redirect(url_for('home'))
-    return render_template('manage_bookings.html', bookings=Booking.query.all())
+    # Show newest bookings first
+    bookings = Booking.query.order_by(Booking.date_booked.desc()).all()
+    return render_template('manage_bookings.html', bookings=bookings)
+
+# Missing Route for Updating Booking Status
+@app.route('/admin/booking/update/<int:id>/<status>')
+@login_required
+def update_booking(id, status):
+    if not current_user.is_admin: return redirect(url_for('home'))
+    booking = Booking.query.get(id)
+    if booking:
+        booking.status = status
+        db.session.commit()
+    return redirect(url_for('manage_bookings'))
 
 @app.route('/admin/users')
 @login_required
 def manage_users():
     if not current_user.is_admin: return redirect(url_for('home'))
-    return render_template('manage_users.html', users=User.query.all())
+    users = User.query.all()
+    return render_template('manage_users.html', users=users)
 
 @app.route('/admin/users/delete/<int:id>')
 @login_required
