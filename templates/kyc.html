@@ -10,46 +10,115 @@
 <body>
   {% extends "base.html" %}
 {% block content %}
-<div style="max-width: 600px; margin: 60px auto; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center;">
+<div style="max-width: 700px; margin: 60px auto; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
     
-    <div style="background: #e6f7ff; color: #0050b3; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-        <i class="fas fa-shield-alt" style="font-size: 1.8rem;"></i>
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="margin-bottom: 10px;">e-KYC Verification</h2>
+        <p style="color: #666;">Complete your profile to unlock bookings.</p>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}<div style="background: #fff3cd; color: #856404; padding: 10px; margin-top: 10px; border-radius: 5px;">{{ messages[0] }}</div>{% endif %}
+        {% endwith %}
     </div>
 
-    <h2 style="margin-bottom: 10px;">Verify Your Identity</h2>
-    <p style="color: #666; margin-bottom: 30px; line-height: 1.6;">
-        To ensure the safety of our fleet, DriveX requires all members to complete e-KYC. 
-        Your documents are encrypted and stored securely.
-    </p>
-
-    <form method="POST" style="text-align: left;">
-        
-        <div style="margin-bottom: 20px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Phone Number</label>
-            <input type="text" name="phone" value="{{ current_user.phone or '' }}" required placeholder="+91 98765 43210" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+    <form method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 5px;">Phone</label>
+                <input type="text" name="phone" value="{{ current_user.phone or '' }}" required placeholder="+91..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 5px;">Govt ID Number</label>
+                <input type="text" name="gov_id" value="{{ current_user.gov_id or '' }}" required placeholder="DL/Aadhaar No" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            </div>
+        </div>
+        <div style="margin-bottom: 30px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Address</label>
+            <input type="text" name="address" value="{{ current_user.address or '' }}" required placeholder="Full Address" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Residential Address</label>
-            <input type="text" name="address" value="{{ current_user.address or '' }}" required placeholder="Flat No, Street, City" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
-        </div>
+        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 30px;">
 
-        <div style="margin-bottom: 20px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Govt ID Number (Aadhaar/License)</label>
-            <input type="text" name="gov_id" value="{{ current_user.gov_id or '' }}" required placeholder="XXXX-XXXX-XXXX" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; border-left: 4px solid #007bff;">
+        <div style="margin-bottom: 30px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Step 1: Upload ID Proof</label>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Upload a clear photo of your Driving License or Aadhaar.</p>
+            
+            <input type="file" id="fileInput" accept="image/*" style="display: block; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            
+            <input type="hidden" name="gov_id_image_data" id="gov_id_hidden">
+            <div id="file_preview" style="margin-top: 10px; color: green; font-weight: bold; display: none;">✓ File Selected</div>
         </div>
 
         <div style="margin-bottom: 30px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;">ID Document Image URL</label>
-            <input type="text" name="id_image" required placeholder="https://..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
-            <small style="color: #888;">*Paste a link to your ID image (Simulated upload)</small>
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Step 2: Take a Live Selfie</label>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">We need to verify it's really you.</p>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button type="button" onclick="startCamera()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Open Camera</button>
+                <button type="button" onclick="takePhoto()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Capture Photo</button>
+            </div>
+
+            <video id="video" width="320" height="240" autoplay style="background: #000; border-radius: 8px; display: none;"></video>
+            <canvas id="canvas" width="320" height="240" style="display: none; border-radius: 8px; border: 2px solid #28a745; margin-top: 10px;"></canvas>
+
+            <input type="hidden" name="user_selfie_data" id="selfie_hidden">
         </div>
 
-        <button type="submit" style="width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
-            Submit for Verification
+        <button type="submit" style="width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px;">
+            Submit Verification
         </button>
     </form>
 </div>
+
+<script>
+    // --- 1. HANDLE FILE UPLOAD (Convert to Base64) ---
+    document.getElementById('fileInput').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Compress/Resize image logic could go here, for now we just take the raw string
+                document.getElementById('gov_id_hidden').value = e.target.result;
+                document.getElementById('file_preview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // --- 2. HANDLE WEBCAM (Capture to Base64) ---
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    
+    function startCamera() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.style.display = 'block';
+                canvas.style.display = 'none';
+            })
+            .catch(err => alert("Error accessing camera: " + err));
+    }
+
+    function takePhoto() {
+        const context = canvas.getContext('2d');
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, 320, 240);
+        
+        // Convert canvas to Base64 string
+        const dataURL = canvas.toDataURL('image/jpeg', 0.7); // 0.7 quality to save space
+        
+        document.getElementById('selfie_hidden').value = dataURL;
+        
+        // Show result
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        // Stop camera stream
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+    }
+</script>
 {% endblock %}
 
 </body>
