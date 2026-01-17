@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  {% extends "base.html" %}
+{% block content %}
+<div style="display: flex;">
+    <div style="width: 250px; background: #0b121f; min-height: 100vh; padding: 20px; color: white;">
+        <h3 style="margin-bottom: 30px;">Admin Panel</h3>
+        <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
+        <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Manage Cars</a>
+        <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Bookings</a>
+        <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Users</a>
+    </div>
+
+    <div style="flex: 1; padding: 40px; background: #f8f9fa;">
+        <h2>Booking Management</h2>
+        <div style="background: white; border-radius: 10px; overflow: hidden; margin-top: 20px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #eee; text-align: left;">
+                    <th style="padding: 15px;">Booking ID</th>
+                    <th>User</th>
+                    <th>Car</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                {% for booking in bookings %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px;">#{{ booking.id }}</td>
+                    <td>{{ booking.user.name }}<br><small style="color: #888;">{{ booking.user.email }}</small></td>
+                    <td>{{ booking.car.name }}</td>
+                    <td>
+                        {% if booking.status == 'Confirmed' %}
+                            <span style="color: green; font-weight: bold;">Confirmed</span>
+                        {% elif booking.status == 'Cancelled' %}
+                            <span style="color: red; font-weight: bold;">Cancelled</span>
+                        {% else %}
+                            <span style="color: orange; font-weight: bold;">{{ booking.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if booking.status != 'Cancelled' %}
+                        <a href="{{ url_for('update_booking', id=booking.id, status='Cancelled') }}" style="padding: 5px 10px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Cancel</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+</body>
+
+</html>
