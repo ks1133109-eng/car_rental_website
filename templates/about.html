@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  {% extends "base.html" %}
+{% block content %}
+
+<div style="background: #0b121f; color: white; padding: 80px 10%; text-align: center;">
+    <h1 style="font-size: 3rem; margin-bottom: 20px;">Driving the Future of Mobility</h1>
+    <p style="font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto;">
+        DriveX isn't just a car rental company. We are a technology-first platform designed to make travel seamless, luxurious, and accessible.
+    </p>
+</div>
+
+<div style="padding: 60px 10%; background: white;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center;">
+        <div>
+            <h2 style="font-size: 2rem; margin-bottom: 20px; color: #333;">Our Story</h2>
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                Founded in 2024, DriveX started with a simple idea: <strong>Why is renting a luxury car so complicated?</strong>
+            </p>
+            <p style="line-height: 1.8; color: #666;">
+                We stripped away the paperwork, hidden fees, and old vehicles. Today, we offer a fully digital experience where you can book a verified, premium car in under 2 minutes. Whether you need a self-drive adventure or a chauffeur-driven experience, we have you covered.
+            </p>
+        </div>
+        <div>
+            <img src="https://images.unsplash.com/photo-1542362567-b07e54358753?w=800" style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        </div>
+    </div>
+</div>
+
+<div style="background: #f8f9fa; padding: 60px 10%; text-align: center;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">50+</div>
+            <div style="color: #666;">Premium Cars</div>
+        </div>
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">10k+</div>
+            <div style="color: #666;">Happy Trips</div>
+        </div>
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">24/7</div>
+            <div style="color: #666;">Roadside Support</div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+</body>
+
+</html>
