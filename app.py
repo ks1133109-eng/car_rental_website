@@ -34,6 +34,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
+    
+    # NEW SECURITY FIELD
+    gov_id = db.Column(db.String(50)) # Stores Driving License / Aadhaar
+    
     is_admin = db.Column(db.Boolean, default=False)
 
 class Car(db.Model):
@@ -178,7 +182,7 @@ def invoice(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('invoice.html', booking=booking)
 
-# --- Account & Dashboard Routes (These were missing!) ---
+# --- Account & Dashboard Routes ---
 
 @app.route('/dashboard')
 @login_required
@@ -193,6 +197,10 @@ def profile():
         current_user.name = request.form.get('name')
         current_user.phone = request.form.get('phone')
         current_user.address = request.form.get('address')
+        
+        # Save Government ID (Security Update)
+        current_user.gov_id = request.form.get('gov_id')
+        
         db.session.commit()
         flash('Profile updated!')
         return redirect(url_for('profile'))
@@ -218,12 +226,7 @@ def security():
 def help_support():
     return render_template('help.html')
 
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-# --- NEW PAGES ---
+# --- Company Pages (New) ---
 
 @app.route('/about')
 def about():
@@ -232,13 +235,17 @@ def about():
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
-        # In a real app, you would send an email here
         name = request.form.get('name')
         msg = request.form.get('message')
-        print(f"New Message from {name}: {msg}") # Prints to your terminal
+        # Here you would typically send an email
         flash('Message sent! We will get back to you shortly.')
         return redirect(url_for('contact'))
     return render_template('contact.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 # --- Admin Routes ---
 
