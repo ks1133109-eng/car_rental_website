@@ -34,12 +34,12 @@
             <label style="display: block; margin-bottom: 5px; font-weight: 600;">Address</label>
             <textarea name="address" rows="3" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">{{ current_user.address or '' }}</textarea>
         </div>
-        <button type="submit" style="background: var(--primary); color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer;">Save Changes</button>
+        <button type="submit" style="background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer;">Save Changes</button>
         <a href="{{ url_for('dashboard') }}" style="margin-left: 10px; color: #666; text-decoration: none;">Cancel</a>
     </form>
 </div>
 {% endblock %}
-
+  
 </body>
 
 </html>
