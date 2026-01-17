@@ -32,5 +32,37 @@
     {% endwith %}
 
     {% block content %}{% endblock %}
+
+    <footer style="background: #0b121f; color: white; padding: 40px 10%; margin-top: auto;">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px;">
+            <div style="flex: 1; min-width: 250px;">
+                <h3>DriveX</h3>
+                <p style="color: #aaa; line-height: 1.6;">
+                    India's leading premium self-drive and chauffeur service. 
+                    Verified cars, transparent pricing, and 24/7 support.
+                </p>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <h4>Company</h4>
+                <ul style="list-style: none; padding: 0; line-height: 2;">
+                    <li><a href="{{ url_for('about') }}" style="color: #aaa; text-decoration: none;">About Us</a></li>
+                    <li><a href="{{ url_for('fleet') }}" style="color: #aaa; text-decoration: none;">Our Fleet</a></li>
+                    <li><a href="{{ url_for('contact') }}" style="color: #aaa; text-decoration: none;">Contact / Support</a></li>
+                    <li><a href="#" style="color: #aaa; text-decoration: none;">Terms & Conditions</a></li>
+                </ul>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <h4>Contact</h4>
+                <ul style="list-style: none; padding: 0; line-height: 2;">
+                    <li style="color: #aaa;"><i class="fas fa-phone" style="margin-right: 10px;"></i> +91 98765 43210</li>
+                    <li style="color: #aaa;"><i class="fas fa-envelope" style="margin-right: 10px;"></i> support@drivex.com</li>
+                </ul>
+            </div>
+        </div>
+        <div style="border-top: 1px solid #222; margin-top: 30px; padding-top: 20px; text-align: center; color: #555; font-size: 0.9rem;">
+            &copy; 2026 DriveX Technologies. All rights reserved.
+        </div>
+    </footer>
+
 </body>
 </html>
