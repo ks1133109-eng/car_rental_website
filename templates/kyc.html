@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  {% extends "base.html" %}
+{% block content %}
+<div style="max-width: 600px; margin: 60px auto; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center;">
+    
+    <div style="background: #e6f7ff; color: #0050b3; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+        <i class="fas fa-shield-alt" style="font-size: 1.8rem;"></i>
+    </div>
+
+    <h2 style="margin-bottom: 10px;">Verify Your Identity</h2>
+    <p style="color: #666; margin-bottom: 30px; line-height: 1.6;">
+        To ensure the safety of our fleet, DriveX requires all members to complete e-KYC. 
+        Your documents are encrypted and stored securely.
+    </p>
+
+    <form method="POST" style="text-align: left;">
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Phone Number</label>
+            <input type="text" name="phone" value="{{ current_user.phone or '' }}" required placeholder="+91 98765 43210" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Residential Address</label>
+            <input type="text" name="address" value="{{ current_user.address or '' }}" required placeholder="Flat No, Street, City" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Govt ID Number (Aadhaar/License)</label>
+            <input type="text" name="gov_id" value="{{ current_user.gov_id or '' }}" required placeholder="XXXX-XXXX-XXXX" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; border-left: 4px solid #007bff;">
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 5px;">ID Document Image URL</label>
+            <input type="text" name="id_image" required placeholder="https://..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+            <small style="color: #888;">*Paste a link to your ID image (Simulated upload)</small>
+        </div>
+
+        <button type="submit" style="width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
+            Submit for Verification
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+</body>
+
+</html>
