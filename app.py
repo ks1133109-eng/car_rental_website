@@ -5,14 +5,24 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
+# --- Updated Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drivex.db'
+
+# Get the Cloud Database URL from Render
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # Fix for Render's URL format (postgres:// -> postgresql://)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # Fallback to local file for testing on your laptop
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drivex.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
 
 # --- Enhanced Models ---
 class User(UserMixin, db.Model):
