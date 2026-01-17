@@ -35,8 +35,8 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
     
-    # NEW SECURITY FIELD
-    gov_id = db.Column(db.String(50)) # Stores Driving License / Aadhaar
+    # Security Field
+    gov_id = db.Column(db.String(50)) # Driving License / Aadhaar
     
     is_admin = db.Column(db.Boolean, default=False)
 
@@ -126,11 +126,17 @@ def fleet():
     categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
     return render_template('fleet.html', cars=cars, categories=categories, current_category=category_filter)
 
-# --- Booking System ---
+# --- Booking System (With Security Check) ---
 
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car(car_id):
+    # --- SECURITY GATEKEEPER: Check Profile Completeness ---
+    if not current_user.gov_id or not current_user.phone or not current_user.address:
+        flash('⚠️ Security Alert: You must complete your Profile (Government ID, Phone, & Address) before you can book a car.')
+        return redirect(url_for('profile'))
+    # -------------------------------------------------------
+
     car = Car.query.get_or_404(car_id)
     
     if request.method == 'POST':
@@ -226,7 +232,7 @@ def security():
 def help_support():
     return render_template('help.html')
 
-# --- Company Pages (New) ---
+# --- Company Pages ---
 
 @app.route('/about')
 def about():
@@ -237,7 +243,7 @@ def contact():
     if request.method == 'POST':
         name = request.form.get('name')
         msg = request.form.get('message')
-        # Here you would typically send an email
+        # Simulate sending email
         flash('Message sent! We will get back to you shortly.')
         return redirect(url_for('contact'))
     return render_template('contact.html')
