@@ -8,6 +8,7 @@
 </head>
 
 <body>
+  
   {% extends "base.html" %}
 {% block content %}
 <div style="max-width: 600px; margin: 50px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
@@ -26,6 +27,13 @@
             <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email (Cannot be changed)</label>
             <input type="text" value="{{ current_user.email }}" disabled style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9;">
         </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Driving License / Aadhaar Number</label>
+            <input type="text" name="gov_id" value="{{ current_user.gov_id or '' }}" placeholder="Enter valid ID number" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; border-left: 5px solid #dc3545;">
+            <small style="color: #dc3545;">* Required for security verification before rental.</small>
+        </div>
+
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phone Number</label>
             <input type="text" name="phone" value="{{ current_user.phone or '' }}" placeholder="+91 98765 43210" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
@@ -39,7 +47,7 @@
     </form>
 </div>
 {% endblock %}
-  
+
 </body>
 
 </html>
