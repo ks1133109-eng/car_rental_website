@@ -5,11 +5,11 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
-# --- Updated Configuration ---
+# --- Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 
-# Get the Cloud Database URL from Render
+# Get the Cloud Database URL from Render (Environment Variable)
 database_url = os.environ.get('DATABASE_URL')
 
 if database_url:
@@ -23,14 +23,16 @@ else:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# --- Initialize Extensions (This was missing!) ---
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-# --- Enhanced Models ---
+# --- Database Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    # Ensure email is unique and indexed
     email = db.Column(db.String(120), unique=True, nullable=False)
-    # Increased length to 255 to safely store long hashes
     password = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
@@ -71,24 +73,18 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # FIX: Force email to lowercase to match registration
         email = request.form.get('email').lower()
         password = request.form.get('password')
-        
-        print(f"DEBUG: Attempting login for {email}") # Debugging
         
         user = User.query.filter_by(email=email).first()
         
         if user:
             if check_password_hash(user.password, password):
                 login_user(user)
-                print("DEBUG: Login Successful")
                 return redirect(url_for('dashboard') if not user.is_admin else url_for('admin_dashboard'))
             else:
-                print("DEBUG: Password Incorrect")
                 flash('Incorrect password. Please try again.')
         else:
-            print("DEBUG: User not found")
             flash('Email not found. Please register first.')
             
     return render_template('login.html')
@@ -97,13 +93,89 @@ def login():
 def register():
     if request.method == 'POST':
         name = request.form.get('name')
-        # FIX: Force email to lowercase
         email = request.form.get('email').lower()
         password = request.form.get('password')
         
         if User.query.filter_by(email=email).first():
             flash('Email already exists. Please login.')
             return redirect(url_for('login'))
+        else:
+            hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
+            new_user = User(name=name, email=email, password=hashed_pw)
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+            return redirect(url_for('home'))
+            
+    return render_template('register.html')
+
+@app.route('/book/<int:car_id>', methods=['GET', 'POST'])
+@login_required
+def book_car(car_id):
+    car = Car.query.get_or_404(car_id)
+    if request.method == 'POST':
+        new_booking = Booking(
+            user_id=current_user.id, 
+            car_id=car.id, 
+            total_cost=(car.price_per_hr * 24),
+            status="Completed"
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+        
+        flash(f'Booking confirmed for {car.name}!')
+        return redirect(url_for('dashboard'))
+        
+    return render_template('booking_details.html', car=car)
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.date_booked.desc()).all()
+    return render_template('dashboard.html', bookings=bookings)
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+    stats = {
+        'total_fleet': Car.query.count(),
+        'active_bookings': Booking.query.count(),
+        'revenue': "7,200"
+    }
+    cars = Car.query.all()
+    return render_template('admin.html', stats=stats, cars=cars)
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# --- Database Creation & Seeding ---
+def seed_data():
+    with app.app_context():
+        db.create_all()
+        # Only add cars if the database is empty
+        if not Car.query.first():
+            cars = [
+                Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
+                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
+                Car(name="Honda City", category="Sedan", price_per_hr=140, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600"),
+                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600"),
+                Car(name="Tata Nexon EV", category="SUV", price_per_hr=160, transmission="Auto", fuel_type="Electric", seats=5, image_url="https://images.unsplash.com/photo-1678721245345-429a6568858a?w=600"),
+                Car(name="Toyota Innova Crysta", category="SUV", price_per_hr=220, transmission="Manual", fuel_type="Diesel", seats=7, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600")
+            ]
+            db.session.add_all(cars)
+            # Create Default Admin
+            admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True)
+            db.session.add(admin)
+            db.session.commit()
+            print("Database initialized successfully!")
+
+if __name__ == '__main__':
+    seed_data()
+    app.run(debug=True)
         else:
             hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
             new_user = User(name=name, email=email, password=hashed_pw)
