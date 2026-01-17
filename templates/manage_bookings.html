@@ -27,7 +27,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <tr style="background: #eee; text-align: left;">
                     <th style="padding: 15px;">ID</th>
-                    <th>User</th>
+                    <th>User & Identity</th>
                     <th>Car</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -38,7 +38,17 @@
                     <td>
                         {% if booking.user %}
                             <strong>{{ booking.user.name }}</strong><br>
-                            <small style="color: #777;">{{ booking.user.email }}</small>
+                            <small style="color: #777;">{{ booking.user.email }}</small><br>
+                            
+                            {% if booking.user.gov_id %}
+                                <div style="margin-top: 5px; background: #eee; padding: 2px 6px; border-radius: 4px; display: inline-block; font-size: 0.75rem;">
+                                    <i class="fas fa-id-card"></i> ID: {{ booking.user.gov_id }}
+                                </div>
+                            {% else %}
+                                <div style="margin-top: 5px; color: red; font-size: 0.75rem; font-weight: bold;">
+                                    <i class="fas fa-exclamation-triangle"></i> NO ID PROVIDED
+                                </div>
+                            {% endif %}
                         {% else %}
                             <span style="color: red;">(User Deleted)</span>
                         {% endif %}
@@ -81,8 +91,7 @@
     </div>
 </div>
 {% endblock %}
-  
-   
+
 </body>
 
 </html>
