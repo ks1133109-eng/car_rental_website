@@ -223,6 +223,23 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+# --- NEW PAGES ---
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        # In a real app, you would send an email here
+        name = request.form.get('name')
+        msg = request.form.get('message')
+        print(f"New Message from {name}: {msg}") # Prints to your terminal
+        flash('Message sent! We will get back to you shortly.')
+        return redirect(url_for('contact'))
+    return render_template('contact.html')
+
 # --- Admin Routes ---
 
 @app.route('/admin')
