@@ -9,9 +9,9 @@
 
 <body>
   {% extends "base.html" %}
- {% extends "base.html" %}
 {% block content %}
 <div style="padding: 40px 10%; background: #f8f9fa; min-height: 90vh;">
+    
     <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 40px; color: #aaa; font-weight: 600;">
         <span style="color: #28a745;"><i class="fas fa-check-circle"></i> Book</span>
         <span style="color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px;">2. Verify</span>
@@ -19,10 +19,11 @@
     </div>
 
     <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px;">
+        
         <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
             <h2 style="margin-top: 0;">Identify Yourself</h2>
             <p style="color: #666; margin-bottom: 30px;">Please provide details for manual admin verification.</p>
-            
+
             <div style="border: 2px dashed #ddd; padding: 40px; text-align: center; border-radius: 12px; margin-bottom: 20px; background: #fafafa;">
                 <i class="fas fa-camera" style="font-size: 2rem; color: #ccc;"></i>
                 <p style="color: #999; margin-top: 10px;">Click to start camera</p>
@@ -30,9 +31,16 @@
 
             <form method="POST" action="{{ url_for('book_car', car_id=car.id) }}">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <input type="text" placeholder="Aadhaar (Last 4)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                    <input type="text" placeholder="PAN Number" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="font-size: 0.8rem; margin-bottom: 5px; color: #666;">Aadhaar (Last 4)</label>
+                        <input type="text" placeholder="XXXX" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <label style="font-size: 0.8rem; margin-bottom: 5px; color: #666;">PAN Number</label>
+                        <input type="text" placeholder="ABCDE1234F" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
                 </div>
+                
                 <button type="submit" style="width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
                     Confirm & Finalize Payment <i class="fas fa-arrow-right"></i>
                 </button>
@@ -47,17 +55,26 @@
                     <small style="color: #888;">{{ car.transmission }} • {{ car.fuel_type }}</small>
                 </div>
             </div>
+            
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #555;">
-                <span>Rate (24 hrs)</span><span>₹{{ car.price_per_hr * 24 }}</span>
+                <span>Rate (24 hrs)</span>
+                <span>₹{{ car.price_per_hr * 24 }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #555;">
-                <span>Taxes & Fees</span><span>₹648</span>
+                <span>Taxes & Fees</span>
+                <span>₹648</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; color: #28a745; font-weight: 600;">
+                <span>Insurance</span>
+                <span>Free</span>
             </div>
             <hr style="border: 0; border-top: 1px solid #eee;">
             <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 1.2rem; font-weight: 800;">
-                <span>Total Estimate</span><span style="color: #007bff;">₹{{ (car.price_per_hr * 24) + 648 }}</span>
+                <span>Total Estimate</span>
+                <span style="color: #007bff;">₹{{ (car.price_per_hr * 24) + 648 }}</span>
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}
