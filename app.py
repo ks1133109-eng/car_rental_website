@@ -139,13 +139,21 @@ def dashboard():
 def admin_dashboard():
     if not current_user.is_admin:
         return redirect(url_for('home'))
+        
+    # Fetch data
+    users = User.query.all()  # Get all users
+    cars = Car.query.all()    # Get all cars
+    
     stats = {
         'total_fleet': Car.query.count(),
         'active_bookings': Booking.query.count(),
+        'total_users': User.query.count(),  # New Stat
         'revenue': "7,200"
     }
-    cars = Car.query.all()
-    return render_template('admin.html', stats=stats, cars=cars)
+    
+    # Send both 'cars' and 'users' to the template
+    return render_template('admin.html', stats=stats, cars=cars, users=users)
+
 
 @app.route('/logout')
 def logout():
