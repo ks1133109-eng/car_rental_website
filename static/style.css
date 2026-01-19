@@ -2,7 +2,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background-color: #f4f6f9; /* Soft Grey Background */
+    background-color: #ffffff; /* Clean White Background */
     color: #333;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
@@ -14,7 +14,7 @@ body {
 a { text-decoration: none; color: inherit; transition: 0.3s; }
 ul { list-style: none; }
 
-/* --- NAVIGATION BAR --- */
+/* --- NAVBAR --- */
 .navbar {
     display: flex; justify-content: space-between; align-items: center;
     padding: 15px 5%; background: #0b121f; color: white;
@@ -26,110 +26,103 @@ ul { list-style: none; }
 .nav-links a:hover { color: white; }
 .btn-login { background: #007bff; color: white !important; padding: 8px 20px; border-radius: 4px; }
 
-/* --- HERO & HOME --- */
+/* --- HOME PAGE HERO --- */
 .hero {
     height: 60vh; background-size: cover; background-position: center;
     color: white; display: flex; align-items: center; justify-content: center;
-    text-align: center; position: relative; margin-bottom: 60px;
+    text-align: center; position: relative; margin-bottom: 50px;
 }
 .hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); }
 .hero > div { position: relative; z-index: 2; }
 .btn-main { background: #007bff; color: white; padding: 12px 30px; border-radius: 5px; margin-top: 20px; display: inline-block; }
 
-/* --- CAR CARDS --- */
+/* --- HOME PAGE SECTIONS --- */
+.search-container {
+    background: white; max-width: 900px; margin: -50px auto 40px; 
+    padding: 30px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+    position: relative; z-index: 10; display: flex; gap: 15px; flex-wrap: wrap;
+}
 .section-title { text-align: center; margin: 40px 0; font-size: 2rem; }
 .fleet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 0 5% 50px; }
-.car-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; }
-.car-card:hover { transform: translateY(-5px); }
+.car-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #eee; }
+.car-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 .car-img-box img { width: 100%; height: 200px; object-fit: cover; }
 .car-info { padding: 20px; }
 .price-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
 .btn-book { background: #007bff; color: white; padding: 8px 20px; border-radius: 4px; }
 
-/* --- AUTH PAGES (Login/Signup - The "Card" Look) --- */
-.auth-wrapper {
-    display: flex; justify-content: center; align-items: center;
-    flex: 1; padding: 40px 20px;
+/* --- RESTORED: AUTH PAGES (Login/Signup) --- */
+/* Centers the form and gives it space */
+form {
+    max-width: 400px;
+    margin: 60px auto;
+    padding: 20px;
+    text-align: left; /* Align labels left like your screenshot */
 }
 
-.auth-card {
-    background: white;
-    padding: 40px;
+/* THE "DARK INPUT" DESIGN FROM YOUR SCREENSHOT */
+input[type="text"], input[type="email"], input[type="password"], select {
     width: 100%;
-    max-width: 450px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    text-align: center;
-}
-
-.auth-card h2 { margin-bottom: 10px; color: #111; font-size: 1.8rem; }
-.auth-card p { color: #666; margin-bottom: 30px; font-size: 0.95rem; }
-
-.form-group { margin-bottom: 20px; text-align: left; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; font-size: 0.9rem; }
-
-/* Premium Input Fields */
-input[type="text"], input[type="email"], input[type="password"] {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #e1e1e1;
-    border-radius: 8px;
-    background: #f8f9fa;
+    padding: 14px;
+    margin-bottom: 20px;
+    background-color: #333333; /* Dark Grey Background */
+    color: #ffffff;            /* White Text */
+    border: 1px solid #444;    /* Subtle border */
+    border-radius: 6px;
     font-size: 1rem;
-    transition: 0.3s;
+    display: block;
 }
-input:focus { border-color: #007bff; background: white; outline: none; }
 
-/* Full Width Blue Button */
-.btn-block {
-    display: block; width: 100%;
-    background: #007bff; color: white;
-    padding: 14px; border: none; border-radius: 8px;
-    font-size: 1rem; font-weight: bold; cursor: pointer;
-    transition: 0.3s;
+/* Fix placeholder color to be readable on dark background */
+::placeholder { color: #aaaaaa; opacity: 1; }
+
+/* Blue Full-Width Button */
+form button, input[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
 }
-.btn-block:hover { background: #0056b3; }
+form button:hover { background: #0069d9; }
 
-.auth-footer { margin-top: 20px; font-size: 0.9rem; color: #666; }
-.auth-footer a { color: #007bff; font-weight: 600; }
+/* --- RESTORED: DASHBOARD GRID --- */
+/* This forces the "Account Overview" list back into a 2-column grid */
+.dashboard-container, .profile-container {
+    max-width: 1000px; margin: 40px auto; padding: 0 20px;
+}
 
-/* --- PROFILE / DASHBOARD (Grid Layout) --- */
-.dashboard-container { max-width: 1100px; margin: 40px auto; padding: 0 20px; width: 100%; }
-
-/* Welcome Header */
-.dashboard-header {
-    background: white; padding: 30px; border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+/* Card for User Welcome Header */
+.dashboard-header, .user-card {
+    background: white; border: 1px solid #eee; padding: 30px; 
+    border-radius: 12px; margin-bottom: 30px;
     display: flex; align-items: center; gap: 20px;
-    margin-bottom: 30px;
-}
-.avatar-circle {
-    width: 70px; height: 70px; background: #e0f2ff; color: #007bff;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem; font-weight: bold;
 }
 
-/* The Grid Options */
-.dashboard-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+/* THE GRID RESTORATION */
+/* Finds the container holding the dashboard items and turns it into a grid */
+.dashboard-grid, .account-overview-list, .grid-container {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
     gap: 20px;
 }
 
-.dash-card {
-    background: white; padding: 25px; border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    transition: 0.3s; display: flex; align-items: start; gap: 15px;
-    border: 1px solid #f0f0f0; cursor: pointer;
+/* Styling the individual items to look like cards again */
+.dashboard-grid > div, .dash-card {
+    background: white;
+    border: 1px solid #eee;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    transition: 0.3s;
+    display: flex; align-items: center; gap: 15px;
 }
-.dash-card:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
-
-.dash-icon {
-    width: 45px; height: 45px; background: #f4f6f9; color: #555;
-    border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-}
-.dash-info h3 { font-size: 1rem; margin-bottom: 5px; color: #222; }
-.dash-info p { font-size: 0.85rem; color: #888; line-height: 1.4; }
+.dashboard-grid > div:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
 /* Footer */
-footer { margin-top: auto; background: #0b121f; color: #888; padding: 40px 5%; font-size: 0.9rem; }
+footer { margin-top: auto; background: #0b121f; color: #888; padding: 40px 10%; font-size: 0.9rem; }
