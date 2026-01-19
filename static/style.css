@@ -26,7 +26,7 @@ ul { list-style: none; }
 .nav-links a:hover { color: white; }
 .btn-login { background: #007bff; color: white !important; padding: 8px 20px; border-radius: 4px; }
 
-/* --- HOME PAGE HERO --- */
+/* --- HERO SECTION --- */
 .hero {
     height: 60vh; background-size: cover; background-position: center;
     color: white; display: flex; align-items: center; justify-content: center;
@@ -36,12 +36,14 @@ ul { list-style: none; }
 .hero > div { position: relative; z-index: 2; }
 .btn-main { background: #007bff; color: white; padding: 12px 30px; border-radius: 5px; margin-top: 20px; display: inline-block; }
 
-/* --- HOME PAGE SECTIONS --- */
+/* --- SEARCH BAR (Home Page) --- */
 .search-container {
     background: white; max-width: 900px; margin: -50px auto 40px; 
     padding: 30px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
     position: relative; z-index: 10; display: flex; gap: 15px; flex-wrap: wrap;
 }
+
+/* --- FLEET GRID --- */
 .section-title { text-align: center; margin: 40px 0; font-size: 2rem; }
 .fleet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 0 5% 50px; }
 .car-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #eee; }
@@ -51,32 +53,43 @@ ul { list-style: none; }
 .price-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
 .btn-book { background: #007bff; color: white; padding: 8px 20px; border-radius: 4px; }
 
-/* --- RESTORED: AUTH PAGES (Login/Signup) --- */
-/* Centers the form and gives it space */
+/* --- AUTH PAGES (The "Dark Input" Fix) --- */
+/* 1. Center the form on the screen */
 form {
     max-width: 400px;
-    margin: 60px auto;
+    margin: 60px auto;  /* Centers it top-to-bottom and left-to-right */
     padding: 20px;
-    text-align: left; /* Align labels left like your screenshot */
+    text-align: left;
 }
 
-/* THE "DARK INPUT" DESIGN FROM YOUR SCREENSHOT */
+/* 2. Style the Inputs to be DARK GREY (Matches Image 1) */
 input[type="text"], input[type="email"], input[type="password"], select {
     width: 100%;
     padding: 14px;
     margin-bottom: 20px;
-    background-color: #333333; /* Dark Grey Background */
+    background-color: #333333; /* Dark Background */
     color: #ffffff;            /* White Text */
-    border: 1px solid #444;    /* Subtle border */
+    border: 1px solid #444;
     border-radius: 6px;
     font-size: 1rem;
     display: block;
 }
+input:focus { border-color: #007bff; outline: none; }
 
-/* Fix placeholder color to be readable on dark background */
-::placeholder { color: #aaaaaa; opacity: 1; }
+/* 3. Style the "Rent/Host" Tabs (Fixes Image 2) */
+/* This handles the buttons if they appear in your form */
+.btn-group, .tab-group {
+    display: flex; gap: 10px; margin-bottom: 20px;
+}
+.btn-group a, .tab-group a, .btn-outline {
+    flex: 1; text-align: center; padding: 10px;
+    border: 1px solid #ddd; border-radius: 5px; color: #555;
+}
+.btn-group a.active, .btn-outline.active {
+    background: #e6f0ff; border-color: #007bff; color: #007bff; font-weight: bold;
+}
 
-/* Blue Full-Width Button */
+/* 4. Full Width Blue Submit Button */
 form button, input[type="submit"] {
     width: 100%;
     padding: 14px;
@@ -91,38 +104,10 @@ form button, input[type="submit"] {
 }
 form button:hover { background: #0069d9; }
 
-/* --- RESTORED: DASHBOARD GRID --- */
-/* This forces the "Account Overview" list back into a 2-column grid */
-.dashboard-container, .profile-container {
-    max-width: 1000px; margin: 40px auto; padding: 0 20px;
-}
+/* --- DASHBOARD GRID --- */
+.dashboard-container, .profile-container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+.dashboard-header { background: white; border: 1px solid #eee; padding: 30px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; gap: 20px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+.dash-card { background: white; border: 1px solid #eee; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; }
 
-/* Card for User Welcome Header */
-.dashboard-header, .user-card {
-    background: white; border: 1px solid #eee; padding: 30px; 
-    border-radius: 12px; margin-bottom: 30px;
-    display: flex; align-items: center; gap: 20px;
-}
-
-/* THE GRID RESTORATION */
-/* Finds the container holding the dashboard items and turns it into a grid */
-.dashboard-grid, .account-overview-list, .grid-container {
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-    gap: 20px;
-}
-
-/* Styling the individual items to look like cards again */
-.dashboard-grid > div, .dash-card {
-    background: white;
-    border: 1px solid #eee;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    transition: 0.3s;
-    display: flex; align-items: center; gap: 15px;
-}
-.dashboard-grid > div:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-
-/* Footer */
 footer { margin-top: auto; background: #0b121f; color: #888; padding: 40px 10%; font-size: 0.9rem; }
