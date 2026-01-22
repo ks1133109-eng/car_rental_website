@@ -188,8 +188,26 @@ def book_car(car_id):
         )
         db.session.add(new_booking)
         db.session.commit()
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('booking_payment', booking_id=new_booking.id))
     return render_template('booking_details.html', car=car)
+
+@app.route('/booking/<int:booking_id>/payment')
+@login_required
+def booking_payment(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+
+    base_price = booking.base_cost
+    tax = 648  # keep same logic for now
+    total = booking.total_cost
+
+    return render_template(
+        'booking_details.html',
+        booking=booking,
+        car=booking.car,
+        base_price=base_price,
+        tax=tax,
+        total=total
+    )
 
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
