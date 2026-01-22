@@ -66,7 +66,16 @@
   </p>
 </div>
 {% endblock %}
+<script>
+  const payBtn = document.getElementById("payNowBtn");
+  const methods = document.querySelectorAll("input[name='payment_method']");
 
+  methods.forEach(m => {
+    m.addEventListener("change", () => {
+      payBtn.disabled = false;
+    });
+  });
+</script>
 </body>
 
 </html>
