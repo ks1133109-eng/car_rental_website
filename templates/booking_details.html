@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
-</head>
-
-<body>
-  
 {% extends "base.html" %}
 {% block content %}
 
@@ -20,74 +9,53 @@
     <div class="payment-methods">
       <label class="pay-option">
         <input type="radio" name="payment_method" value="upi">
-        <span>UPI (GPay / PhonePe / Paytm)</span>
+        UPI (GPay / PhonePe / Paytm)
       </label>
 
       <label class="pay-option">
         <input type="radio" name="payment_method" value="card">
-        <span>Credit / Debit Card</span>
+        Credit / Debit Card
       </label>
 
       <label class="pay-option">
         <input type="radio" name="payment_method" value="netbanking">
-        <span>Net Banking</span>
+        Net Banking
       </label>
 
       <label class="pay-option">
         <input type="radio" name="payment_method" value="cod">
-        <span>Pay at Pickup</span>
+        Pay at Pickup
       </label>
     </div>
 
     <div class="price-box">
-      <h4>Price Summary</h4>
-
       <div class="price-row">
         <span>Base Fare</span>
         <span>₹{{ base_price }}</span>
       </div>
-
-      <div class="price-row">
-        <span>Driver Charges</span>
-        <span id="driverCharge">₹0</span>
-      </div>
-
       <div class="price-row">
         <span>Taxes & Fees</span>
         <span>₹{{ tax }}</span>
       </div>
-
-      <hr>
-
       <div class="price-row total">
-        <span>Total Payable</span>
-        <span id="finalAmount">₹{{ total }}</span>
+        <strong>Total</strong>
+        <strong>₹{{ total }}</strong>
       </div>
     </div>
 
-    <button class="pay-btn" type="submit" id="payNowBtn" disabled>
+    <button class="pay-btn" type="submit" disabled id="payNowBtn">
       Pay Now
     </button>
 
-    <p class="trust-text">
-      🔒 Secure Payment · 📄 Invoice Generated · 🔁 Easy Cancellation
-    </p>
   </div>
 
 </form>
 
 <script>
-  const payBtn = document.getElementById("payNowBtn");
-  const methods = document.querySelectorAll("input[name='payment_method']");
-
-  methods.forEach(m => {
-    m.addEventListener("change", () => {
-      payBtn.disabled = false;
-    });
+  const btn = document.getElementById("payNowBtn");
+  document.querySelectorAll("input[name='payment_method']").forEach(el => {
+    el.addEventListener("change", () => btn.disabled = false);
   });
 </script>
 
 {% endblock %}
-</body>
-
-</html>
