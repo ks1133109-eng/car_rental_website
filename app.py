@@ -209,7 +209,22 @@ def booking_payment(booking_id):
         tax=tax,
         total=total
     )
+@app.route('/pay/<int:booking_id>', methods=['POST'])
+@login_required
+def process_payment(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
 
+    payment_method = request.form.get('payment_method')
+    if not payment_method:
+        flash("Please select a payment method")
+        return redirect(url_for('booking_payment', booking_id=booking_id))
+
+    booking.status = "Paid"
+    booking.payment_method = payment_method
+
+    db.session.commit()
+
+    return redirect(url_for('invoice', booking_id=booking.id))
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
 def invoice(booking_id):
