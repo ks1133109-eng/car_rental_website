@@ -195,15 +195,16 @@ def book_car(car_id):
 @login_required
 def booking_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
+    car = Car.query.get_or_404(booking.car_id)
 
     base_price = booking.base_cost
-    tax = 648  # keep same logic for now
+    tax = 648
     total = booking.total_cost
 
     return render_template(
         'booking_details.html',
         booking=booking,
-        car=booking.car,
+        car=car,
         base_price=base_price,
         tax=tax,
         total=total
