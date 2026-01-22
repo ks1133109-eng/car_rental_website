@@ -11,68 +11,59 @@
   
 {% extends "base.html" %}
 {% block content %}
-<div style="padding: 40px 10%; background: #f8f9fa; min-height: 90vh;">
-    
-    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px;">
-        
-        <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <h2 style="margin-top: 0;">Customize Booking</h2>
-            <p style="color: #666; margin-bottom: 30px;">Select your preferences.</p>
+<div class="payment-panel">
+  <h3>Payment Method</h3>
 
-            <form method="POST" action="{{ url_for('book_car', car_id=car.id) }}">
-                
-                <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h4 style="margin: 0;">I need a Professional Driver</h4>
-                        <small style="color: #666;">Relax while we drive. (+₹500)</small>
-                    </div>
-                    <input type="checkbox" name="with_driver" style="width: 20px; height: 20px;">
-                </div>
+  <div class="payment-methods">
+    <label class="pay-option">
+      <input type="radio" name="payment_method" value="upi">
+      <span>UPI (GPay / PhonePe / Paytm)</span>
+    </label>
 
-                <div style="margin-bottom: 30px;">
-    <label style="font-weight: 600;">Have a Coupon?</label>
-    <div style="display: flex; gap: 10px; margin-top: 5px;">
-        <input type="text" name="coupon_code" placeholder="Enter Code" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+    <label class="pay-option">
+      <input type="radio" name="payment_method" value="card">
+      <span>Credit / Debit Card</span>
+    </label>
+
+    <label class="pay-option">
+      <input type="radio" name="payment_method" value="netbanking">
+      <span>Net Banking</span>
+    </label>
+
+    <label class="pay-option">
+      <input type="radio" name="payment_method" value="cod">
+      <span>Pay at Pickup</span>
+    </label>
+  </div>
+
+  <div class="price-box">
+    <h4>Price Summary</h4>
+    <div class="price-row">
+      <span>Base Fare</span>
+      <span>₹{{ base_price }}</span>
     </div>
-</div>
-
-                    <small style="color: green;">Try code: <strong>WELCOME20</strong></small>
-                </div>
-
-                <button type="submit" style="width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
-                    Confirm & Pay
-                </button>
-            </form>
-        </div>
-
-        <div style="background: white; padding: 30px; border-radius: 16px; height: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                <img src="{{ car.image_url }}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px;">
-                <div>
-                    <h4 style="margin: 0;">{{ car.name }}</h4>
-                    <small style="color: #888;">{{ car.category }}</small>
-                </div>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #555;">
-                <span>Rate (24 hrs)</span>
-                <span>₹{{ car.price_per_hr * 24 }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #555;">
-                <span>Taxes & Fees</span>
-                <span>₹648</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; color: #555;">
-                <span>Insurance</span>
-                <span style="color: green;">Free</span>
-            </div>
-            <hr style="border: 0; border-top: 1px solid #eee;">
-            <div style="margin-top: 20px; text-align: center; color: #999; font-size: 0.8rem;">
-                * Total will be calculated after applying coupons and add-ons.
-            </div>
-        </div>
-
+    <div class="price-row">
+      <span>Driver Charges</span>
+      <span id="driverCharge">₹0</span>
     </div>
+    <div class="price-row">
+      <span>Taxes & Fees</span>
+      <span>₹{{ tax }}</span>
+    </div>
+    <hr>
+    <div class="price-row total">
+      <span>Total Payable</span>
+      <span id="finalAmount">₹{{ total }}</span>
+    </div>
+  </div>
+
+  <button class="pay-btn" disabled id="payNowBtn">
+    Pay Now
+  </button>
+
+  <p class="trust-text">
+    🔒 Secure Payment · 📄 Invoice Generated · 🔁 Easy Cancellation
+  </p>
 </div>
 {% endblock %}
 
