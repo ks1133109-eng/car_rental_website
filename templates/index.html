@@ -9,57 +9,64 @@
 
 <body>
 {% extends "base.html" %}
-
 {% block content %}
 
-<div class="hero" style="background-image: url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1920&q=80');">
-    <div>
-        <h1 style="font-size: 3.5rem; margin-bottom: 10px;">Find Your Perfect Drive</h1>
-        <p style="font-size: 1.2rem; margin-bottom: 30px;">Premium cars for self-drive and chauffeur services.</p>
-        <a href="#fleet" class="btn-main">Browse Fleet</a>
-    </div>
-</div>
+<header class="hero">
+    <div class="badge">PREMIUM MOBILITY NETWORK 2.0</div>
+    <h1>Driving the<br><span style="color: #60a5fa;">Future.</span></h1>
+    <p>India's first truly intelligent car ecosystem. Seamless access to luxury, from self-drive adventures to professional chauffeur services.</p>
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('fleet') }}" class="btn-login" style="padding: 12px 30px; text-decoration: none; display: inline-block;">
+    Explore Fleet <i class="fas fa-arrow-right"></i>
+</a>
 
-<div class="search-container">
-    <div style="flex: 1;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color:#333;">Pick-up Date</label>
-        <input type="date" style="margin:0; background: #f9f9f9; color: #333; border: 1px solid #ddd;">
-    </div>
-    <div style="flex: 1;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color:#333;">Return Date</label>
-        <input type="date" style="margin:0; background: #f9f9f9; color: #333; border: 1px solid #ddd;">
-    </div>
-    <button style="width: auto; padding: 0 30px; margin-top:0;">Search</button>
-</div>
 
-<div id="fleet">
-    <h2 class="section-title">Our Premium Fleet</h2>
-    
-    <div class="fleet-grid">
-        {% for car in cars %}
-        <div class="car-card">
-            <div class="car-img-box">
-                <img src="{{ car.image_url }}" alt="{{ car.name }}">
+    <div class="search-container">
+        <div class="search-group">
+            <label>Location</label>
+            <select><option>Mumbai</option><option>Delhi</option><option>Bangalore</option></select>
+        </div>
+        <div class="search-group">
+            <label>Pick-up Date</label>
+            <input type="datetime-local">
+        </div>
+        <div class="search-group">
+            <label>Return Date</label>
+            <input type="datetime-local">
+        </div>
+        <button class="btn-search">Search</button>
+    </div>
+</header>
+
+<h2 class="section-title">Designed for every narrative.</h2>
+<div class="car-grid">
+    {% for car in cars %}
+    <div class="car-card">
+        <div class="car-header">
+            <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
+            <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> {{ car.rating }}</div>
+        </div>
+        <div class="car-body">
+            <h3 class="car-title">{{ car.name }}</h3>
+            <span class="car-subtitle">{{ car.trips_completed }}+ VOYAGES COMPLETE</span>
+            
+            <div class="specs">
+                <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
+                <div class="spec-chip"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
+                <div class="spec-chip"><i class="fas fa-user"></i> {{ car.seats }}</div>
             </div>
-            <div class="car-info">
-                <h3>{{ car.name }}</h3>
-                <div style="display:flex; gap:15px; color:#666; font-size:0.9rem; margin-bottom:10px;">
-                    <span><i class="fas fa-cog"></i> {{ car.transmission }}</span>
-                    <span><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</span>
-                    <span><i class="fas fa-user"></i> {{ car.seats }}</span>
-                </div>
-                <div class="price-row">
-                    <div style="font-size:1.2rem; font-weight:bold;">₹{{ car.price_per_hr }}<small>/hr</small></div>
-                    <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn-book">Book Now</a>
-                </div>
+
+            <div class="car-footer">
+                <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
+                <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
-        {% endfor %}
     </div>
+    {% endfor %}
 </div>
-
 {% endblock %}
-  
+
+
 </body>
 
 </html>
