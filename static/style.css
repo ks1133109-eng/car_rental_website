@@ -129,3 +129,72 @@ body {
 .sidebar-link.active { background: var(--primary); color: white; }
 .admin-content { flex: 1; padding: 30px; overflow-y: auto; }
 .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--card-shadow); }
+
+
+.payment-panel {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pay-option {
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pay-option input {
+  accent-color: #0d6efd;
+}
+
+.price-box {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+}
+
+.price-row.total {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.pay-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: not-allowed;
+}
+
+.pay-btn:enabled {
+  cursor: pointer;
+}
+
+.trust-text {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+}
