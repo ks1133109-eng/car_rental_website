@@ -1,113 +1,131 @@
-/* --- GLOBAL DEFAULTS --- */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --primary: #007bff;
+    --primary-dark: #0056b3;
+    --dark: #111;
+    --light: #f8f9fa;
+    --gray: #6c757d;
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
 
 body {
-    background-color: #ffffff; /* Clean White Background */
-    color: #333;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: #f4f6f9;
+    color: var(--dark);
+    margin: 0;
+}
+
+/* Navbar */
+.navbar {
+    background: white;
+    padding: 1rem 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.logo { font-weight: 800; font-size: 1.5rem; color: var(--dark); display: flex; align-items: center; gap: 5px; }
+.logo span { color: var(--primary); }
+.nav-links a { text-decoration: none; color: var(--dark); margin-left: 20px; font-weight: 500; font-size: 0.9rem; }
+.btn-login { background: var(--primary); color: white !important; padding: 8px 20px; border-radius: 6px; }
+
+/* Hero Section */
+.hero {
+    height: 85vh;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1485291571150-772bcfc10da5?w=1600');
+    background-size: cover;
+    background-position: center;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-}
-
-a { text-decoration: none; color: inherit; transition: 0.3s; }
-ul { list-style: none; }
-
-/* --- NAVBAR --- */
-.navbar {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 15px 5%; background: #0b121f; color: white;
-}
-.logo { font-size: 1.5rem; font-weight: bold; }
-.logo span { color: #007bff; }
-.nav-links { display: flex; gap: 20px; align-items: center; }
-.nav-links a { color: #ccc; font-weight: 500; }
-.nav-links a:hover { color: white; }
-.btn-login { background: #007bff; color: white !important; padding: 8px 20px; border-radius: 4px; }
-
-/* --- HERO SECTION --- */
-.hero {
-    height: 60vh; background-size: cover; background-position: center;
-    color: white; display: flex; align-items: center; justify-content: center;
-    text-align: center; position: relative; margin-bottom: 50px;
-}
-.hero::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); }
-.hero > div { position: relative; z-index: 2; }
-.btn-main { background: #007bff; color: white; padding: 12px 30px; border-radius: 5px; margin-top: 20px; display: inline-block; }
-
-/* --- SEARCH BAR (Home Page) --- */
-.search-container {
-    background: white; max-width: 900px; margin: -50px auto 40px; 
-    padding: 30px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-    position: relative; z-index: 10; display: flex; gap: 15px; flex-wrap: wrap;
-}
-
-/* --- FLEET GRID --- */
-.section-title { text-align: center; margin: 40px 0; font-size: 2rem; }
-.fleet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 0 5% 50px; }
-.car-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #eee; }
-.car-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-.car-img-box img { width: 100%; height: 200px; object-fit: cover; }
-.car-info { padding: 20px; }
-.price-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
-.btn-book { background: #007bff; color: white; padding: 8px 20px; border-radius: 4px; }
-
-/* --- AUTH PAGES (The "Dark Input" Fix) --- */
-/* 1. Center the form on the screen */
-form {
-    max-width: 400px;
-    margin: 60px auto;  /* Centers it top-to-bottom and left-to-right */
-    padding: 20px;
-    text-align: left;
-}
-
-/* 2. Style the Inputs to be DARK GREY (Matches Image 1) */
-input[type="text"], input[type="email"], input[type="password"], select {
-    width: 100%;
-    padding: 14px;
-    margin-bottom: 20px;
-    background-color: #333333; /* Dark Background */
-    color: #ffffff;            /* White Text */
-    border: 1px solid #444;
-    border-radius: 6px;
-    font-size: 1rem;
-    display: block;
-}
-input:focus { border-color: #007bff; outline: none; }
-
-/* 3. Style the "Rent/Host" Tabs (Fixes Image 2) */
-/* This handles the buttons if they appear in your form */
-.btn-group, .tab-group {
-    display: flex; gap: 10px; margin-bottom: 20px;
-}
-.btn-group a, .tab-group a, .btn-outline {
-    flex: 1; text-align: center; padding: 10px;
-    border: 1px solid #ddd; border-radius: 5px; color: #555;
-}
-.btn-group a.active, .btn-outline.active {
-    background: #e6f0ff; border-color: #007bff; color: #007bff; font-weight: bold;
-}
-
-/* 4. Full Width Blue Submit Button */
-form button, input[type="submit"] {
-    width: 100%;
-    padding: 14px;
-    background: #007bff;
+    justify-content: center;
+    padding: 0 5%;
     color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 10px;
+    position: relative;
 }
-form button:hover { background: #0069d9; }
 
-/* --- DASHBOARD GRID --- */
-.dashboard-container, .profile-container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-.dashboard-header { background: white; border: 1px solid #eee; padding: 30px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; gap: 20px; }
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-.dash-card { background: white; border: 1px solid #eee; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; }
+.hero h1 { font-size: 4rem; margin-bottom: 10px; font-weight: 800; }
+.hero p { font-size: 1.2rem; max-width: 600px; margin-bottom: 30px; opacity: 0.9; }
 
-footer { margin-top: auto; background: #0b121f; color: #888; padding: 40px 10%; font-size: 0.9rem; }
+/* Search Bar (Floating) */
+.search-container {
+    position: absolute;
+    bottom: -40px;
+    left: 5%;
+    right: 5%;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+.search-group { flex: 1; }
+.search-group label { display: block; font-size: 0.8rem; color: var(--gray); margin-bottom: 5px; font-weight: 600; }
+.search-group input, .search-group select { width: 100%; padding: 12px; border: 1px solid #e9ecef; border-radius: 6px; background: #f8f9fa; }
+.btn-search { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+/* Car Grid */
+.section-title { margin-top: 100px; margin-left: 5%; font-size: 2rem; font-weight: 700; }
+.car-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    padding: 30px 5%;
+}
+
+.car-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s;
+    border: 1px solid #eee;
+}
+.car-card:hover { transform: translateY(-5px); }
+
+.car-header { position: relative; }
+.car-img { width: 100%; height: 200px; object-fit: cover; }
+.rating-badge {
+    position: absolute;
+    top: 15px; right: 15px;
+    background: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.car-body { padding: 20px; }
+.car-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
+.car-subtitle { font-size: 0.8rem; color: var(--gray); margin-bottom: 15px; display: block; }
+
+.specs { display: flex; gap: 10px; margin-bottom: 20px; }
+.spec-chip { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; color: #555; display: flex; align-items: center; gap: 5px; }
+
+.car-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f1f1; padding-top: 15px; }
+.price { font-size: 1.2rem; font-weight: 800; }
+.price span { font-size: 0.8rem; color: var(--gray); font-weight: normal; }
+.btn-arrow { background: var(--primary); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* Auth Pages */
+.auth-container { display: flex; height: 100vh; justify-content: center; align-items: center; background: #fff; }
+.auth-box { width: 100%; max-width: 400px; padding: 40px; }
+.auth-header { text-align: center; margin-bottom: 30px; }
+.toggle-btn { display: flex; background: #f1f5f9; padding: 5px; border-radius: 8px; margin-bottom: 20px; }
+.toggle-btn button { flex: 1; border: none; padding: 10px; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 600; color: #666; }
+.toggle-btn button.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+/* Dashboard */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+.dash-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #eee; display: flex; gap: 15px; align-items: center; cursor: pointer; }
+.dash-icon { width: 40px; height: 40px; background: #e0f2ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+/* Admin */
+.admin-layout { display: flex; height: 100vh; }
+.sidebar { width: 250px; background: #0b121f; color: white; padding: 20px; }
+.sidebar-link { display: block; padding: 12px; color: #a0aec0; text-decoration: none; margin-bottom: 5px; border-radius: 8px; }
+.sidebar-link.active { background: var(--primary); color: white; }
+.admin-content { flex: 1; padding: 30px; overflow-y: auto; }
+.stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--card-shadow); }
