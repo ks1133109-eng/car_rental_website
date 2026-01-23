@@ -1,59 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
 
+<form method="POST" action="{{ url_for('book_car', car_id=car.id) }}">
+
   <div class="payment-panel">
     <h3>Payment Method</h3>
+    ```
 
-    <div class="payment-methods">
-      <label class="pay-option">
-        <input type="radio" name="payment_method" value="upi">
-        UPI (GPay / PhonePe / Paytm)
-      </label>
+### 2. Fix the "Empty Prices" (Backend)
+In your screenshot, the prices (Base Fare, Total) are showing as empty (`₹ `) because your Python route isn't sending those numbers to the HTML page.
 
-      <label class="pay-option">
-        <input type="radio" name="payment_method" value="card">
-        Credit / Debit Card
-      </label>
+**File:** `app (2).py`
 
-      <label class="pay-option">
-        <input type="radio" name="payment_method" value="netbanking">
-        Net Banking
-      </label>
+Update the `book_car` route to calculate and pass the prices during the `GET` request.
 
-      <label class="pay-option">
-        <input type="radio" name="payment_method" value="cod">
-        Pay at Pickup
-      </label>
-    </div>
+```python
+@app.route('/book/<int:car_id>', methods=['GET', 'POST'])
+@login_required
+def book_car(car_id):
+    # ... (Keep your existing KYC check code here) ...
+    
+    car = Car.query.get_or_404(car_id)
 
-    <div class="price-box">
-      <div class="price-row">
-        <span>Base Fare</span>
-        <span>₹{{ base_price }}</span>
-      </div>
-      <div class="price-row">
-        <span>Taxes & Fees</span>
-        <span>₹{{ tax }}</span>
-      </div>
-      <div class="price-row total">
-        <strong>Total</strong>
-        <strong>₹{{ total }}</strong>
-      </div>
-    </div>
+    # --- CALCULATE PRICES FOR DISPLAY ---
+    base_price = car.price_per_hr * 24
+    tax = 648
+    total = base_price + tax
 
-    <button class="pay-btn" type="submit" disabled id="payNowBtn">
-      Pay Now
-    </button>
+    if request.method == 'POST':
+        # ... (Keep your existing POST logic) ...
+        # OPTIONAL: Save the payment method selected on this page
+        payment_method = request.form.get('payment_method') 
+        
+        new_booking = Booking(
+            user_id=current_user.id, 
+            car_id=car.id, 
+            base_cost=base_price,
+            driver_cost=driver_fee, 
+            discount=discount_value, 
+            total_cost=final_total,
+            with_driver=needs_driver, 
+            payment_method=payment_method, # <--- Add this to save it
+            status="Confirmed"
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+        return redirect(url_for('payment_page', booking_id=new_booking.id))
 
-  </div>
-
-</form>
-
-<script>
-  const btn = document.getElementById("payNowBtn");
-  document.querySelectorAll("input[name='payment_method']").forEach(el => {
-    el.addEventListener("change", () => btn.disabled = false);
-  });
-</script>
-
-{% endblock %}
+    # --- PASS VARIABLES TO TEMPLATE ---
+    return render_template('booking_details.html', car=car, base_price=base_price, tax=tax, total=total)
