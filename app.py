@@ -218,7 +218,7 @@ def process_payment(booking_id):
     payment_method = request.form.get('payment_method')
     if not payment_method:
         flash("Please select a payment method")
-        return redirect(url_for('booking_payment', booking_id=booking_id))
+        return redirect(url_for('payment_page', booking_id=booking_id))
     booking.status = "Paid"
     booking.payment_method = payment_method
     db.session.commit()
