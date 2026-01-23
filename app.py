@@ -163,11 +163,12 @@ def kyc():
         
     return render_template('kyc.html')
 
-# --- Updated Booking Logic ---
+# --- Updated Booking Flow ---
 
+# STEP 1: DATE SELECTION
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
-def book_car(car_id):
+def book_car_dates(car_id):
     # KYC Check
     if current_user.kyc_status != 'Verified':
         if current_user.kyc_status == 'Pending':
@@ -179,61 +180,83 @@ def book_car(car_id):
             
     car = Car.query.get_or_404(car_id)
 
-    # Calculate prices
-    base_price = car.price_per_hr * 24
-    tax = 648
-    total_display = base_price + tax
-
+    # If user submits dates, calculate price and move to payment step
     if request.method == 'POST':
-        needs_driver = 'with_driver' in request.form
-        driver_fee = 500 if needs_driver else 0
+        start_str = request.form.get('start_date')
+        end_str = request.form.get('end_date')
         
-        coupon_input = request.form.get('coupon_code')
-        coupon_code = coupon_input.strip().upper() if coupon_input else None
-        
-        discount_value = 0
-        if coupon_code:
-            coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
-            if coupon:
-                discount_value = coupon.discount_amount
-                flash(f'Coupon Applied! Saved ₹{discount_value}')
-        
-        final_total = (base_price + driver_fee + tax) - discount_value
-        
-        payment_method = request.form.get('payment_method')
-        
-        # Logic: If they pay online, mark as Paid. If COD, mark as Confirmed.
-        booking_status = 'Paid' if payment_method != 'cod' else 'Confirmed'
+        # Convert string to datetime
+        start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+        end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
 
-        new_booking = Booking(
-            user_id=current_user.id, 
-            car_id=car.id, 
-            base_cost=base_price,
-            driver_cost=driver_fee, 
-            discount=discount_value, 
-            total_cost=final_total,
-            with_driver=needs_driver, 
-            payment_method=payment_method,
-            status=booking_status
-        )
-        db.session.add(new_booking)
-        db.session.commit()
-        
-        # ✅ CHANGE: Redirect directly to the success page
-        return redirect(url_for('booking_success', booking_id=new_booking.id))
+        # Calculate duration in hours
+        duration_delta = end_date - start_date
+        duration_hours = duration_delta.total_seconds() / 3600
 
-    return render_template('booking_details.html', car=car, base_price=base_price, tax=tax, total=total_display)
+        if duration_hours <= 0:
+            flash("End date must be after start date!")
+            return redirect(url_for('book_car_dates', car_id=car.id))
 
-# --- New Success Route ---
+        # Calculate Costs
+        base_cost = int(duration_hours * car.price_per_hr)
+        driver_fee = 500 if 'with_driver' in request.form else 0
+        tax = 648 # Flat tax for example
+        total_cost = base_cost + driver_fee + tax
 
+        # Render Payment Page with calculated data
+        return render_template('booking_payment.html', 
+                               car=car, 
+                               start_date=start_str, 
+                               end_date=end_str,
+                               base_cost=base_cost,
+                               driver_fee=driver_fee,
+                               tax=tax,
+                               total=total_cost,
+                               with_driver=('with_driver' in request.form))
+
+    return render_template('booking_dates.html', car=car)
+
+
+# STEP 2: CONFIRM & PAY (Finalize Booking)
+@app.route('/book/confirm/<int:car_id>', methods=['POST'])
+@login_required
+def confirm_booking(car_id):
+    car = Car.query.get_or_404(car_id)
+    
+    # Retrieve data from hidden fields
+    start_str = request.form.get('start_date')
+    end_str = request.form.get('end_date')
+    total_cost = float(request.form.get('total_cost'))
+    base_cost = float(request.form.get('base_cost'))
+    driver_fee = float(request.form.get('driver_fee'))
+    with_driver = request.form.get('with_driver') == 'True'
+    payment_method = request.form.get('payment_method')
+
+    # Create Booking
+    new_booking = Booking(
+        user_id=current_user.id,
+        car_id=car.id,
+        base_cost=base_cost,
+        driver_cost=driver_fee,
+        total_cost=total_cost,
+        with_driver=with_driver,
+        payment_method=payment_method,
+        status='Paid' if payment_method != 'cod' else 'Confirmed',
+        date_booked=datetime.utcnow() # In a real app, save the start/end rental dates too
+    )
+    
+    db.session.add(new_booking)
+    db.session.commit()
+    
+    return redirect(url_for('booking_success', booking_id=new_booking.id))
+
+# STEP 3: SUCCESS PAGE
 @app.route('/booking/success/<int:booking_id>')
 @login_required
 def booking_success(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-    # Security check: ensure user owns this booking
     if booking.user_id != current_user.id:
         return redirect(url_for('dashboard'))
-    
     return render_template('booking_success.html', booking=booking)
 
 
