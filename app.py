@@ -25,6 +25,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+login_manager.session_protection = "strong"
 
 # --- Models ---
 class User(UserMixin, db.Model):
@@ -212,7 +213,6 @@ def payment_page(booking_id):
     )
     
 @app.route('/pay/<int:booking_id>', methods=['POST'])
-@login_required
 def process_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     payment_method = request.form.get('payment_method')
