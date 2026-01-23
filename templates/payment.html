@@ -1,34 +1,57 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc;">
+<style>
+  /* FORCE payment area to be clickable */
+  .payment-fix {
+    position: relative;
+    z-index: 9999;
+    pointer-events: auto;
+    background: #fff;
+  }
+</style>
+
+<div class="payment-fix" style="
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+">
+
   <h2>Payment</h2>
 
   <p><b>Booking ID:</b> {{ booking.id }}</p>
   <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
 
-  <form id="payForm" action="/pay/{{ booking.id }}" method="POST">
-    <input type="hidden" name="payment_method" id="pm">
+  <form action="/pay/{{ booking.id }}" method="POST">
+
+    <label>
+      <input type="radio" name="payment_method" value="upi" required>
+      UPI
+    </label><br><br>
+
+    <label>
+      <input type="radio" name="payment_method" value="card">
+      Card
+    </label><br><br>
+
+    <label>
+      <input type="radio" name="payment_method" value="cash">
+      Pay at Pickup
+    </label><br><br>
+
+    <button type="submit" style="
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10000;
+      position: relative;
+    ">
+      Pay Now
+    </button>
+
   </form>
-
-  <button onclick="pay('upi')" style="width:100%; padding:10px; margin-bottom:10px;">
-    Pay with UPI
-  </button>
-
-  <button onclick="pay('card')" style="width:100%; padding:10px; margin-bottom:10px;">
-    Pay with Card
-  </button>
-
-  <button onclick="pay('cash')" style="width:100%; padding:10px;">
-    Pay at Pickup
-  </button>
 </div>
-
-<script>
-  function pay(method) {
-    document.getElementById('pm').value = method;
-    document.getElementById('payForm').submit();
-  }
-</script>
 
 {% endblock %}
