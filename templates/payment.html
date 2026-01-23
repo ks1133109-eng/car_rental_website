@@ -1,66 +1,22 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Payment Test</title>
+</head>
+<body>
 
-<style>
-  /* FORCE payment area to be clickable */
-  .payment-fix {
-    position: relative;
-    z-index: 9999;
-    pointer-events: auto;
-    background: #fff;
-   padding-bottom: 150px;
-  }
-</style>
-
-<div class="payment-fix" style="
-  max-width: 400px;
-  margin: 60px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-">
-
-  <h2>Payment</h2>
-
-  <p><b>Booking ID:</b> {{ booking.id }}</p>
-  <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
+<h1>Payment Test Page</h1>
+<p>Booking ID: {{ booking.id }}</p>
+<p>Total: {{ booking.total_cost }}</p>
 
 <form method="POST" action="/pay/{{ booking.id }}">
+  <label>
+    <input type="radio" name="payment_method" value="upi" required>
+    UPI
+  </label><br><br>
 
-  <div class="payment-panel">
-    <h3>Payment Method</h3>
-
-    <div class="payment-methods">
-      <label>
-        <input type="radio" name="payment_method" value="upi" required>
-        UPI (GPay / PhonePe / Paytm)
-      </label><br>
-
-      <label>
-        <input type="radio" name="payment_method" value="card">
-        Credit / Debit Card
-      </label><br>
-
-      <label>
-        <input type="radio" name="payment_method" value="netbanking">
-        Net Banking
-      </label><br>
-
-      <label>
-        <input type="radio" name="payment_method" value="cash">
-        Pay at Pickup
-      </label>
-    </div>
-
-    <div class="price-box">
-      <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
-    </div>
-
-    <button type="submit" class="pay-btn" id="payNowBtn">
-      Pay Now
-    </button>
-  </div>
-
+  <button type="submit">PAY NOW</button>
 </form>
-</div>
 
-{% endblock %}
+</body>
+</html>
