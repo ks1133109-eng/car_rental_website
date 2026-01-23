@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Payment for Booking #{{ booking.id }}</h2>
+
+<p><strong>Car:</strong> {{ booking.car.name }}</p>
+<p><strong>Total Amount:</strong> ₹{{ booking.total_price }}</p>
+
+<form method="POST" action="{{ url_for('process_payment', booking_id=booking.id) }}">
+
+  <label>
+    <input type="radio" name="payment_method" value="card">
+    Card
+  </label><br>
+
+  <label>
+    <input type="radio" name="payment_method" value="upi">
+    UPI
+  </label><br>
+
+  <label>
+    <input type="radio" name="payment_method" value="cash">
+    Cash
+  </label><br><br>
+
+  <button type="submit" id="payNowBtn" disabled>
+    Pay Now
+  </button>
+
+</form>
+
+<script>
+  const btn = document.getElementById("payNowBtn");
+  document.querySelectorAll("input[name='payment_method']")
+    .forEach(el => {
+      el.addEventListener("change", () => btn.disabled = false);
+    });
+</script>
+
+{% endblock %}
