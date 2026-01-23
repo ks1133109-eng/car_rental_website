@@ -4,7 +4,7 @@
 <h2>Payment for Booking #{{ booking.id }}</h2>
 
 <p><strong>Car:</strong> {{ booking.car.name }}</p>
-<p><strong>Total Amount:</strong> ₹{{ booking.total_price }}</p>
+<p><strong>Total Amount:</strong> ₹{{ booking.total_cost }}</p>
 
 <form method="POST" action="{{ url_for('process_payment', booking_id=booking.id) }}">
 
