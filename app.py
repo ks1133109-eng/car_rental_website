@@ -195,26 +195,21 @@ def book_car(car_id):
         )
         db.session.add(new_booking)
         db.session.commit()
-        return redirect(url_for('booking_payment', booking_id=new_booking.id))
+        return redirect(url_for('payment_page', booking_id=booking.id) )
     return render_template('booking_details.html', car=car)
 
-@app.route('/booking/<int:booking_id>/payment')
+@app.route('/booking/<int:booking_id>/payment', methods=['GET'])
 @login_required
-def booking_payment(booking_id):
+def payment_page(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-    car = Car.query.get_or_404(booking.car_id)
 
-    base_price = booking.base_cost
-    tax = 648
-    total = booking.total_cost
+    # safety check
+    if booking.user_id != current_user.id:
+        return redirect(url_for('dashboard'))
 
     return render_template(
-        'booking_details.html',
-        booking=booking,
-        car=car,
-        base_price=base_price,
-        tax=tax,
-        total=total
+        'payment.html',
+        booking=booking
     )
 @app.route('/pay/<int:booking_id>', methods=['POST'])
 @login_required
@@ -236,7 +231,24 @@ def process_payment(booking_id):
 @login_required
 def invoice(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-    if booking.user_id != current_user.id and not current_user.is_admin:
+    if booking.user_id != current_user.id and not current_user.is_@app.route('/booking/<int:booking_id>/payment')
+@login_required
+def booking_payment(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    car = Car.query.get_or_404(booking.car_id)
+
+    base_price = booking.base_cost
+    tax = 648
+    total = booking.total_cost
+
+    return render_template(
+        'booking_details.html',
+        booking=booking,
+        car=car,
+        base_price=base_price,
+        tax=tax,
+        total=total
+    )admin:
         return redirect(url_for('dashboard'))
     return render_template('invoice.html', booking=booking)
 
