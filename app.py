@@ -212,17 +212,25 @@ def payment_page(booking_id):
         booking=booking
     )
     
-@app.route('/pay/<int:booking_id>', methods=['POST'])
+@app.route('/pay/<int:booking_id>', methods=['GET', 'POST'])
 def process_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-    payment_method = request.form.get('payment_method')
-    if not payment_method:
-        flash("Please select a payment method")
-        return redirect(url_for('payment_page', booking_id=booking_id))
-    booking.status = "Paid"
-    booking.payment_method = payment_method
-    db.session.commit()
-    return redirect(url_for('invoice', booking_id=new_booking.id))
+
+    # If POST, process payment
+    if request.method == 'POST':
+        payment_method = request.form.get('payment_method')
+
+        if not payment_method:
+            return redirect(f"/booking/{booking_id}/payment")
+
+        booking.payment_method = payment_method
+        booking.status = "Paid"
+        db.session.commit()
+
+        return redirect(f"/booking/invoice/{booking.id}")
+
+    # If GET, just redirect to payment page
+    return redirect(f"/booking/{booking_id}/payment")
 
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
