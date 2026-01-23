@@ -196,7 +196,7 @@ def book_car(car_id):
         db.session.add(new_booking)
         db.session.commit()
         return redirect(url_for('booking_payment', booking_id=new_booking.id))
-    return render_template('fleet.html', car=car)
+    return render_template('booking_details.html', car=car)
 
 @app.route('/booking/<int:booking_id>/payment')
 @login_required
@@ -209,7 +209,7 @@ def booking_payment(booking_id):
     total = booking.total_cost
 
     return render_template(
-        'fleet.html',
+        'booking_details.html',
         booking=booking,
         car=car,
         base_price=base_price,
