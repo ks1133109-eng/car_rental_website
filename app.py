@@ -163,10 +163,12 @@ def kyc():
         
     return render_template('kyc.html')
 
+# --- Updated Booking Logic ---
+
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car(car_id):
-    # 1. Check KYC Status
+    # KYC Check
     if current_user.kyc_status != 'Verified':
         if current_user.kyc_status == 'Pending':
             flash('⏳ Your KYC is Pending Approval.')
@@ -177,14 +179,12 @@ def book_car(car_id):
             
     car = Car.query.get_or_404(car_id)
 
-    # ✅ FIX 3: Calculate prices BEFORE checking for POST
-    # This ensures the numbers show up on the page load
+    # Calculate prices
     base_price = car.price_per_hr * 24
     tax = 648
     total_display = base_price + tax
 
     if request.method == 'POST':
-        # Recalculate based on options selected (Driver, Coupon, etc)
         needs_driver = 'with_driver' in request.form
         driver_fee = 500 if needs_driver else 0
         
@@ -200,8 +200,10 @@ def book_car(car_id):
         
         final_total = (base_price + driver_fee + tax) - discount_value
         
-        # ✅ FIX 4: Capture the Payment Method selected by user
         payment_method = request.form.get('payment_method')
+        
+        # Logic: If they pay online, mark as Paid. If COD, mark as Confirmed.
+        booking_status = 'Paid' if payment_method != 'cod' else 'Confirmed'
 
         new_booking = Booking(
             user_id=current_user.id, 
@@ -211,15 +213,28 @@ def book_car(car_id):
             discount=discount_value, 
             total_cost=final_total,
             with_driver=needs_driver, 
-            payment_method=payment_method, # Save the payment method
-            status="Confirmed"
+            payment_method=payment_method,
+            status=booking_status
         )
         db.session.add(new_booking)
         db.session.commit()
-        return redirect(url_for('payment_page', booking_id=new_booking.id))
+        
+        # ✅ CHANGE: Redirect directly to the success page
+        return redirect(url_for('booking_success', booking_id=new_booking.id))
 
-    # Pass the calculated variables to the template
     return render_template('booking_details.html', car=car, base_price=base_price, tax=tax, total=total_display)
+
+# --- New Success Route ---
+
+@app.route('/booking/success/<int:booking_id>')
+@login_required
+def booking_success(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    # Security check: ensure user owns this booking
+    if booking.user_id != current_user.id:
+        return redirect(url_for('dashboard'))
+    
+    return render_template('booking_success.html', booking=booking)
 
 
 @app.route('/booking/<int:booking_id>/payment', methods=['GET'])
