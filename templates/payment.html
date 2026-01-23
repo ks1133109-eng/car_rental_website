@@ -1,40 +1,34 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Payment for Booking #{{ booking.id }}</h2>
+<div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc;">
+  <h2>Payment</h2>
 
-<p><strong>Car:</strong> {{ booking.car.name }}</p>
-<p><strong>Total Amount:</strong> ₹{{ booking.total_cost }}</p>
+  <p><b>Booking ID:</b> {{ booking.id }}</p>
+  <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
 
-<form method="POST" action="{{ url_for('process_payment', booking_id=booking.id) }}">
+  <form action="/pay/{{ booking.id }}" method="POST">
 
-  <label>
-    <input type="radio" name="payment_method" value="card">
-    Card
-  </label><br>
+    <label>
+      <input type="radio" name="payment_method" value="upi" required>
+      UPI
+    </label><br><br>
 
-  <label>
-    <input type="radio" name="payment_method" value="upi">
-    UPI
-  </label><br>
+    <label>
+      <input type="radio" name="payment_method" value="card">
+      Card
+    </label><br><br>
 
-  <label>
-    <input type="radio" name="payment_method" value="cash">
-    Cash
-  </label><br><br>
+    <label>
+      <input type="radio" name="payment_method" value="cash">
+      Pay at Pickup
+    </label><br><br>
 
-<button type="submit" id="payNowBtn">
-    Pay Now
-  </button>
+    <button type="submit" style="padding:10px; width:100%;">
+      Pay Now
+    </button>
 
-</form>
-
-<script>
-  const btn = document.getElementById("payNowBtn");
-  document.querySelectorAll("input[name='payment_method']")
-    .forEach(el => {
-      el.addEventListener("change", () => btn.disabled = false);
-    });
-</script>
+  </form>
+</div>
 
 {% endblock %}
