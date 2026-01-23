@@ -198,3 +198,8 @@ body {
   color: #666;
   text-align: center;
 }
+
+footer {
+  position: relative !important;
+  z-index: 1 !important;
+}
