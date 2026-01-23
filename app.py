@@ -208,7 +208,7 @@ def booking_payment(booking_id):
     tax = 648
     total = booking.total_cost
 
-    return render_template(
+    return redirect(url_for(
         'booking_details.html',
         booking=booking,
         car=car,
