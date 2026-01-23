@@ -173,7 +173,6 @@ def book_car(car_id):
         else:
             flash('⚠️ You must complete e-KYC Verification before booking.')
             return redirect(url_for('kyc'))
-
     car = Car.query.get_or_404(car_id)
     if request.method == 'POST':
         base_price = car.price_per_hr * 24
@@ -211,45 +210,28 @@ def payment_page(booking_id):
         'payment.html',
         booking=booking
     )
+    
 @app.route('/pay/<int:booking_id>', methods=['POST'])
 @login_required
 def process_payment(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-
     payment_method = request.form.get('payment_method')
     if not payment_method:
         flash("Please select a payment method")
         return redirect(url_for('booking_payment', booking_id=booking_id))
-
     booking.status = "Paid"
     booking.payment_method = payment_method
-
     db.session.commit()
-
     return redirect(url_for('invoice', booking_id=booking.id))
+
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
 def invoice(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-    if booking.user_id != current_user.id and not current_user.is_@app.route('/booking/<int:booking_id>/payment')
-@login_required
-def booking_payment(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-    car = Car.query.get_or_404(booking.car_id)
 
-    base_price = booking.base_cost
-    tax = 648
-    total = booking.total_cost
-
-    return render_template(
-        'booking_details.html',
-        booking=booking,
-        car=car,
-        base_price=base_price,
-        tax=tax,
-        total=total
-    )admin:
+    if booking.user_id != current_user.id and not current_user.is_admin:
         return redirect(url_for('dashboard'))
+
     return render_template('invoice.html', booking=booking)
 
 # --- Account Routes ---
