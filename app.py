@@ -194,7 +194,7 @@ def book_car(car_id):
         )
         db.session.add(new_booking)
         db.session.commit()
-        return redirect(url_for('payment_page', booking_id=booking.id) )
+        return redirect(url_for('payment_page', booking_id=new_booking.id))
     return render_template('booking_details.html', car=car)
 
 @app.route('/booking/<int:booking_id>/payment', methods=['GET'])
