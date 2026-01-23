@@ -166,7 +166,7 @@ def kyc():
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car(car_id):
-    # KYC Gatekeeper
+    # 1. Check KYC Status
     if current_user.kyc_status != 'Verified':
         if current_user.kyc_status == 'Pending':
             flash('⏳ Your KYC is Pending Approval.')
@@ -174,29 +174,53 @@ def book_car(car_id):
         else:
             flash('⚠️ You must complete e-KYC Verification before booking.')
             return redirect(url_for('kyc'))
+            
     car = Car.query.get_or_404(car_id)
+
+    # ✅ FIX 3: Calculate prices BEFORE checking for POST
+    # This ensures the numbers show up on the page load
+    base_price = car.price_per_hr * 24
+    tax = 648
+    total_display = base_price + tax
+
     if request.method == 'POST':
-        base_price = car.price_per_hr * 24
+        # Recalculate based on options selected (Driver, Coupon, etc)
         needs_driver = 'with_driver' in request.form
         driver_fee = 500 if needs_driver else 0
+        
         coupon_input = request.form.get('coupon_code')
         coupon_code = coupon_input.strip().upper() if coupon_input else None
+        
         discount_value = 0
         if coupon_code:
             coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
             if coupon:
                 discount_value = coupon.discount_amount
                 flash(f'Coupon Applied! Saved ₹{discount_value}')
-        final_total = (base_price + driver_fee + 648) - discount_value
+        
+        final_total = (base_price + driver_fee + tax) - discount_value
+        
+        # ✅ FIX 4: Capture the Payment Method selected by user
+        payment_method = request.form.get('payment_method')
+
         new_booking = Booking(
-            user_id=current_user.id, car_id=car.id, base_cost=base_price,
-            driver_cost=driver_fee, discount=discount_value, total_cost=final_total,
-            with_driver=needs_driver, status="Confirmed"
+            user_id=current_user.id, 
+            car_id=car.id, 
+            base_cost=base_price,
+            driver_cost=driver_fee, 
+            discount=discount_value, 
+            total_cost=final_total,
+            with_driver=needs_driver, 
+            payment_method=payment_method, # Save the payment method
+            status="Confirmed"
         )
         db.session.add(new_booking)
         db.session.commit()
         return redirect(url_for('payment_page', booking_id=new_booking.id))
-    return render_template('booking_details.html', car=car)
+
+    # Pass the calculated variables to the template
+    return render_template('booking_details.html', car=car, base_price=base_price, tax=tax, total=total_display)
+
 
 @app.route('/booking/<int:booking_id>/payment', methods=['GET'])
 @login_required
