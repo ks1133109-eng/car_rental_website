@@ -7,28 +7,28 @@
   <p><b>Booking ID:</b> {{ booking.id }}</p>
   <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
 
-  <form action="/pay/{{ booking.id }}" method="POST">
-
-    <label>
-      <input type="radio" name="payment_method" value="upi" required>
-      UPI
-    </label><br><br>
-
-    <label>
-      <input type="radio" name="payment_method" value="card">
-      Card
-    </label><br><br>
-
-    <label>
-      <input type="radio" name="payment_method" value="cash">
-      Pay at Pickup
-    </label><br><br>
-
-    <button type="submit" style="padding:10px; width:100%;">
-      Pay Now
-    </button>
-
+  <form id="payForm" action="/pay/{{ booking.id }}" method="POST">
+    <input type="hidden" name="payment_method" id="pm">
   </form>
+
+  <button onclick="pay('upi')" style="width:100%; padding:10px; margin-bottom:10px;">
+    Pay with UPI
+  </button>
+
+  <button onclick="pay('card')" style="width:100%; padding:10px; margin-bottom:10px;">
+    Pay with Card
+  </button>
+
+  <button onclick="pay('cash')" style="width:100%; padding:10px;">
+    Pay at Pickup
+  </button>
 </div>
+
+<script>
+  function pay(method) {
+    document.getElementById('pm').value = method;
+    document.getElementById('payForm').submit();
+  }
+</script>
 
 {% endblock %}
