@@ -222,7 +222,7 @@ def process_payment(booking_id):
     booking.status = "Paid"
     booking.payment_method = payment_method
     db.session.commit()
-    return redirect(url_for('invoice', booking_id=booking.id))
+    return redirect(url_for('invoice', booking_id=new_booking.id))
 
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
