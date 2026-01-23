@@ -8,7 +8,7 @@
     z-index: 9999;
     pointer-events: auto;
     background: #fff;
-    padding-bottom: 150px;
+   padding-bottom: 150px;
   }
 </style>
 
@@ -24,36 +24,43 @@
   <p><b>Booking ID:</b> {{ booking.id }}</p>
   <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
 
-  <form action="/pay/{{ booking.id }}" method="POST">
+<form method="POST" action="/pay/{{ booking.id }}">
 
-    <label>
-      <input type="radio" name="payment_method" value="upi" required>
-      UPI
-    </label><br><br>
+  <div class="payment-panel">
+    <h3>Payment Method</h3>
 
-    <label>
-      <input type="radio" name="payment_method" value="card">
-      Card
-    </label><br><br>
+    <div class="payment-methods">
+      <label>
+        <input type="radio" name="payment_method" value="upi" required>
+        UPI (GPay / PhonePe / Paytm)
+      </label><br>
 
-    <label>
-      <input type="radio" name="payment_method" value="cash">
-      Pay at Pickup
-    </label><br><br>
+      <label>
+        <input type="radio" name="payment_method" value="card">
+        Credit / Debit Card
+      </label><br>
 
-    <button type="submit" style="
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      cursor: pointer;
-      pointer-events: auto !important;
-      z-index: 10000;
-      position: relative;
-    ">
+      <label>
+        <input type="radio" name="payment_method" value="netbanking">
+        Net Banking
+      </label><br>
+
+      <label>
+        <input type="radio" name="payment_method" value="cash">
+        Pay at Pickup
+      </label>
+    </div>
+
+    <div class="price-box">
+      <p><b>Total:</b> ₹{{ booking.total_cost }}</p>
+    </div>
+
+    <button type="submit" class="pay-btn" id="payNowBtn">
       Pay Now
     </button>
+  </div>
 
-  </form>
+</form>
 </div>
 
 {% endblock %}
