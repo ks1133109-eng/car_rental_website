@@ -26,9 +26,13 @@
         <div class="search-group">
             <label>Location</label>
             <select name="location">
-                <option value="Mumbai">Mumbai</option>
-                <option value="Delhi">Delhi</option>
-                <option value="Bangalore">Bangalore</option>
+                {% if locations %}
+                    {% for loc in locations %}
+                        <option value="{{ loc }}">{{ loc }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="All">All Cities</option>
+                {% endif %}
             </select>
         </div>
 
@@ -36,15 +40,12 @@
             <label>Pick-up Date</label>
             <input type="date" name="start_date" required>
         </div>
-
         <div class="search-group">
             <label>Return Date</label>
             <input type="date" name="end_date" required>
         </div>
-
         <button type="submit" class="btn-search">Search</button>
     </form>
-
 </header>
 
 <h2 class="section-title">Designed for every narrative.</h2>
