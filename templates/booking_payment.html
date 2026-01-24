@@ -1,73 +1,98 @@
 {% extends "base.html" %}
 {% block content %}
 
-<form method="POST" action="{{ url_for('confirm_booking', car_id=car.id) }}">
-
-  <input type="hidden" name="start_date" value="{{ start_date }}">
-  <input type="hidden" name="end_date" value="{{ end_date }}">
-  <input type="hidden" name="base_cost" value="{{ base_cost }}">
-  <input type="hidden" name="driver_fee" value="{{ driver_fee }}">
-  <input type="hidden" name="total_cost" value="{{ total }}">
-  <input type="hidden" name="with_driver" value="{{ with_driver }}">
-
-  <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
+<div style="max-width: 600px; margin: 40px auto; padding: 20px;">
     
     <h2 style="margin-bottom: 20px; text-align: center;">Secure Payment</h2>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
-        <h4 style="margin-top: 0; color: #555;">Trip Summary</h4>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span><strong>{{ car.name }}</strong></span>
-            <span>{{ start_date }} to {{ end_date }}</span>
-        </div>
-        <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-        
-        <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span>Rent Cost</span>
-            <span>₹{{ base_cost }}</span>
-        </div>
-        {% if with_driver %}
-        <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span>Driver Fee</span>
-            <span>₹{{ driver_fee }}</span>
-        </div>
-        {% endif %}
-        <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span>Taxes</span>
-            <span>₹{{ tax }}</span>
-        </div>
-        <div class="price-row total" style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin-top: 10px; color: #007bff;">
-            <span>Total Payable</span>
-            <span>₹{{ total }}</span>
-        </div>
+    <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+        <form action="{{ url_for('apply_coupon') }}" method="POST" style="display: flex; gap: 10px;">
+            <input type="hidden" name="car_id" value="{{ car.id }}">
+            <input type="hidden" name="start_date" value="{{ start_date }}">
+            <input type="hidden" name="end_date" value="{{ end_date }}">
+            <input type="hidden" name="with_driver" value="{{ with_driver }}">
+
+            <input type="text" name="coupon_code" placeholder="Enter Code (e.g. WELCOME20)" value="{{ applied_coupon }}" 
+                   style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            
+            <button type="submit" style="background: #6c757d; color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer;">
+                Apply
+            </button>
+        </form>
     </div>
 
-    <div class="payment-panel" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
-        <h3 style="margin-top: 0;">Select Payment Method</h3>
-        <div class="payment-methods" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-            <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                <input type="radio" name="payment_method" value="upi" required>
-                UPI (GPay / PhonePe / Paytm)
-            </label>
-            <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                <input type="radio" name="payment_method" value="card">
-                Credit / Debit Card
-            </label>
-            <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                <input type="radio" name="payment_method" value="netbanking">
-                Net Banking
-            </label>
-            <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                <input type="radio" name="payment_method" value="cod">
-                Pay at Pickup
-            </label>
-        </div>
+    <form method="POST" action="{{ url_for('confirm_booking', car_id=car.id) }}">
 
-        <button class="pay-btn" type="submit" style="width: 100%; margin-top: 25px; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">
-            Confirm & Pay ₹{{ total }}
-        </button>
-    </div>
+      <input type="hidden" name="start_date" value="{{ start_date }}">
+      <input type="hidden" name="end_date" value="{{ end_date }}">
+      <input type="hidden" name="base_cost" value="{{ base_cost }}">
+      <input type="hidden" name="driver_fee" value="{{ driver_fee }}">
+      <input type="hidden" name="total_cost" value="{{ total }}">
+      <input type="hidden" name="discount" value="{{ discount if discount else 0 }}">
+      <input type="hidden" name="with_driver" value="{{ with_driver }}">
 
-  </div>
-</form>
+      <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+          <h4 style="margin-top: 0; color: #555;">Trip Summary</h4>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span><strong>{{ car.name }}</strong></span>
+              <span>{{ start_date }} to {{ end_date }}</span>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+          
+          <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span>Rent Cost</span>
+              <span>₹{{ base_cost }}</span>
+          </div>
+          {% if with_driver %}
+          <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span>Driver Fee</span>
+              <span>₹{{ driver_fee }}</span>
+          </div>
+          {% endif %}
+          <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span>Taxes</span>
+              <span>₹{{ tax }}</span>
+          </div>
+
+          {% if discount %}
+          <div class="price-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; color: green; font-weight: bold;">
+              <span>Coupon Discount</span>
+              <span>- ₹{{ discount }}</span>
+          </div>
+          {% endif %}
+
+          <div class="price-row total" style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin-top: 10px; color: #007bff;">
+              <span>Total Payable</span>
+              <span>₹{{ total }}</span>
+          </div>
+      </div>
+
+      <div class="payment-panel" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+          <h3 style="margin-top: 0;">Select Payment Method</h3>
+          <div class="payment-methods" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+              <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                  <input type="radio" name="payment_method" value="upi" required>
+                  UPI (GPay / PhonePe / Paytm)
+              </label>
+              <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                  <input type="radio" name="payment_method" value="card">
+                  Credit / Debit Card
+              </label>
+              <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                  <input type="radio" name="payment_method" value="netbanking">
+                  Net Banking
+              </label>
+              <label class="pay-option" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                  <input type="radio" name="payment_method" value="cod">
+                  Pay at Pickup
+              </label>
+          </div>
+
+          <button class="pay-btn" type="submit" style="width: 100%; margin-top: 25px; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">
+              Confirm & Pay ₹{{ total }}
+          </button>
+      </div>
+
+    </form>
+</div>
 {% endblock %}
