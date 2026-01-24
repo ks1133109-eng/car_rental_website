@@ -4,12 +4,22 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from flask_mail import Mail, Message  # ✅ NEW IMPORT
 
 # --- Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
-# Increase upload limit to 16MB just in case
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+
+# ✅ EMAIL CONFIGURATION (Replace with your details)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  # <--- REPLACE THIS
+app.config['MAIL_PASSWORD'] = 'fflb xgnp lock vwwx'     # <--- REPLACE THIS (Use App Password, not real password)
+app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
+
+mail = Mail(app)
 
 # Database Configuration
 database_url = os.environ.get('DATABASE_URL')
@@ -35,14 +45,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
-    
-    # KYC FIELDS (Updated for Images)
     gov_id = db.Column(db.String(50)) 
-    # We use db.Text to store the Image Data (Base64 string)
     gov_id_image = db.Column(db.Text) 
     user_selfie = db.Column(db.Text) 
     kyc_status = db.Column(db.String(20), default='Unverified')
-    
     is_admin = db.Column(db.Boolean, default=False)
 
 class Car(db.Model):
@@ -55,6 +61,25 @@ class Car(db.Model):
     fuel_type = db.Column(db.String(20))
     seats = db.Column(db.Integer)
     is_available = db.Column(db.Boolean, default=True)
+    location = db.Column(db.String(50), default='Mumbai')
+    
+    # ✅ NEW: Relationship to Reviews
+    reviews = db.relationship('Review', backref='car', lazy=True)
+
+    @property
+    def average_rating(self):
+        if not self.reviews:
+            return 5.0  # Default rating
+        return round(sum([r.rating for r in self.reviews]) / len(self.reviews), 1)
+
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    car_id = db.Column(db.Integer, db.ForeignKey('car.id'))
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.String(500))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User')
 
 class Coupon(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,20 +91,16 @@ class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     car_id = db.Column(db.Integer, db.ForeignKey('car.id'))
-
     status = db.Column(db.String(50), default='Upcoming')
-
     base_cost = db.Column(db.Integer)
     driver_cost = db.Column(db.Integer, default=0)
     discount = db.Column(db.Integer, default=0)
     total_cost = db.Column(db.Integer)
-
     with_driver = db.Column(db.Boolean, default=False)
-
-    payment_method = db.Column(db.String(30))  # ✅ FIXED FIELD
-
+    payment_method = db.Column(db.String(30))
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
     date_booked = db.Column(db.DateTime, default=datetime.utcnow)
-
     car = db.relationship('Car')
     user = db.relationship('User')
 
@@ -87,11 +108,33 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# --- Email Helper ---
+def send_booking_email(user, booking):
+    try:
+        msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
+        msg.body = f"""
+        Hello {user.name},
+        
+        Your booking for {booking.car.name} is confirmed.
+        
+        Dates: {booking.start_date} to {booking.end_date}
+        Total Paid: ₹{booking.total_cost}
+        
+        View your booking: {url_for('my_bookings', _external=True)}
+        
+        Drive Safe!
+        - DriveX Team
+        """
+        mail.send(msg)
+    except Exception as e:
+        print(f"Email failed: {e}")
+
 # --- Public Routes ---
 @app.route('/')
 def home():
+    locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
     cars = Car.query.filter_by(is_available=True).all()
-    return render_template('index.html', cars=cars)
+    return render_template('index.html', cars=cars, locations=locations)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -124,13 +167,47 @@ def register():
 
 @app.route('/fleet')
 def fleet():
-    category_filter = request.args.get('category')
+    location = request.args.get('location')
+    category = request.args.get('category')
+    fuel_type = request.args.get('fuel_type')
+    seats = request.args.get('seats')
+    start_str = request.args.get('start_date')
+    end_str = request.args.get('end_date')
+
     query = Car.query.filter_by(is_available=True)
-    if category_filter and category_filter != 'All':
-        query = query.filter_by(category=category_filter)
+
+    if location and location != 'All':
+        query = query.filter_by(location=location)
+
+    if category and category != 'All':
+        query = query.filter_by(category=category)
+    
+    if fuel_type and fuel_type != 'All':
+        query = query.filter_by(fuel_type=fuel_type)
+        
+    if seats and seats != 'All':
+        query = query.filter_by(seats=int(seats))
+
+    if start_str and end_str:
+        try:
+            req_start = datetime.strptime(start_str, '%Y-%m-%d')
+            req_end = datetime.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59)
+            busy_subquery = db.session.query(Booking.car_id).filter(
+                Booking.status != 'Cancelled',
+                Booking.start_date < req_end,
+                Booking.end_date > req_start
+            ).subquery()
+            query = query.filter(Car.id.notin_(busy_subquery))
+        except ValueError:
+            pass
+
     cars = query.all()
+    locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
     categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
-    return render_template('fleet.html', cars=cars, categories=categories, current_category=category_filter)
+    fuel_types = [c[0] for c in db.session.query(Car.fuel_type).distinct().all()]
+    seat_options = [c[0] for c in db.session.query(Car.seats).distinct().order_by(Car.seats).all()]
+
+    return render_template('fleet.html', cars=cars, locations=locations, categories=categories, fuel_types=fuel_types, seat_options=seat_options, current_filters=request.args)
 
 # --- KYC & Booking ---
 
@@ -142,31 +219,23 @@ def kyc():
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        # Get form data
         current_user.phone = request.form.get('phone')
         current_user.address = request.form.get('address')
         current_user.gov_id = request.form.get('gov_id')
-        
-        # Get the Base64 Image Strings (Hidden Inputs)
         current_user.gov_id_image = request.form.get('gov_id_image_data')
         current_user.user_selfie = request.form.get('user_selfie_data')
-        
-        # Validate that images were provided
         if not current_user.gov_id_image or not current_user.user_selfie:
             flash('⚠️ Please upload both your ID and take a selfie.')
             return redirect(url_for('kyc'))
-
         current_user.kyc_status = 'Pending'
         db.session.commit()
         flash('KYC Submitted! Please wait for Admin approval.')
         return redirect(url_for('dashboard'))
-        
     return render_template('kyc.html')
 
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
-def book_car(car_id):
-    # KYC Gatekeeper
+def book_car_dates(car_id):
     if current_user.kyc_status != 'Verified':
         if current_user.kyc_status == 'Pending':
             flash('⏳ Your KYC is Pending Approval.')
@@ -174,70 +243,163 @@ def book_car(car_id):
         else:
             flash('⚠️ You must complete e-KYC Verification before booking.')
             return redirect(url_for('kyc'))
+            
     car = Car.query.get_or_404(car_id)
+
     if request.method == 'POST':
-        base_price = car.price_per_hr * 24
-        needs_driver = 'with_driver' in request.form
-        driver_fee = 500 if needs_driver else 0
-        coupon_input = request.form.get('coupon_code')
-        coupon_code = coupon_input.strip().upper() if coupon_input else None
-        discount_value = 0
-        if coupon_code:
-            coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
-            if coupon:
-                discount_value = coupon.discount_amount
-                flash(f'Coupon Applied! Saved ₹{discount_value}')
-        final_total = (base_price + driver_fee + 648) - discount_value
-        new_booking = Booking(
-            user_id=current_user.id, car_id=car.id, base_cost=base_price,
-            driver_cost=driver_fee, discount=discount_value, total_cost=final_total,
-            with_driver=needs_driver, status="Confirmed"
-        )
-        db.session.add(new_booking)
-        db.session.commit()
-        return redirect(url_for('payment_page', booking_id=new_booking.id))
-    return render_template('booking_details.html', car=car)
+        start_str = request.form.get('start_date')
+        end_str = request.form.get('end_date')
+        try:
+            start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+            end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash("Invalid date format.")
+            return redirect(url_for('book_car_dates', car_id=car.id))
 
-@app.route('/booking/<int:booking_id>/payment', methods=['GET'])
+        duration_delta = end_date - start_date
+        duration_hours = duration_delta.total_seconds() / 3600
+
+        if duration_hours <= 0:
+            flash("End date must be after start date!")
+            return redirect(url_for('book_car_dates', car_id=car.id))
+
+        collision = Booking.query.filter(
+            Booking.car_id == car.id,
+            Booking.status != 'Cancelled',
+            Booking.start_date < end_date,
+            Booking.end_date > start_date
+        ).first()
+
+        if collision:
+            s_fmt = collision.start_date.strftime('%d %b')
+            e_fmt = collision.end_date.strftime('%d %b')
+            flash(f'❌ Unavailable! This car is already booked from {s_fmt} to {e_fmt}.')
+            return redirect(url_for('book_car_dates', car_id=car.id))
+
+        base_cost = int(duration_hours * car.price_per_hr)
+        driver_fee = 500 if 'with_driver' in request.form else 0
+        tax = 648
+        total_cost = base_cost + driver_fee + tax
+
+        return render_template('booking_payment.html', 
+                               car=car, 
+                               start_date=start_str, 
+                               end_date=end_str,
+                               base_cost=base_cost,
+                               driver_fee=driver_fee,
+                               tax=tax,
+                               total=total_cost,
+                               with_driver=('with_driver' in request.form))
+
+    return render_template('booking_dates.html', car=car)
+
+@app.route('/book/apply-coupon', methods=['POST'])
 @login_required
-def payment_page(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
+def apply_coupon():
+    car_id = request.form.get('car_id')
+    start_str = request.form.get('start_date')
+    end_str = request.form.get('end_date')
+    with_driver = request.form.get('with_driver') == 'True'
+    coupon_code = request.form.get('coupon_code').strip().upper()
+    
+    car = Car.query.get_or_404(car_id)
+    start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+    end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+    duration_hours = (end_date - start_date).total_seconds() / 3600
+    
+    base_cost = int(duration_hours * car.price_per_hr)
+    driver_fee = 500 if with_driver else 0
+    tax = 648
+    
+    discount = 0
+    coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
+    if coupon:
+        discount = coupon.discount_amount
+        flash(f'✅ Coupon Applied! You saved ₹{discount}')
+    else:
+        flash('❌ Invalid or Expired Coupon Code')
+    
+    total_cost = max(0, (base_cost + driver_fee + tax) - discount)
 
-    # safety check
-    if booking.user_id != current_user.id:
-        return redirect(url_for('dashboard'))
+    return render_template('booking_payment.html', 
+                           car=car, 
+                           start_date=start_str, 
+                           end_date=end_str,
+                           base_cost=base_cost,
+                           driver_fee=driver_fee,
+                           tax=tax,
+                           discount=discount,
+                           total=total_cost,
+                           with_driver=with_driver,
+                           applied_coupon=coupon_code if discount > 0 else "")
 
-    return render_template(
-        'payment.html',
-        booking=booking
-    )
-@app.route('/pay/<int:booking_id>', methods=['POST'])
-def process_payment(booking_id):
-    print("🔥 PAY ROUTE HIT")
+@app.route('/book/confirm/<int:car_id>', methods=['POST'])
+@login_required
+def confirm_booking(car_id):
+    car = Car.query.get_or_404(car_id)
+    start_str = request.form.get('start_date')
+    end_str = request.form.get('end_date')
+    start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+    end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
 
-    booking = Booking.query.get_or_404(booking_id)
+    total_cost = float(request.form.get('total_cost'))
+    base_cost = float(request.form.get('base_cost'))
+    driver_fee = float(request.form.get('driver_fee'))
+    discount = float(request.form.get('discount', 0))
+    with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    print("Payment method:", payment_method)
-
-    booking.payment_method = payment_method
-    booking.status = "Paid"
+    new_booking = Booking(
+        user_id=current_user.id,
+        car_id=car.id,
+        base_cost=base_cost,
+        driver_cost=driver_fee,
+        discount=discount,
+        total_cost=total_cost,
+        with_driver=with_driver,
+        payment_method=payment_method,
+        status='Paid' if payment_method != 'cod' else 'Confirmed',
+        start_date=start_date,
+        end_date=end_date
+    )
+    db.session.add(new_booking)
     db.session.commit()
-
-    return "PAYMENT SUCCESS"
     
+    # ✅ SEND EMAIL
+    send_booking_email(current_user, new_booking)
+    
+    return redirect(url_for('booking_success', booking_id=new_booking.id))
+
+@app.route('/booking/success/<int:booking_id>')
+@login_required
+def booking_success(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if booking.user_id != current_user.id:
+        return redirect(url_for('dashboard'))
+    return render_template('booking_success.html', booking=booking)
+
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
 def invoice(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-
     if booking.user_id != current_user.id and not current_user.is_admin:
         return redirect(url_for('dashboard'))
-
     return render_template('invoice.html', booking=booking)
 
-# --- Account Routes ---
+# --- REVIEWS ---
+@app.route('/review/submit', methods=['POST'])
+@login_required
+def submit_review():
+    car_id = request.form.get('car_id')
+    rating = int(request.form.get('rating'))
+    comment = request.form.get('comment')
+    
+    db.session.add(Review(user_id=current_user.id, car_id=car_id, rating=rating, comment=comment))
+    db.session.commit()
+    flash('Thank you for your feedback!')
+    return redirect(url_for('my_bookings'))
 
+# --- Account & Admin Routes ---
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -293,8 +455,6 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-# --- Admin Routes ---
-
 @app.route('/admin')
 @login_required
 def admin_dashboard():
@@ -335,7 +495,16 @@ def reject_kyc(user_id):
 def manage_cars():
     if not current_user.is_admin: return redirect(url_for('home'))
     if request.method == 'POST':
-        db.session.add(Car(name=request.form.get('name'), price_per_hr=int(request.form.get('price')), image_url=request.form.get('image'), category=request.form.get('category'), transmission="Auto", fuel_type="Petrol", seats=5))
+        db.session.add(Car(
+            name=request.form.get('name'), 
+            price_per_hr=int(request.form.get('price')), 
+            image_url=request.form.get('image'), 
+            category=request.form.get('category'), 
+            location=request.form.get('location'),
+            transmission="Auto", 
+            fuel_type="Petrol", 
+            seats=5
+        ))
         db.session.commit()
     cars = Car.query.all()
     return render_template('manage_cars.html', cars=cars)
@@ -347,6 +516,32 @@ def delete_car(id):
     db.session.delete(Car.query.get(id))
     db.session.commit()
     return redirect(url_for('manage_cars'))
+
+@app.route('/admin/coupons', methods=['GET', 'POST'])
+@login_required
+def manage_coupons():
+    if not current_user.is_admin: return redirect(url_for('home'))
+    if request.method == 'POST':
+        code = request.form.get('code').upper()
+        discount = int(request.form.get('discount'))
+        if Coupon.query.filter_by(code=code).first():
+            flash('Error: Coupon code already exists!')
+        else:
+            db.session.add(Coupon(code=code, discount_amount=discount))
+            db.session.commit()
+            flash('Coupon created successfully!')
+    coupons = Coupon.query.all()
+    return render_template('manage_coupons.html', coupons=coupons)
+
+@app.route('/admin/coupons/delete/<int:id>')
+@login_required
+def delete_coupon(id):
+    if not current_user.is_admin: return redirect(url_for('home'))
+    coupon = Coupon.query.get(id)
+    if coupon:
+        db.session.delete(coupon)
+        db.session.commit()
+    return redirect(url_for('manage_coupons'))
 
 @app.route('/admin/bookings')
 @login_required
@@ -388,9 +583,9 @@ def reset_db():
         db.create_all()
         if not Car.query.first():
             cars = [
-                Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
-                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
-                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600")
+                Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, location="Mumbai", image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
+                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, location="Delhi", image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
+                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, location="Bangalore", image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600")
             ]
             db.session.add_all(cars)
             admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True, kyc_status='Verified')
@@ -398,8 +593,7 @@ def reset_db():
             c1 = Coupon(code="WELCOME20", discount_amount=200)
             db.session.add(c1)
             db.session.commit()
-    return "Database has been reset! Please <a href='/register'>Register Again</a>."
+    return "Database has been reset! Cars are now distributed in Mumbai, Delhi, and Bangalore. Please <a href='/register'>Register Again</a>."
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
