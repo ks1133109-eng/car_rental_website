@@ -129,13 +129,61 @@ def register():
 
 @app.route('/fleet')
 def fleet():
-    category_filter = request.args.get('category')
+    # 1. Get all Filter Parameters from URL
+    category = request.args.get('category')
+    fuel_type = request.args.get('fuel_type')
+    seats = request.args.get('seats')
+    start_str = request.args.get('start_date')
+    end_str = request.args.get('end_date')
+
+    # 2. Start with a Base Query (All Available Cars)
     query = Car.query.filter_by(is_available=True)
-    if category_filter and category_filter != 'All':
-        query = query.filter_by(category=category_filter)
+
+    # 3. Apply "Static" Filters (Category, Fuel, Seats)
+    if category and category != 'All':
+        query = query.filter_by(category=category)
+    
+    if fuel_type and fuel_type != 'All':
+        query = query.filter_by(fuel_type=fuel_type)
+        
+    if seats and seats != 'All':
+        query = query.filter_by(seats=int(seats))
+
+    # 4. Apply "Dynamic" Date Availability Filter
+    if start_str and end_str:
+        try:
+            # We use type="date" in HTML, so we get YYYY-MM-DD
+            # Assume pickup is morning (00:00) and dropoff is night (23:59) for safety
+            req_start = datetime.strptime(start_str, '%Y-%m-%d')
+            req_end = datetime.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59)
+            
+            # Find IDs of cars that are BUSY during this time
+            busy_subquery = db.session.query(Booking.car_id).filter(
+                Booking.status != 'Cancelled',
+                Booking.start_date < req_end,  # Overlap Logic
+                Booking.end_date > req_start
+            ).subquery()
+            
+            # Exclude those busy cars from our main list
+            query = query.filter(Car.id.notin_(busy_subquery))
+            
+        except ValueError:
+            pass # If dates are invalid, just ignore them
+
+    # 5. Execute Query
     cars = query.all()
+
+    # 6. Get distinct values for the dropdown menus
     categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
-    return render_template('fleet.html', cars=cars, categories=categories, current_category=category_filter)
+    fuel_types = [c[0] for c in db.session.query(Car.fuel_type).distinct().all()]
+    seat_options = [c[0] for c in db.session.query(Car.seats).distinct().order_by(Car.seats).all()]
+
+    return render_template('fleet.html', 
+                           cars=cars, 
+                           categories=categories,
+                           fuel_types=fuel_types,
+                           seat_options=seat_options,
+                           current_filters=request.args) # Pass back filters to keep them selected
 
 # --- KYC & Booking ---
 
