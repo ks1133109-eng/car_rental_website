@@ -17,7 +17,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
-# Reads the password you saved in Render Dashboard > Environment Variables
+# Reads the password from Render Environment Variables (Secure)
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
 
@@ -108,7 +108,7 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- BACKGROUND EMAIL LOGIC ---
+# --- BACKGROUND EMAIL LOGIC (Fixes Timeout) ---
 def async_send_mail(app, msg):
     with app.app_context():
         try:
@@ -118,9 +118,9 @@ def async_send_mail(app, msg):
             print(f"Email failed: {e}")
 
 def send_booking_email(user, booking):
-    # Only try sending if password exists to prevent crashes
+    # Check if password exists to prevent crash
     if not app.config.get('MAIL_PASSWORD'):
-        print("Skipping email: No MAIL_PASSWORD set in Environment Variables.")
+        print("Skipping email: MAIL_PASSWORD not set in Render Environment.")
         return
 
     msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
@@ -137,7 +137,7 @@ def send_booking_email(user, booking):
     Drive Safe!
     - DriveX Team
     """
-    # Send in background thread so user doesn't wait
+    # ✅ Send in background thread (Crucial for Render)
     Thread(target=async_send_mail, args=(app, msg)).start()
 
 # --- Routes ---
@@ -356,7 +356,7 @@ def confirm_booking(car_id):
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    # ✅ 2. Create the Booking Object (This was missing!)
+    # ✅ 2. Create the Booking Object (FIXED LOGIC)
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
