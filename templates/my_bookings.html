@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>My Journeys | DriveX</title>
 </head>
-
 <body>
   {% extends "base.html" %}
 {% block content %}
@@ -19,30 +17,43 @@
     {% if bookings %}
         <div style="display: grid; gap: 20px;">
             {% for booking in bookings %}
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; gap: 20px; align-items: center;">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
                 
                 <img src="{{ booking.car.image_url }}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px;">
                 
-                <div style="flex: 1;">
+                <div style="flex: 1; min-width: 200px;">
                     <h3 style="margin: 0 0 5px;">{{ booking.car.name }}</h3>
-                    <p style="margin: 0; color: #666; font-size: 0.9rem;">
-                        <i class="fas fa-calendar-alt"></i> Booked on: {{ booking.date_booked.strftime('%d %b %Y') }}
+                    
+                    <p style="margin: 0 0 5px; color: #333; font-weight: 600; font-size: 0.95rem;">
+                        <i class="fas fa-calendar-day" style="color: #007bff; width: 20px;"></i> 
+                        {% if booking.start_date and booking.end_date %}
+                            {{ booking.start_date.strftime('%d %b') }} - {{ booking.end_date.strftime('%d %b, %Y') }}
+                        {% else %}
+                            Date: {{ booking.date_booked.strftime('%d %b %Y') }}
+                        {% endif %}
                     </p>
-                    <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem;">
-                        <i class="fas fa-receipt"></i> Total: ₹{{ booking.total_cost }}
-                        {% if booking.with_driver %} <span style="font-size: 0.8rem; color: #007bff;">(with Driver)</span>{% endif %}
+
+                    {% if booking.start_date %}
+                    <p style="margin: 0; color: #777; font-size: 0.85rem; padding-left: 24px;">
+                        {{ booking.start_date.strftime('%I:%M %p') }} to {{ booking.end_date.strftime('%I:%M %p') }}
+                    </p>
+                    {% endif %}
+                    
+                    <p style="margin: 8px 0 0; color: #666; font-size: 0.9rem;">
+                        <i class="fas fa-receipt" style="width: 20px;"></i> Total: <strong>₹{{ booking.total_cost }}</strong>
+                        {% if booking.with_driver %} <span style="font-size: 0.8rem; color: #007bff; background: #e7f1ff; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">With Driver</span>{% endif %}
                     </p>
                 </div>
                 
-                <div style="text-align: right; display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                <div style="text-align: right; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; min-width: 120px;">
                     <span style="padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; 
-                        background: {{ '#d4edda' if booking.status == 'Confirmed' or booking.status == 'Completed' else '#f8d7da' }};
-                        color: {{ '#155724' if booking.status == 'Confirmed' or booking.status == 'Completed' else '#721c24' }};">
+                        background: {{ '#d4edda' if booking.status == 'Confirmed' or booking.status == 'Paid' else '#f8d7da' }};
+                        color: {{ '#155724' if booking.status == 'Confirmed' or booking.status == 'Paid' else '#721c24' }};">
                         {{ booking.status }}
                     </span>
 
-                    <a href="{{ url_for('invoice', booking_id=booking.id) }}" target="_blank" style="padding: 6px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 20px; font-size: 0.85rem; display: inline-block;">
-                        <i class="fas fa-file-invoice"></i> Receipt
+                    <a href="{{ url_for('invoice', booking_id=booking.id) }}" target="_blank" style="padding: 8px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-size: 0.85rem; display: inline-block;">
+                        <i class="fas fa-download"></i> Receipt
                     </a>
                 </div>
 
@@ -58,8 +69,5 @@
     {% endif %}
 </div>
 {% endblock %}
-
-
 </body>
-
 </html>
