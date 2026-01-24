@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>Admin | Manage Bookings</title>
 </head>
 
 <body>
@@ -29,7 +29,7 @@
                     <th style="padding: 15px;">ID</th>
                     <th>User & Identity</th>
                     <th>Car</th>
-                    <th>Status</th>
+                    <th>Schedule</th> <th>Status</th>
                     <th>Actions</th>
                 </tr>
                 {% for booking in bookings %}
@@ -61,12 +61,30 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if booking.status == 'Confirmed' %}
-                            <span style="color: green; font-weight: bold;">Confirmed</span>
-                        {% elif booking.status == 'Cancelled' %}
-                            <span style="color: red; font-weight: bold;">Cancelled</span>
+                        {% if booking.start_date and booking.end_date %}
+                            <div style="font-size: 0.9rem; font-weight: 600; color: #333;">
+                                {{ booking.start_date.strftime('%b %d') }} - {{ booking.end_date.strftime('%b %d') }}
+                            </div>
+                            <div style="font-size: 0.8rem; color: #666;">
+                                {{ booking.start_date.strftime('%I:%M %p') }} to {{ booking.end_date.strftime('%I:%M %p') }}
+                            </div>
                         {% else %}
-                            <span style="color: orange; font-weight: bold;">{{ booking.status }}</span>
+                            <span style="color: #ccc;">No dates</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if booking.status == 'Confirmed' or booking.status == 'Paid' %}
+                            <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                                {{ booking.status }}
+                            </span>
+                        {% elif booking.status == 'Cancelled' %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                                Cancelled
+                            </span>
+                        {% else %}
+                            <span style="background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                                {{ booking.status }}
+                            </span>
                         {% endif %}
                     </td>
                     <td>
@@ -93,5 +111,4 @@
 {% endblock %}
 
 </body>
-
 </html>
