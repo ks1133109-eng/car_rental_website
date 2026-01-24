@@ -12,17 +12,18 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# ✅ FIX 1: Use Port 465 (SSL) to bypass Network Unreachable error
+# ✅ FINAL EMAIL CONFIGURATION (Port 465 SSL)
+# This fixes the "Network Unreachable" error you are seeing in logs
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465               # <--- MUST BE 465
-app.config['MAIL_USE_TLS'] = False          # <--- MUST BE False
-app.config['MAIL_USE_SSL'] = True           # <--- MUST BE True
+app.config['MAIL_PORT'] = 465               # ✅ Changed to 465 (Secure)
+app.config['MAIL_USE_TLS'] = False          # ✅ Disable TLS
+app.config['MAIL_USE_SSL'] = True           # ✅ Enable SSL
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
 # Reads the password you saved in Render Environment Variables
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
 
-# ✅ FIX 2: Initialize Mail correctly
+# ✅ Initialize Mail
 mail = Mail(app)
 
 # Database Configuration
@@ -110,7 +111,7 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- FIX 3: Background Email Logic (Prevents Timeouts) ---
+# --- BACKGROUND EMAIL LOGIC (Prevents Timeouts) ---
 def async_send_mail(app, msg):
     with app.app_context():
         try:
@@ -120,7 +121,6 @@ def async_send_mail(app, msg):
             print(f"❌ Email failed: {e}")
 
 def send_booking_email(user, booking):
-    # Check if password is set to prevent crashes
     if not app.config.get('MAIL_PASSWORD'):
         print("⚠️ Skipping email: No MAIL_PASSWORD set.")
         return
@@ -139,10 +139,23 @@ def send_booking_email(user, booking):
     Drive Safe!
     - DriveX Team
     """
-    # Send in background thread
+    # Send in background thread so user doesn't wait
     Thread(target=async_send_mail, args=(app, msg)).start()
 
 # --- Routes ---
+
+# ✅ NEW: DEBUG ROUTE TO TEST EMAIL DIRECTLY
+@app.route('/test-email')
+@login_required
+def test_email():
+    try:
+        msg = Message("DriveX Test Email", recipients=[current_user.email])
+        msg.body = "If you are reading this, your email configuration is PERFECT!"
+        mail.send(msg)
+        return "<h1>✅ Email Sent Successfully! Check your Inbox (and Spam).</h1>"
+    except Exception as e:
+        return f"<h1>❌ Email Failed:</h1><p>{str(e)}</p>"
+
 @app.route('/')
 def home():
     locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
