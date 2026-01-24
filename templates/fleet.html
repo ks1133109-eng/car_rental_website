@@ -9,6 +9,16 @@
         <form action="{{ url_for('fleet') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: end;">
             
             <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">LOCATION</label>
+                <select name="location" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="All">All Cities</option>
+                    {% for loc in locations %}
+                        <option value="{{ loc }}" {% if current_filters.get('location') == loc %}selected{% endif %}>{{ loc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
                 <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">TYPE</label>
                 <select name="category" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
                     <option value="All">All Types</option>
@@ -66,7 +76,10 @@
                 </div>
                 <div class="car-body">
                     <h3 class="car-title">{{ car.name }}</h3>
-                    <span class="car-subtitle">{{ car.category }}</span>
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#666; margin-bottom:10px;">
+                        <span>{{ car.category }}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> {{ car.location }}</span>
+                    </div>
                     
                     <div class="specs">
                         <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
@@ -90,7 +103,7 @@
                 <i class="fas fa-search" style="font-size: 2rem; color: #ccc;"></i>
             </div>
             <h2>No cars available</h2>
-            <p>Try adjusting your filters or changing the dates.</p>
+            <p>Try adjusting your location or dates.</p>
             <a href="{{ url_for('fleet') }}" style="color: #007bff; font-weight: bold; text-decoration: none;">Clear all filters</a>
         </div>
     {% endif %}
