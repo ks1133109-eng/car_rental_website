@@ -1,5 +1,5 @@
 import os
-from threading import Thread  # ✅ REQUIRED FOR BACKGROUND EMAILS
+from threading import Thread
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -17,7 +17,6 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
-# This reads the password you just saved in Render Settings:
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
 
@@ -108,7 +107,7 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- BACKGROUND EMAIL LOGIC (Fixes Timeout) ---
+# --- BACKGROUND EMAIL LOGIC ---
 def async_send_mail(app, msg):
     with app.app_context():
         try:
@@ -118,7 +117,6 @@ def async_send_mail(app, msg):
             print(f"Email failed: {e}")
 
 def send_booking_email(user, booking):
-    # If no password is set, skip email to prevent crash
     if not app.config.get('MAIL_PASSWORD'):
         print("Skipping email: No MAIL_PASSWORD set.")
         return
@@ -137,8 +135,6 @@ def send_booking_email(user, booking):
     Drive Safe!
     - DriveX Team
     """
-    
-    # ✅ Start background thread
     Thread(target=async_send_mail, args=(app, msg)).start()
 
 # --- Routes ---
@@ -343,7 +339,7 @@ def apply_coupon():
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
-    # 1. Fetch Data
+    # ✅ 1. Get Data from Form
     car = Car.query.get_or_404(car_id)
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
@@ -357,7 +353,7 @@ def confirm_booking(car_id):
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    # 2. Save Booking
+    # ✅ 2. Create the new_booking object
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
@@ -371,10 +367,12 @@ def confirm_booking(car_id):
         start_date=start_date,
         end_date=end_date
     )
+    
+    # ✅ 3. Save to Database
     db.session.add(new_booking)
     db.session.commit()
     
-    # 3. Send Email (Now using Threading to prevent 502 Timeout)
+    # ✅ 4. Send Email in Background
     send_booking_email(current_user, new_booking)
     
     return redirect(url_for('booking_success', booking_id=new_booking.id))
