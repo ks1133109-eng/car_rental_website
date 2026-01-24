@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>DriveX | Home</title>
 </head>
 
 <body>
@@ -17,25 +17,35 @@
     <p>India's first truly intelligent car ecosystem. Seamless access to luxury, from self-drive adventures to professional chauffeur services.</p>
     <div style="margin-top: 20px;">
         <a href="{{ url_for('fleet') }}" class="btn-login" style="padding: 12px 30px; text-decoration: none; display: inline-block;">
-    Explore Fleet <i class="fas fa-arrow-right"></i>
-</a>
+            Explore Fleet <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
 
-
-    <div class="search-container">
+    <form action="{{ url_for('fleet') }}" method="GET" class="search-container">
+        
         <div class="search-group">
             <label>Location</label>
-            <select><option>Mumbai</option><option>Delhi</option><option>Bangalore</option></select>
+            <select name="location">
+                {% if locations %}
+                    {% for loc in locations %}
+                        <option value="{{ loc }}">{{ loc }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="All">All Cities</option>
+                {% endif %}
+            </select>
         </div>
+
         <div class="search-group">
             <label>Pick-up Date</label>
-            <input type="datetime-local">
+            <input type="date" name="start_date" required>
         </div>
         <div class="search-group">
             <label>Return Date</label>
-            <input type="datetime-local">
+            <input type="date" name="end_date" required>
         </div>
-        <button class="btn-search">Search</button>
-    </div>
+        <button type="submit" class="btn-search">Search</button>
+    </form>
 </header>
 
 <h2 class="section-title">Designed for every narrative.</h2>
@@ -44,11 +54,11 @@
     <div class="car-card">
         <div class="car-header">
             <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
-            <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> {{ car.rating }}</div>
+            <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> 5.0</div>
         </div>
         <div class="car-body">
             <h3 class="car-title">{{ car.name }}</h3>
-            <span class="car-subtitle">{{ car.trips_completed }}+ VOYAGES COMPLETE</span>
+            <span class="car-subtitle">PREMIUM SELECTION</span>
             
             <div class="specs">
                 <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
@@ -58,7 +68,8 @@
 
             <div class="car-footer">
                 <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
-                <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
+                
+                <a href="{{ url_for('book_car_dates', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -66,7 +77,5 @@
 </div>
 {% endblock %}
 
-
 </body>
-
 </html>

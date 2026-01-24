@@ -1,93 +1,112 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
-</head>
-
-<body>
-  {% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 
-<div style="background-color: #f8f9fa; min-height: 100vh; padding-bottom: 50px;">
+<div style="padding: 100px 5% 40px; background: #f8f9fa; min-height: 100vh;">
 
-    <div style="background: white; padding: 30px 5%; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;">
-        <h1 style="margin-top: 0; font-size: 1.8rem;">Our Premium Fleet</h1>
+    <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 40px;">
+        <h1 style="margin-top: 0; font-size: 1.5rem; margin-bottom: 20px;">Find your perfect drive</h1>
         
-        <form action="{{ url_for('fleet') }}" method="GET" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end; margin-top: 20px;">
+        <form action="{{ url_for('fleet') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: end;">
             
-            <div style="flex: 1; min-width: 200px;">
-                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">CAR TYPE</label>
-                <select name="category" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 1rem;">
-                    <option value="All">All Categories</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>{{ cat }}</option>
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">LOCATION</label>
+                <select name="location" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="All">All Cities</option>
+                    {% for loc in locations %}
+                        <option value="{{ loc }}" {% if current_filters.get('location') == loc %}selected{% endif %}>{{ loc }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <div style="flex: 1; min-width: 150px;">
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">TYPE</label>
+                <select name="category" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="All">All Types</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if current_filters.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">FUEL</label>
+                <select name="fuel_type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="All">Any Fuel</option>
+                    {% for fuel in fuel_types %}
+                        <option value="{{ fuel }}" {% if current_filters.get('fuel_type') == fuel %}selected{% endif %}>{{ fuel }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">SEATS</label>
+                <select name="seats" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="All">Any</option>
+                    {% for seat in seat_options %}
+                        <option value="{{ seat }}" {% if current_filters.get('seats') == seat|string %}selected{% endif %}>{{ seat }} Seater</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
                 <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">PICKUP</label>
-                <input type="date" style="width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;">
+                <input type="date" name="start_date" value="{{ current_filters.get('start_date', '') }}" style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 8px;">
             </div>
 
-            <div style="flex: 1; min-width: 150px;">
+            <div>
                 <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">RETURN</label>
-                <input type="date" style="width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;">
+                <input type="date" name="end_date" value="{{ current_filters.get('end_date', '') }}" style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 8px;">
             </div>
 
-            <button type="submit" style="background: var(--primary); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; min-width: 120px;">
-                Find Car
+            <button type="submit" style="background: #007bff; color: white; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; height: 42px;">
+                Search Filter
             </button>
             
-            <a href="{{ url_for('fleet') }}" style="padding: 12px; color: #666; text-decoration: none;">Reset</a>
+            <a href="{{ url_for('fleet') }}" style="text-align: center; font-size: 0.9rem; color: #666; text-decoration: none; padding: 10px;">Reset</a>
         </form>
     </div>
 
-    <div style="padding: 40px 5%;">
-        
-        {% if cars %}
-            <div class="car-grid">
-                {% for car in cars %}
-                <div class="car-card">
-                    <div class="car-header">
-                        <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
-                        <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> {{ car.rating }}</div>
+    {% if cars %}
+        <div class="car-grid" style="padding: 0;">
+            {% for car in cars %}
+            <div class="car-card">
+                <div class="car-header">
+                    <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
+                    <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> 5.0</div>
+                </div>
+                <div class="car-body">
+                    <h3 class="car-title">{{ car.name }}</h3>
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#666; margin-bottom:10px;">
+                        <span>{{ car.category }}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> {{ car.location }}</span>
                     </div>
-                    <div class="car-body">
-                        <h3 class="car-title">{{ car.name }}</h3>
-                        <span class="car-subtitle" style="margin-bottom: 15px; display: block;">{{ car.category }} • {{ car.trips_completed }}+ Trips</span>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-user"></i> {{ car.seats }} Seats</div>
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-tachometer-alt"></i> Fast</div>
-                        </div>
+                    
+                    <div class="specs">
+                        <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
+                        <div class="spec-chip"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
+                        <div class="spec-chip"><i class="fas fa-user"></i> {{ car.seats }}</div>
+                    </div>
 
-                        <div class="car-footer">
-                            <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
-                            <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
-                        </div>
+                    <div class="car-footer">
+                        <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
+                        <a href="{{ url_for('book_car_dates', car_id=car.id) }}" class="btn-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-        {% else %}
-            <div style="text-align: center; padding: 60px; color: #999;">
-                <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                <h2>No cars found</h2>
-                <p>Try changing your filters or category.</p>
-                <a href="{{ url_for('fleet') }}" style="color: var(--primary); font-weight: bold;">View All Cars</a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 80px 20px; color: #999;">
+            <div style="background: #eee; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-search" style="font-size: 2rem; color: #ccc;"></i>
             </div>
-        {% endif %}
-    </div>
+            <h2>No cars available</h2>
+            <p>Try adjusting your location or dates.</p>
+            <a href="{{ url_for('fleet') }}" style="color: #007bff; font-weight: bold; text-decoration: none;">Clear all filters</a>
+        </div>
+    {% endif %}
 
 </div>
 {% endblock %}
-
-</body>
-
-</html>

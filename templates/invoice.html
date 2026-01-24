@@ -26,7 +26,8 @@
                             <td class="top-title">DriveX</td>
                             <td>
                                 Invoice #: {{ booking.id }}<br>
-                                Created: {{ booking.date_booked.strftime('%B %d, %Y') }}<br>
+                                Date: {{ booking.date_booked.strftime('%B %d, %Y') }}<br>
+                                Status: <strong style="color: green;">{{ booking.status }}</strong>
                             </td>
                         </tr>
                     </table>
@@ -43,8 +44,9 @@
                                 Mumbai, India
                             </td>
                             <td>
-                                {{ booking.user.name }}<br>
-                                {{ booking.user.email }}
+                                <strong>{{ booking.user.name }}</strong><br>
+                                {{ booking.user.email }}<br>
+                                {{ booking.user.phone }}
                             </td>
                         </tr>
                     </table>
@@ -52,18 +54,40 @@
             </tr>
 
             <tr class="heading">
-                <td>Item Description</td>
+                <td>Rental Details</td>
+                <td></td>
+            </tr>
+
+            <tr class="item">
+                <td>Vehicle</td>
+                <td>{{ booking.car.name }}</td>
+            </tr>
+            
+            <tr class="item">
+                <td>Rental Period</td>
+                <td>
+                    {% if booking.start_date and booking.end_date %}
+                        {{ booking.start_date.strftime('%b %d, %I:%M %p') }} <br>
+                        to {{ booking.end_date.strftime('%b %d, %I:%M %p') }}
+                    {% else %}
+                        24 Hours (Standard)
+                    {% endif %}
+                </td>
+            </tr>
+
+            <tr class="heading">
+                <td>Charges</td>
                 <td>Price</td>
             </tr>
 
             <tr class="item">
-                <td>{{ booking.car.name }} (24 Hour Rental)</td>
+                <td>Base Fare</td>
                 <td>₹{{ booking.base_cost }}</td>
             </tr>
 
             {% if booking.with_driver %}
             <tr class="item">
-                <td>Professional Driver Service</td>
+                <td>Professional Driver</td>
                 <td>₹{{ booking.driver_cost }}</td>
             </tr>
             {% endif %}
