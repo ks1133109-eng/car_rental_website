@@ -1,24 +1,24 @@
-from threading import Thread
 import os
+from threading import Thread  # ✅ REQUIRED FOR BACKGROUND EMAILS
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from flask_mail import Mail, Message  # ✅ NEW IMPORT
+from flask_mail import Mail, Message
 
 # --- Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# ✅ EMAIL CONFIGURATION (Replace with your details)
+# ✅ EMAIL CONFIGURATION
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  # <--- REPLACE THIS
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-   # <--- REPLACE THIS (Use App Password, not real password)
+app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
+# This reads the password you just saved in Render Settings:
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
 
 mail = Mail(app)
@@ -64,14 +64,12 @@ class Car(db.Model):
     seats = db.Column(db.Integer)
     is_available = db.Column(db.Boolean, default=True)
     location = db.Column(db.String(50), default='Mumbai')
-    
-    # ✅ NEW: Relationship to Reviews
     reviews = db.relationship('Review', backref='car', lazy=True)
 
     @property
     def average_rating(self):
         if not self.reviews:
-            return 5.0  # Default rating
+            return 5.0
         return round(sum([r.rating for r in self.reviews]) / len(self.reviews), 1)
 
 class Review(db.Model):
@@ -109,15 +107,22 @@ class Booking(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-# --- Asynchronous Email Logic ---
+
+# --- BACKGROUND EMAIL LOGIC (Fixes Timeout) ---
 def async_send_mail(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
+            print("Email sent successfully!")
         except Exception as e:
             print(f"Email failed: {e}")
 
 def send_booking_email(user, booking):
+    # If no password is set, skip email to prevent crash
+    if not app.config.get('MAIL_PASSWORD'):
+        print("Skipping email: No MAIL_PASSWORD set.")
+        return
+
     msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
     msg.body = f"""
     Hello {user.name},
@@ -133,11 +138,10 @@ def send_booking_email(user, booking):
     - DriveX Team
     """
     
-    # ✅ This line sends the email in the background instantly
+    # ✅ Start background thread
     Thread(target=async_send_mail, args=(app, msg)).start()
 
-
-# --- Public Routes ---
+# --- Routes ---
 @app.route('/')
 def home():
     locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
@@ -186,13 +190,10 @@ def fleet():
 
     if location and location != 'All':
         query = query.filter_by(location=location)
-
     if category and category != 'All':
         query = query.filter_by(category=category)
-    
     if fuel_type and fuel_type != 'All':
         query = query.filter_by(fuel_type=fuel_type)
-        
     if seats and seats != 'All':
         query = query.filter_by(seats=int(seats))
 
@@ -216,8 +217,6 @@ def fleet():
     seat_options = [c[0] for c in db.session.query(Car.seats).distinct().order_by(Car.seats).all()]
 
     return render_template('fleet.html', cars=cars, locations=locations, categories=categories, fuel_types=fuel_types, seat_options=seat_options, current_filters=request.args)
-
-# --- KYC & Booking ---
 
 @app.route('/kyc', methods=['GET', 'POST'])
 @login_required
@@ -344,17 +343,41 @@ def apply_coupon():
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
-    # ... (Your existing code to get form data) ...
+    # 1. Fetch Data
+    car = Car.query.get_or_404(car_id)
+    start_str = request.form.get('start_date')
+    end_str = request.form.get('end_date')
+    start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+    end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
 
-    # ... (Your existing code to save booking) ...
+    total_cost = float(request.form.get('total_cost'))
+    base_cost = float(request.form.get('base_cost'))
+    driver_fee = float(request.form.get('driver_fee'))
+    discount = float(request.form.get('discount', 0))
+    with_driver = request.form.get('with_driver') == 'True'
+    payment_method = request.form.get('payment_method')
+
+    # 2. Save Booking
+    new_booking = Booking(
+        user_id=current_user.id,
+        car_id=car.id,
+        base_cost=base_cost,
+        driver_cost=driver_fee,
+        discount=discount,
+        total_cost=total_cost,
+        with_driver=with_driver,
+        payment_method=payment_method,
+        status='Paid' if payment_method != 'cod' else 'Confirmed',
+        start_date=start_date,
+        end_date=end_date
+    )
     db.session.add(new_booking)
     db.session.commit()
     
-    # This will now run instantly because of the Thread fix
+    # 3. Send Email (Now using Threading to prevent 502 Timeout)
     send_booking_email(current_user, new_booking)
     
     return redirect(url_for('booking_success', booking_id=new_booking.id))
-
 
 @app.route('/booking/success/<int:booking_id>')
 @login_required
@@ -372,20 +395,18 @@ def invoice(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('invoice.html', booking=booking)
 
-# --- REVIEWS ---
 @app.route('/review/submit', methods=['POST'])
 @login_required
 def submit_review():
     car_id = request.form.get('car_id')
     rating = int(request.form.get('rating'))
     comment = request.form.get('comment')
-    
     db.session.add(Review(user_id=current_user.id, car_id=car_id, rating=rating, comment=comment))
     db.session.commit()
     flash('Thank you for your feedback!')
     return redirect(url_for('my_bookings'))
 
-# --- Account & Admin Routes ---
+# --- Account & Admin ---
 @app.route('/dashboard')
 @login_required
 def dashboard():
