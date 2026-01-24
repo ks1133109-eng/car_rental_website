@@ -8,7 +8,6 @@ from datetime import datetime
 # --- Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
-# Increase upload limit to 16MB just in case
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
 # Database Configuration
@@ -35,14 +34,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
-    
-    # KYC FIELDS (Updated for Images)
     gov_id = db.Column(db.String(50)) 
-    # We use db.Text to store the Image Data (Base64 string)
     gov_id_image = db.Column(db.Text) 
     user_selfie = db.Column(db.Text) 
     kyc_status = db.Column(db.String(20), default='Unverified')
-    
     is_admin = db.Column(db.Boolean, default=False)
 
 class Car(db.Model):
@@ -55,6 +50,9 @@ class Car(db.Model):
     fuel_type = db.Column(db.String(20))
     seats = db.Column(db.Integer)
     is_available = db.Column(db.Boolean, default=True)
+    
+    # ✅ NEW: Location Field
+    location = db.Column(db.String(50), default='Mumbai') 
 
 class Coupon(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,27 +64,18 @@ class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     car_id = db.Column(db.Integer, db.ForeignKey('car.id'))
-
     status = db.Column(db.String(50), default='Upcoming')
-
     base_cost = db.Column(db.Integer)
     driver_cost = db.Column(db.Integer, default=0)
     discount = db.Column(db.Integer, default=0)
     total_cost = db.Column(db.Integer)
-
     with_driver = db.Column(db.Boolean, default=False)
     payment_method = db.Column(db.String(30))
-    
-    # ✅ NEW FIELDS: Store the Trip Dates
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-
-    # When the booking was created
     date_booked = db.Column(db.DateTime, default=datetime.utcnow)
-
     car = db.relationship('Car')
     user = db.relationship('User')
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -95,8 +84,10 @@ def load_user(user_id):
 # --- Public Routes ---
 @app.route('/')
 def home():
+    # Only show distinct locations available in DB
+    locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
     cars = Car.query.filter_by(is_available=True).all()
-    return render_template('index.html', cars=cars)
+    return render_template('index.html', cars=cars, locations=locations)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -129,17 +120,21 @@ def register():
 
 @app.route('/fleet')
 def fleet():
-    # 1. Get all Filter Parameters from URL
+    # 1. Get Filters
+    location = request.args.get('location') # ✅ NEW
     category = request.args.get('category')
     fuel_type = request.args.get('fuel_type')
     seats = request.args.get('seats')
     start_str = request.args.get('start_date')
     end_str = request.args.get('end_date')
 
-    # 2. Start with a Base Query (All Available Cars)
+    # 2. Base Query
     query = Car.query.filter_by(is_available=True)
 
-    # 3. Apply "Static" Filters (Category, Fuel, Seats)
+    # 3. Apply Filters
+    if location and location != 'All':
+        query = query.filter_by(location=location) # ✅ Filter by City
+
     if category and category != 'All':
         query = query.filter_by(category=category)
     
@@ -149,41 +144,37 @@ def fleet():
     if seats and seats != 'All':
         query = query.filter_by(seats=int(seats))
 
-    # 4. Apply "Dynamic" Date Availability Filter
+    # 4. Date Availability Check
     if start_str and end_str:
         try:
-            # We use type="date" in HTML, so we get YYYY-MM-DD
-            # Assume pickup is morning (00:00) and dropoff is night (23:59) for safety
             req_start = datetime.strptime(start_str, '%Y-%m-%d')
             req_end = datetime.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59)
             
-            # Find IDs of cars that are BUSY during this time
             busy_subquery = db.session.query(Booking.car_id).filter(
                 Booking.status != 'Cancelled',
-                Booking.start_date < req_end,  # Overlap Logic
+                Booking.start_date < req_end,
                 Booking.end_date > req_start
             ).subquery()
             
-            # Exclude those busy cars from our main list
             query = query.filter(Car.id.notin_(busy_subquery))
-            
         except ValueError:
-            pass # If dates are invalid, just ignore them
+            pass
 
-    # 5. Execute Query
     cars = query.all()
 
-    # 6. Get distinct values for the dropdown menus
+    # 5. Get Filter Options
+    locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
     categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
     fuel_types = [c[0] for c in db.session.query(Car.fuel_type).distinct().all()]
     seat_options = [c[0] for c in db.session.query(Car.seats).distinct().order_by(Car.seats).all()]
 
     return render_template('fleet.html', 
                            cars=cars, 
+                           locations=locations, # ✅ Pass locations to template
                            categories=categories,
                            fuel_types=fuel_types,
                            seat_options=seat_options,
-                           current_filters=request.args) # Pass back filters to keep them selected
+                           current_filters=request.args)
 
 # --- KYC & Booking ---
 
@@ -195,16 +186,12 @@ def kyc():
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        # Get form data
         current_user.phone = request.form.get('phone')
         current_user.address = request.form.get('address')
         current_user.gov_id = request.form.get('gov_id')
-        
-        # Get the Base64 Image Strings (Hidden Inputs)
         current_user.gov_id_image = request.form.get('gov_id_image_data')
         current_user.user_selfie = request.form.get('user_selfie_data')
         
-        # Validate that images were provided
         if not current_user.gov_id_image or not current_user.user_selfie:
             flash('⚠️ Please upload both your ID and take a selfie.')
             return redirect(url_for('kyc'))
@@ -216,13 +203,9 @@ def kyc():
         
     return render_template('kyc.html')
 
-# --- Updated Booking Flow ---
-
-# STEP 1: DATE SELECTION (With Availability Check)
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car_dates(car_id):
-    # KYC Check
     if current_user.kyc_status != 'Verified':
         if current_user.kyc_status == 'Pending':
             flash('⏳ Your KYC is Pending Approval.')
@@ -237,7 +220,6 @@ def book_car_dates(car_id):
         start_str = request.form.get('start_date')
         end_str = request.form.get('end_date')
         
-        # Convert string to datetime
         try:
             start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
             end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
@@ -245,7 +227,6 @@ def book_car_dates(car_id):
             flash("Invalid date format.")
             return redirect(url_for('book_car_dates', car_id=car.id))
 
-        # 1. Check for valid duration
         duration_delta = end_date - start_date
         duration_hours = duration_delta.total_seconds() / 3600
 
@@ -253,29 +234,24 @@ def book_car_dates(car_id):
             flash("End date must be after start date!")
             return redirect(url_for('book_car_dates', car_id=car.id))
 
-        # ✅ NEW: Check for Overlapping Bookings
-        # Logic: (StartA < EndB) and (EndA > StartB)
         collision = Booking.query.filter(
             Booking.car_id == car.id,
-            Booking.status != 'Cancelled',  # Ignore cancelled trips
-            Booking.start_date < end_date,  # Existing starts before new ends
-            Booking.end_date > start_date   # Existing ends after new starts
+            Booking.status != 'Cancelled',
+            Booking.start_date < end_date,
+            Booking.end_date > start_date
         ).first()
 
         if collision:
-            # Format the dates for a nice error message
             s_fmt = collision.start_date.strftime('%d %b')
             e_fmt = collision.end_date.strftime('%d %b')
             flash(f'❌ Unavailable! This car is already booked from {s_fmt} to {e_fmt}.')
             return redirect(url_for('book_car_dates', car_id=car.id))
 
-        # Calculate Costs (If available)
         base_cost = int(duration_hours * car.price_per_hr)
         driver_fee = 500 if 'with_driver' in request.form else 0
         tax = 648
         total_cost = base_cost + driver_fee + tax
 
-        # Proceed to Payment
         return render_template('booking_payment.html', 
                                car=car, 
                                start_date=start_str, 
@@ -288,19 +264,12 @@ def book_car_dates(car_id):
 
     return render_template('booking_dates.html', car=car)
 
-
-# STEP 2: CONFIRM & PAY (Finalize Booking)
-# STEP 2: CONFIRM & PAY (Finalize Booking)
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
     car = Car.query.get_or_404(car_id)
-    
-    # Retrieve data from hidden fields
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
-    
-    # ✅ Convert strings back to DateTime objects for saving
     start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
     end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
 
@@ -310,7 +279,6 @@ def confirm_booking(car_id):
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    # Create Booking with Dates
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
@@ -320,16 +288,13 @@ def confirm_booking(car_id):
         with_driver=with_driver,
         payment_method=payment_method,
         status='Paid' if payment_method != 'cod' else 'Confirmed',
-        start_date=start_date, # ✅ Saving Start Date
-        end_date=end_date      # ✅ Saving End Date
+        start_date=start_date,
+        end_date=end_date
     )
-    
     db.session.add(new_booking)
     db.session.commit()
-    
     return redirect(url_for('booking_success', booking_id=new_booking.id))
 
-# STEP 3: SUCCESS PAGE
 @app.route('/booking/success/<int:booking_id>')
 @login_required
 def booking_success(booking_id):
@@ -338,43 +303,12 @@ def booking_success(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('booking_success.html', booking=booking)
 
-
-@app.route('/booking/<int:booking_id>/payment', methods=['GET'])
-@login_required
-def payment_page(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-
-    # safety check
-    if booking.user_id != current_user.id:
-        return redirect(url_for('dashboard'))
-
-    return render_template(
-        'payment.html',
-        booking=booking
-    )
-    
-@app.route('/pay/<int:booking_id>', methods=['POST'])
-def process_payment(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
-
-    payment_method = request.form.get('payment_method')
-    if not payment_method:
-        return "NO PAYMENT METHOD", 400
-
-    booking.payment_method = payment_method
-    booking.status = "Paid"
-    db.session.commit()
-
-    return f"PAYMENT SUCCESS FOR BOOKING {booking.id}"
-
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
 def invoice(booking_id):
     booking = Booking.query.get_or_404(booking_id)
-
     if booking.user_id != current_user.id and not current_user.is_admin:
         return redirect(url_for('dashboard'))
-
     return render_template('invoice.html', booking=booking)
 
 # --- Account Routes ---
@@ -475,9 +409,21 @@ def reject_kyc(user_id):
 @login_required
 def manage_cars():
     if not current_user.is_admin: return redirect(url_for('home'))
+    
     if request.method == 'POST':
-        db.session.add(Car(name=request.form.get('name'), price_per_hr=int(request.form.get('price')), image_url=request.form.get('image'), category=request.form.get('category'), transmission="Auto", fuel_type="Petrol", seats=5))
+        # ✅ NEW: Add Car with Location
+        db.session.add(Car(
+            name=request.form.get('name'), 
+            price_per_hr=int(request.form.get('price')), 
+            image_url=request.form.get('image'), 
+            category=request.form.get('category'), 
+            location=request.form.get('location'), # <--- Save City
+            transmission="Auto", 
+            fuel_type="Petrol", 
+            seats=5
+        ))
         db.session.commit()
+        
     cars = Car.query.all()
     return render_template('manage_cars.html', cars=cars)
 
@@ -528,19 +474,22 @@ def reset_db():
         db.drop_all()
         db.create_all()
         if not Car.query.first():
+            # ✅ NEW: Seeding cars in different cities
             cars = [
-                Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
-                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
-                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600")
+                Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, location="Mumbai", image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
+                Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, location="Delhi", image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
+                Car(name="Mahindra Thar", category="SUV", price_per_hr=180, transmission="Manual", fuel_type="Diesel", seats=4, location="Bangalore", image_url="https://images.unsplash.com/photo-1632245889029-e41314320873?w=600")
             ]
             db.session.add_all(cars)
+            
             admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True, kyc_status='Verified')
             db.session.add(admin)
+            
             c1 = Coupon(code="WELCOME20", discount_amount=200)
             db.session.add(c1)
+            
             db.session.commit()
-    return "Database has been reset! Please <a href='/register'>Register Again</a>."
+    return "Database has been reset! Cars are now distributed in Mumbai, Delhi, and Bangalore. Please <a href='/register'>Register Again</a>."
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
