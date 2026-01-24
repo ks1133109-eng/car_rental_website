@@ -12,14 +12,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# ✅ EMAIL CONFIGURATION (Updated to Fix "Network Unreachable" Error)
+# ✅ FINAL EMAIL CONFIGURATION (Port 465 SSL)
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465           # <--- CHANGE TO 465
-app.config['MAIL_USE_TLS'] = False      # <--- CHANGE TO False
-app.config['MAIL_USE_SSL'] = True       # <--- ADD THIS (True)
+app.config['MAIL_PORT'] = 465               # ✅ Changed to 465 (Secure)
+app.config['MAIL_USE_TLS'] = False          # ✅ Disable TLS
+app.config['MAIL_USE_SSL'] = True           # ✅ Enable SSL
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
+
+# ✅ Initialize Mail (Crucial - Do not delete!)
+mail = Mail(app)
 
 # Database Configuration
 database_url = os.environ.get('DATABASE_URL')
@@ -106,19 +109,18 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- BACKGROUND EMAIL LOGIC (Fixes Timeout) ---
+# --- BACKGROUND EMAIL LOGIC ---
 def async_send_mail(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
-            print("Email sent successfully!")
+            print("✅ Email sent successfully!")
         except Exception as e:
-            print(f"Email failed: {e}")
+            print(f"❌ Email failed: {e}")
 
 def send_booking_email(user, booking):
-    # Check if password exists to prevent crash
     if not app.config.get('MAIL_PASSWORD'):
-        print("Skipping email: MAIL_PASSWORD not set in Render Environment.")
+        print("⚠️ Skipping email: No MAIL_PASSWORD set.")
         return
 
     msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
@@ -135,7 +137,6 @@ def send_booking_email(user, booking):
     Drive Safe!
     - DriveX Team
     """
-    # ✅ Send in background thread (Crucial for Render)
     Thread(target=async_send_mail, args=(app, msg)).start()
 
 # --- Routes ---
@@ -340,7 +341,6 @@ def apply_coupon():
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
-    # ✅ 1. Get Data from Form
     car = Car.query.get_or_404(car_id)
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
@@ -354,7 +354,6 @@ def confirm_booking(car_id):
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    # ✅ 2. Create the Booking Object (FIXED LOGIC)
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
@@ -368,12 +367,10 @@ def confirm_booking(car_id):
         start_date=start_date,
         end_date=end_date
     )
-    
-    # ✅ 3. Save to Database
     db.session.add(new_booking)
     db.session.commit()
     
-    # ✅ 4. Send Email in Background
+    # Send Email in Background
     send_booking_email(current_user, new_booking)
     
     return redirect(url_for('booking_success', booking_id=new_booking.id))
@@ -394,6 +391,7 @@ def invoice(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('invoice.html', booking=booking)
 
+# --- REVIEWS ---
 @app.route('/review/submit', methods=['POST'])
 @login_required
 def submit_review():
