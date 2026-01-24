@@ -211,21 +211,21 @@ def payment_page(booking_id):
         'payment.html',
         booking=booking
     )
-    
 @app.route('/pay/<int:booking_id>', methods=['POST'])
 def process_payment(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
+    print("🔥 PAY ROUTE HIT")
 
+    booking = Booking.query.get_or_404(booking_id)
     payment_method = request.form.get('payment_method')
-    if not payment_method:
-        return "NO PAYMENT METHOD", 400
+
+    print("Payment method:", payment_method)
 
     booking.payment_method = payment_method
     booking.status = "Paid"
     db.session.commit()
 
-    return f"PAYMENT SUCCESS FOR BOOKING {booking.id}"
-
+    return "PAYMENT SUCCESS"
+    
 @app.route('/booking/invoice/<int:booking_id>')
 @login_required
 def invoice(booking_id):
