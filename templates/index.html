@@ -21,21 +21,30 @@
         </a>
     </div>
 
-    <div class="search-container">
+    <form action="{{ url_for('fleet') }}" method="GET" class="search-container">
+        
         <div class="search-group">
             <label>Location</label>
-            <select><option>Mumbai</option><option>Delhi</option><option>Bangalore</option></select>
+            <select name="location">
+                <option value="Mumbai">Mumbai</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Bangalore">Bangalore</option>
+            </select>
         </div>
+
         <div class="search-group">
             <label>Pick-up Date</label>
-            <input type="datetime-local">
+            <input type="date" name="start_date" required>
         </div>
+
         <div class="search-group">
             <label>Return Date</label>
-            <input type="datetime-local">
+            <input type="date" name="end_date" required>
         </div>
-        <button class="btn-search">Search</button>
-    </div>
+
+        <button type="submit" class="btn-search">Search</button>
+    </form>
+
 </header>
 
 <h2 class="section-title">Designed for every narrative.</h2>
