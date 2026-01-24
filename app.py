@@ -1,3 +1,4 @@
+from threading import Thread
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -108,9 +109,8 @@ class Booking(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-# --- Asynchronous Email Helper ---
-def send_async_email(app, msg):
+# --- Asynchronous Email Logic ---
+def async_send_mail(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
@@ -121,20 +121,21 @@ def send_booking_email(user, booking):
     msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
     msg.body = f"""
     Hello {user.name},
-
+    
     Your booking for {booking.car.name} is confirmed.
-
+    
     Dates: {booking.start_date} to {booking.end_date}
     Total Paid: ₹{booking.total_cost}
-
+    
     View your booking: {url_for('my_bookings', _external=True)}
-
+    
     Drive Safe!
     - DriveX Team
     """
+    
+    # ✅ This line sends the email in the background instantly
+    Thread(target=async_send_mail, args=(app, msg)).start()
 
-    # ✅ Send in Background Thread (Prevents 502 Timeout)
-    Thread(target=send_async_email, args=(app, msg)).start()
 
 # --- Public Routes ---
 @app.route('/')
@@ -343,39 +344,17 @@ def apply_coupon():
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
-    car = Car.query.get_or_404(car_id)
-    start_str = request.form.get('start_date')
-    end_str = request.form.get('end_date')
-    start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
-    end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+    # ... (Your existing code to get form data) ...
 
-    total_cost = float(request.form.get('total_cost'))
-    base_cost = float(request.form.get('base_cost'))
-    driver_fee = float(request.form.get('driver_fee'))
-    discount = float(request.form.get('discount', 0))
-    with_driver = request.form.get('with_driver') == 'True'
-    payment_method = request.form.get('payment_method')
-
-    new_booking = Booking(
-        user_id=current_user.id,
-        car_id=car.id,
-        base_cost=base_cost,
-        driver_cost=driver_fee,
-        discount=discount,
-        total_cost=total_cost,
-        with_driver=with_driver,
-        payment_method=payment_method,
-        status='Paid' if payment_method != 'cod' else 'Confirmed',
-        start_date=start_date,
-        end_date=end_date
-    )
+    # ... (Your existing code to save booking) ...
     db.session.add(new_booking)
     db.session.commit()
     
-    # ✅ SEND EMAIL
+    # This will now run instantly because of the Thread fix
     send_booking_email(current_user, new_booking)
     
     return redirect(url_for('booking_success', booking_id=new_booking.id))
+
 
 @app.route('/booking/success/<int:booking_id>')
 @login_required
