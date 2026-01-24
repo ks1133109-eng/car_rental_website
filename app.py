@@ -12,16 +12,14 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# ✅ EMAIL CONFIGURATION
+# ✅ EMAIL CONFIGURATION (Updated to Fix "Network Unreachable" Error)
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_PORT'] = 465           # <--- CHANGE TO 465
+app.config['MAIL_USE_TLS'] = False      # <--- CHANGE TO False
+app.config['MAIL_USE_SSL'] = True       # <--- ADD THIS (True)
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
-# Reads the password from Render Environment Variables (Secure)
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
-
-mail = Mail(app)
 
 # Database Configuration
 database_url = os.environ.get('DATABASE_URL')
