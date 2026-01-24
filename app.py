@@ -16,7 +16,8 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  # <--- REPLACE THIS
-app.config['MAIL_PASSWORD'] = 'fflb xgnp lock vwwx'     # <--- REPLACE THIS (Use App Password, not real password)
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+   # <--- REPLACE THIS (Use App Password, not real password)
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
 
 mail = Mail(app)
