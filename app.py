@@ -256,10 +256,11 @@ def book_car_dates(car_id):
 
     return render_template('booking_dates.html', car=car)
 
-# --- COUPON APPLY ROUTE ---
+# --- ADD THIS NEW ROUTE FOR COUPONS ---
 @app.route('/book/apply-coupon', methods=['POST'])
 @login_required
 def apply_coupon():
+    # 1. Get Data
     car_id = request.form.get('car_id')
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
@@ -268,6 +269,7 @@ def apply_coupon():
     
     car = Car.query.get_or_404(car_id)
     
+    # 2. Recalculate Price
     start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
     end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
     duration_hours = (end_date - start_date).total_seconds() / 3600
@@ -276,17 +278,19 @@ def apply_coupon():
     driver_fee = 500 if with_driver else 0
     tax = 648
     
+    # 3. Check Coupon
     discount = 0
     coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
     
     if coupon:
         discount = coupon.discount_amount
-        flash(f'✅ Coupon Applied! You saved ₹{discount}')
+        flash(f'✅ Coupon Applied! Saved ₹{discount}')
     else:
-        flash('❌ Invalid or Expired Coupon Code')
+        flash('❌ Invalid Coupon Code')
     
-    total_cost = max(0, (base_cost + driver_fee + tax) - discount)
+    total_cost = (base_cost + driver_fee + tax) - discount
 
+    # 4. Reload Page with Discount
     return render_template('booking_payment.html', 
                            car=car, 
                            start_date=start_str, 
@@ -294,10 +298,11 @@ def apply_coupon():
                            base_cost=base_cost,
                            driver_fee=driver_fee,
                            tax=tax,
-                           discount=discount,
+                           discount=discount,     # <--- Sends discount to HTML
                            total=total_cost,
                            with_driver=with_driver,
                            applied_coupon=coupon_code if discount > 0 else "")
+
 
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
