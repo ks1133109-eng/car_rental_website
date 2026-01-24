@@ -50,8 +50,6 @@ class Car(db.Model):
     fuel_type = db.Column(db.String(20))
     seats = db.Column(db.Integer)
     is_available = db.Column(db.Boolean, default=True)
-    
-    # ✅ NEW: Location Field
     location = db.Column(db.String(50), default='Mumbai') 
 
 class Coupon(db.Model):
@@ -84,7 +82,6 @@ def load_user(user_id):
 # --- Public Routes ---
 @app.route('/')
 def home():
-    # Only show distinct locations available in DB
     locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
     cars = Car.query.filter_by(is_available=True).all()
     return render_template('index.html', cars=cars, locations=locations)
@@ -120,20 +117,17 @@ def register():
 
 @app.route('/fleet')
 def fleet():
-    # 1. Get Filters
-    location = request.args.get('location') # ✅ NEW
+    location = request.args.get('location')
     category = request.args.get('category')
     fuel_type = request.args.get('fuel_type')
     seats = request.args.get('seats')
     start_str = request.args.get('start_date')
     end_str = request.args.get('end_date')
 
-    # 2. Base Query
     query = Car.query.filter_by(is_available=True)
 
-    # 3. Apply Filters
     if location and location != 'All':
-        query = query.filter_by(location=location) # ✅ Filter by City
+        query = query.filter_by(location=location)
 
     if category and category != 'All':
         query = query.filter_by(category=category)
@@ -144,7 +138,6 @@ def fleet():
     if seats and seats != 'All':
         query = query.filter_by(seats=int(seats))
 
-    # 4. Date Availability Check
     if start_str and end_str:
         try:
             req_start = datetime.strptime(start_str, '%Y-%m-%d')
@@ -162,7 +155,6 @@ def fleet():
 
     cars = query.all()
 
-    # 5. Get Filter Options
     locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
     categories = [c[0] for c in db.session.query(Car.category).distinct().all()]
     fuel_types = [c[0] for c in db.session.query(Car.fuel_type).distinct().all()]
@@ -170,7 +162,7 @@ def fleet():
 
     return render_template('fleet.html', 
                            cars=cars, 
-                           locations=locations, # ✅ Pass locations to template
+                           locations=locations,
                            categories=categories,
                            fuel_types=fuel_types,
                            seat_options=seat_options,
@@ -264,6 +256,49 @@ def book_car_dates(car_id):
 
     return render_template('booking_dates.html', car=car)
 
+# --- COUPON APPLY ROUTE ---
+@app.route('/book/apply-coupon', methods=['POST'])
+@login_required
+def apply_coupon():
+    car_id = request.form.get('car_id')
+    start_str = request.form.get('start_date')
+    end_str = request.form.get('end_date')
+    with_driver = request.form.get('with_driver') == 'True'
+    coupon_code = request.form.get('coupon_code').strip().upper()
+    
+    car = Car.query.get_or_404(car_id)
+    
+    start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+    end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+    duration_hours = (end_date - start_date).total_seconds() / 3600
+    
+    base_cost = int(duration_hours * car.price_per_hr)
+    driver_fee = 500 if with_driver else 0
+    tax = 648
+    
+    discount = 0
+    coupon = Coupon.query.filter_by(code=coupon_code, is_active=True).first()
+    
+    if coupon:
+        discount = coupon.discount_amount
+        flash(f'✅ Coupon Applied! You saved ₹{discount}')
+    else:
+        flash('❌ Invalid or Expired Coupon Code')
+    
+    total_cost = max(0, (base_cost + driver_fee + tax) - discount)
+
+    return render_template('booking_payment.html', 
+                           car=car, 
+                           start_date=start_str, 
+                           end_date=end_str,
+                           base_cost=base_cost,
+                           driver_fee=driver_fee,
+                           tax=tax,
+                           discount=discount,
+                           total=total_cost,
+                           with_driver=with_driver,
+                           applied_coupon=coupon_code if discount > 0 else "")
+
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
@@ -276,6 +311,7 @@ def confirm_booking(car_id):
     total_cost = float(request.form.get('total_cost'))
     base_cost = float(request.form.get('base_cost'))
     driver_fee = float(request.form.get('driver_fee'))
+    discount = float(request.form.get('discount', 0))
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
@@ -284,6 +320,7 @@ def confirm_booking(car_id):
         car_id=car.id,
         base_cost=base_cost,
         driver_cost=driver_fee,
+        discount=discount,
         total_cost=total_cost,
         with_driver=with_driver,
         payment_method=payment_method,
@@ -409,21 +446,18 @@ def reject_kyc(user_id):
 @login_required
 def manage_cars():
     if not current_user.is_admin: return redirect(url_for('home'))
-    
     if request.method == 'POST':
-        # ✅ NEW: Add Car with Location
         db.session.add(Car(
             name=request.form.get('name'), 
             price_per_hr=int(request.form.get('price')), 
             image_url=request.form.get('image'), 
             category=request.form.get('category'), 
-            location=request.form.get('location'), # <--- Save City
+            location=request.form.get('location'),
             transmission="Auto", 
             fuel_type="Petrol", 
             seats=5
         ))
         db.session.commit()
-        
     cars = Car.query.all()
     return render_template('manage_cars.html', cars=cars)
 
@@ -434,6 +468,37 @@ def delete_car(id):
     db.session.delete(Car.query.get(id))
     db.session.commit()
     return redirect(url_for('manage_cars'))
+
+# --- ADMIN COUPON MANAGEMENT ---
+
+@app.route('/admin/coupons', methods=['GET', 'POST'])
+@login_required
+def manage_coupons():
+    if not current_user.is_admin: return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        code = request.form.get('code').upper()
+        discount = int(request.form.get('discount'))
+        
+        if Coupon.query.filter_by(code=code).first():
+            flash('Error: Coupon code already exists!')
+        else:
+            db.session.add(Coupon(code=code, discount_amount=discount))
+            db.session.commit()
+            flash('Coupon created successfully!')
+            
+    coupons = Coupon.query.all()
+    return render_template('manage_coupons.html', coupons=coupons)
+
+@app.route('/admin/coupons/delete/<int:id>')
+@login_required
+def delete_coupon(id):
+    if not current_user.is_admin: return redirect(url_for('home'))
+    coupon = Coupon.query.get(id)
+    if coupon:
+        db.session.delete(coupon)
+        db.session.commit()
+    return redirect(url_for('manage_coupons'))
 
 @app.route('/admin/bookings')
 @login_required
@@ -474,7 +539,7 @@ def reset_db():
         db.drop_all()
         db.create_all()
         if not Car.query.first():
-            # ✅ NEW: Seeding cars in different cities
+            # Seed cars
             cars = [
                 Car(name="Maruti Suzuki Swift", category="Hatchback", price_per_hr=75, transmission="Manual", fuel_type="Petrol", seats=5, location="Mumbai", image_url="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600"),
                 Car(name="Hyundai i20", category="Hatchback", price_per_hr=95, transmission="Auto", fuel_type="Petrol", seats=5, location="Delhi", image_url="https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=600"),
@@ -482,9 +547,11 @@ def reset_db():
             ]
             db.session.add_all(cars)
             
+            # Seed Admin
             admin = User(name="Admin User", email="admin@drivex.com", password=generate_password_hash("admin123", method='pbkdf2:sha256'), is_admin=True, kyc_status='Verified')
             db.session.add(admin)
             
+            # Seed Coupon
             c1 = Coupon(code="WELCOME20", discount_amount=200)
             db.session.add(c1)
             
