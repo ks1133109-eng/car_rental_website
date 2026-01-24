@@ -109,26 +109,32 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Email Helper ---
+# --- Asynchronous Email Helper ---
+def send_async_email(app, msg):
+    with app.app_context():
+        try:
+            mail.send(msg)
+        except Exception as e:
+            print(f"Email failed: {e}")
+
 def send_booking_email(user, booking):
-    try:
-        msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
-        msg.body = f"""
-        Hello {user.name},
-        
-        Your booking for {booking.car.name} is confirmed.
-        
-        Dates: {booking.start_date} to {booking.end_date}
-        Total Paid: ₹{booking.total_cost}
-        
-        View your booking: {url_for('my_bookings', _external=True)}
-        
-        Drive Safe!
-        - DriveX Team
-        """
-        mail.send(msg)
-    except Exception as e:
-        print(f"Email failed: {e}")
+    msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
+    msg.body = f"""
+    Hello {user.name},
+
+    Your booking for {booking.car.name} is confirmed.
+
+    Dates: {booking.start_date} to {booking.end_date}
+    Total Paid: ₹{booking.total_cost}
+
+    View your booking: {url_for('my_bookings', _external=True)}
+
+    Drive Safe!
+    - DriveX Team
+    """
+
+    # ✅ Send in Background Thread (Prevents 502 Timeout)
+    Thread(target=send_async_email, args=(app, msg)).start()
 
 # --- Public Routes ---
 @app.route('/')
