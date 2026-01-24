@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin | Manage Coupons</title>
+</head>
+<body>
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex;">
+    <div style="width: 250px; background: #0b121f; min-height: 100vh; padding: 20px; color: white;">
+        <h3 style="margin-bottom: 30px;">Admin Panel</h3>
+        <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
+        <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Manage Cars</a>
+        <a href="{{ url_for('manage_coupons') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Coupons</a>
+        <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Bookings</a>
+        <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Users</a>
+        <a href="{{ url_for('logout') }}" style="display:block; padding:10px; color:#ff6b6b; margin-top: 20px;">Logout</a>
+    </div>
+
+    <div style="flex: 1; padding: 40px; background: #f8f9fa;">
+        <h2>Coupon Management</h2>
+        
+        <div style="background: white; padding: 25px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0;">Create New Coupon</h3>
+            <form method="POST" style="display: flex; gap: 15px;">
+                <input type="text" name="code" placeholder="Code (e.g. SAVE100)" required style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-transform: uppercase;">
+                <input type="number" name="discount" placeholder="Discount Amount (₹)" required style="width: 150px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                
+                <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    + Create
+                </button>
+            </form>
+        </div>
+
+        <div style="margin-top: 30px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #eee; text-align: left;">
+                    <th style="padding: 15px;">Code</th>
+                    <th>Discount</th>
+                    <th>Actions</th>
+                </tr>
+                {% for coupon in coupons %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px; font-weight: bold; color: #007bff;">{{ coupon.code }}</td>
+                    <td>₹{{ coupon.discount_amount }}</td>
+                    <td>
+                        <a href="{{ url_for('delete_coupon', id=coupon.id) }}" style="color: red; text-decoration: none;">Delete</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="padding: 20px; text-align: center; color: #999;">No coupons active.</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>
