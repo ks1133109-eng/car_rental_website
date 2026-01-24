@@ -13,13 +13,11 @@ app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
 # ✅ FINAL EMAIL CONFIGURATION (Port 465 SSL)
-# This fixes the "Network Unreachable" error you are seeing in logs
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465               # ✅ Changed to 465 (Secure)
-app.config['MAIL_USE_TLS'] = False          # ✅ Disable TLS
-app.config['MAIL_USE_SSL'] = True           # ✅ Enable SSL
+app.config['MAIL_PORT'] = 465               
+app.config['MAIL_USE_TLS'] = False          
+app.config['MAIL_USE_SSL'] = True           
 app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
-# Reads the password you saved in Render Environment Variables
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
 app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
 
@@ -111,12 +109,12 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- BACKGROUND EMAIL LOGIC (Prevents Timeouts) ---
+# --- BACKGROUND EMAIL LOGIC ---
 def async_send_mail(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
-            print("✅ Email sent successfully!")
+            print("✅ Email sent successfully in background!")
         except Exception as e:
             print(f"❌ Email failed: {e}")
 
@@ -128,33 +126,25 @@ def send_booking_email(user, booking):
     msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
     msg.body = f"""
     Hello {user.name},
-    
     Your booking for {booking.car.name} is confirmed.
-    
-    Dates: {booking.start_date} to {booking.end_date}
-    Total Paid: ₹{booking.total_cost}
-    
-    View your booking: {url_for('my_bookings', _external=True)}
-    
-    Drive Safe!
-    - DriveX Team
+    Total: ₹{booking.total_cost}
     """
-    # Send in background thread so user doesn't wait
     Thread(target=async_send_mail, args=(app, msg)).start()
 
 # --- Routes ---
 
-# ✅ NEW: DEBUG ROUTE TO TEST EMAIL DIRECTLY
-@app.route('/test-email')
-@login_required
-def test_email():
+# ✅ PUBLIC DEBUG ROUTE (No Login Required)
+@app.route('/debug-email')
+def debug_email():
     try:
-        msg = Message("DriveX Test Email", recipients=[current_user.email])
-        msg.body = "If you are reading this, your email configuration is PERFECT!"
+        # Sends directly to the Admin email to test connection
+        recipient = 'ks1133109@gmail.com'
+        msg = Message("DriveX Debug Email", recipients=[recipient])
+        msg.body = "This is a test email from your Render Server. If you see this, email is working!"
         mail.send(msg)
-        return "<h1>✅ Email Sent Successfully! Check your Inbox (and Spam).</h1>"
+        return f"<h1>✅ SUCCESS!</h1><p>Email sent to {recipient}. Check your Inbox and Spam folder.</p>"
     except Exception as e:
-        return f"<h1>❌ Email Failed:</h1><p>{str(e)}</p>"
+        return f"<h1>❌ FAILED</h1><p>Error: {str(e)}</p>"
 
 @app.route('/')
 def home():
