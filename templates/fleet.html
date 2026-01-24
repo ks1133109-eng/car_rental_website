@@ -72,7 +72,10 @@
             <div class="car-card">
                 <div class="car-header">
                     <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
-                    <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> 5.0</div>
+                    <div class="rating-badge">
+    <i class="fas fa-star" style="color:orange;"></i> {{ car.average_rating }}
+</div>
+
                 </div>
                 <div class="car-body">
                     <h3 class="car-title">{{ car.name }}</h3>
