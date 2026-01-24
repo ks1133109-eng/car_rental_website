@@ -75,13 +75,18 @@ class Booking(db.Model):
     total_cost = db.Column(db.Integer)
 
     with_driver = db.Column(db.Boolean, default=False)
+    payment_method = db.Column(db.String(30))
+    
+    # ✅ NEW FIELDS: Store the Trip Dates
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
 
-    payment_method = db.Column(db.String(30))  # ✅ FIXED FIELD
-
+    # When the booking was created
     date_booked = db.Column(db.DateTime, default=datetime.utcnow)
 
     car = db.relationship('Car')
     user = db.relationship('User')
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -218,6 +223,7 @@ def book_car_dates(car_id):
 
 
 # STEP 2: CONFIRM & PAY (Finalize Booking)
+# STEP 2: CONFIRM & PAY (Finalize Booking)
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
@@ -226,13 +232,18 @@ def confirm_booking(car_id):
     # Retrieve data from hidden fields
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
+    
+    # ✅ Convert strings back to DateTime objects for saving
+    start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+    end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+
     total_cost = float(request.form.get('total_cost'))
     base_cost = float(request.form.get('base_cost'))
     driver_fee = float(request.form.get('driver_fee'))
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    # Create Booking
+    # Create Booking with Dates
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
@@ -242,7 +253,8 @@ def confirm_booking(car_id):
         with_driver=with_driver,
         payment_method=payment_method,
         status='Paid' if payment_method != 'cod' else 'Confirmed',
-        date_booked=datetime.utcnow() # In a real app, save the start/end rental dates too
+        start_date=start_date, # ✅ Saving Start Date
+        end_date=end_date      # ✅ Saving End Date
     )
     
     db.session.add(new_booking)
