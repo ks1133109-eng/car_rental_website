@@ -1,93 +1,59 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
-</head>
-
-<body>
-  {% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 
-<div style="background-color: #f8f9fa; min-height: 100vh; padding-bottom: 50px;">
-
-    <div style="background: white; padding: 30px 5%; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;">
-        <h1 style="margin-top: 0; font-size: 1.8rem;">Our Premium Fleet</h1>
+<div style="padding: 100px 5% 40px; background: #f8f9fa;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <div>
+            <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Our Fleet</h1>
+            <p style="color: #666;">Select from our wide range of premium vehicles.</p>
+        </div>
         
-        <form action="{{ url_for('fleet') }}" method="GET" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end; margin-top: 20px;">
-            
-            <div style="flex: 1; min-width: 200px;">
-                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">CAR TYPE</label>
-                <select name="category" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 1rem;">
-                    <option value="All">All Categories</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>{{ cat }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div style="flex: 1; min-width: 150px;">
-                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">PICKUP</label>
-                <input type="date" style="width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;">
-            </div>
-
-            <div style="flex: 1; min-width: 150px;">
-                <label style="font-size: 0.8rem; font-weight: 700; color: #666; display: block; margin-bottom: 5px;">RETURN</label>
-                <input type="date" style="width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;">
-            </div>
-
-            <button type="submit" style="background: var(--primary); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; min-width: 120px;">
-                Find Car
-            </button>
-            
-            <a href="{{ url_for('fleet') }}" style="padding: 12px; color: #666; text-decoration: none;">Reset</a>
-        </form>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('fleet', category='All') }}" 
+               style="padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: 500; 
+               {{ 'background: #007bff; color: white;' if current_category == 'All' or not current_category else 'background: white; color: #555; border: 1px solid #ddd;' }}">
+               All
+            </a>
+            {% for cat in categories %}
+            <a href="{{ url_for('fleet', category=cat) }}" 
+               style="padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: 500; 
+               {{ 'background: #007bff; color: white;' if current_category == cat else 'background: white; color: #555; border: 1px solid #ddd;' }}">
+               {{ cat }}
+            </a>
+            {% endfor %}
+        </div>
     </div>
 
-    <div style="padding: 40px 5%;">
-        
-        {% if cars %}
-            <div class="car-grid">
-                {% for car in cars %}
-                <div class="car-card">
-                    <div class="car-header">
-                        <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
-                        <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> {{ car.rating }}</div>
-                    </div>
-                    <div class="car-body">
-                        <h3 class="car-title">{{ car.name }}</h3>
-                        <span class="car-subtitle" style="margin-bottom: 15px; display: block;">{{ car.category }} • {{ car.trips_completed }}+ Trips</span>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-user"></i> {{ car.seats }} Seats</div>
-                            <div class="spec-chip" style="justify-content: center;"><i class="fas fa-tachometer-alt"></i> Fast</div>
-                        </div>
-
-                        <div class="car-footer">
-                            <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
-                            <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
+    <div class="car-grid" style="padding: 0;">
+        {% for car in cars %}
+        <div class="car-card">
+            <div class="car-header">
+                <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
+                <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> 5.0</div>
+            </div>
+            <div class="car-body">
+                <h3 class="car-title">{{ car.name }}</h3>
+                <span class="car-subtitle">{{ car.category }}</span>
+                
+                <div class="specs">
+                    <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
+                    <div class="spec-chip"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
+                    <div class="spec-chip"><i class="fas fa-user"></i> {{ car.seats }}</div>
                 </div>
-                {% endfor %}
+
+                <div class="car-footer">
+                    <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
+                    
+                    <a href="{{ url_for('book_car_dates', car_id=car.id) }}" class="btn-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
             </div>
+        </div>
         {% else %}
-            <div style="text-align: center; padding: 60px; color: #999;">
-                <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                <h2>No cars found</h2>
-                <p>Try changing your filters or category.</p>
-                <a href="{{ url_for('fleet') }}" style="color: var(--primary); font-weight: bold;">View All Cars</a>
-            </div>
-        {% endif %}
+            <p>No cars available in this category.</p>
+        {% endfor %}
     </div>
-
 </div>
+
 {% endblock %}
-
-</body>
-
-</html>
