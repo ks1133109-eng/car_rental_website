@@ -170,7 +170,7 @@ def kyc():
 
 # --- Updated Booking Flow ---
 
-# STEP 1: DATE SELECTION
+# STEP 1: DATE SELECTION (With Availability Check)
 @app.route('/book/<int:car_id>', methods=['GET', 'POST'])
 @login_required
 def book_car_dates(car_id):
@@ -185,16 +185,19 @@ def book_car_dates(car_id):
             
     car = Car.query.get_or_404(car_id)
 
-    # If user submits dates, calculate price and move to payment step
     if request.method == 'POST':
         start_str = request.form.get('start_date')
         end_str = request.form.get('end_date')
         
         # Convert string to datetime
-        start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
-        end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+        try:
+            start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
+            end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash("Invalid date format.")
+            return redirect(url_for('book_car_dates', car_id=car.id))
 
-        # Calculate duration in hours
+        # 1. Check for valid duration
         duration_delta = end_date - start_date
         duration_hours = duration_delta.total_seconds() / 3600
 
@@ -202,13 +205,29 @@ def book_car_dates(car_id):
             flash("End date must be after start date!")
             return redirect(url_for('book_car_dates', car_id=car.id))
 
-        # Calculate Costs
+        # ✅ NEW: Check for Overlapping Bookings
+        # Logic: (StartA < EndB) and (EndA > StartB)
+        collision = Booking.query.filter(
+            Booking.car_id == car.id,
+            Booking.status != 'Cancelled',  # Ignore cancelled trips
+            Booking.start_date < end_date,  # Existing starts before new ends
+            Booking.end_date > start_date   # Existing ends after new starts
+        ).first()
+
+        if collision:
+            # Format the dates for a nice error message
+            s_fmt = collision.start_date.strftime('%d %b')
+            e_fmt = collision.end_date.strftime('%d %b')
+            flash(f'❌ Unavailable! This car is already booked from {s_fmt} to {e_fmt}.')
+            return redirect(url_for('book_car_dates', car_id=car.id))
+
+        # Calculate Costs (If available)
         base_cost = int(duration_hours * car.price_per_hr)
         driver_fee = 500 if 'with_driver' in request.form else 0
-        tax = 648 # Flat tax for example
+        tax = 648
         total_cost = base_cost + driver_fee + tax
 
-        # Render Payment Page with calculated data
+        # Proceed to Payment
         return render_template('booking_payment.html', 
                                car=car, 
                                start_date=start_str, 
