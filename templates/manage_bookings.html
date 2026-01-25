@@ -1,117 +1,58 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin | Manage Bookings</title>
-</head>
-
+<head><title>Manage Bookings</title></head>
 <body>
 {% extends "base.html" %}
 {% block content %}
-<div style="display: flex;">
-    <div style="width: 250px; background: #0b121f; min-height: 100vh; padding: 20px; color: white;">
-        <h3 style="margin-bottom: 30px;">Admin Panel</h3>
-        <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
-        <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Manage Cars</a>
-        
-        <a href="{{ url_for('manage_coupons') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Coupons</a>
-        
-        <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Bookings</a>
-        <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Users</a>
-        <a href="{{ url_for('logout') }}" style="display:block; padding:10px; color:#ff6b6b; margin-top: 20px;">Logout</a>
+<div class="admin-container">
+    <div class="sidebar">
+        <h3>Admin Panel</h3>
+        <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link">Dashboard</a>
+        <a href="{{ url_for('manage_cars') }}" class="sidebar-link">Manage Cars</a>
+        <a href="{{ url_for('manage_coupons') }}" class="sidebar-link">Coupons</a>
+        <a href="{{ url_for('manage_bookings') }}" class="sidebar-link active">Bookings</a>
+        <a href="{{ url_for('manage_users') }}" class="sidebar-link">Users</a>
+        <a href="{{ url_for('logout') }}" class="sidebar-link" style="color:#ff6b6b;">Logout</a>
     </div>
 
-    <div style="flex: 1; padding: 40px; background: var(--bg-color); color: var(--text-color);">
-        <h2>Booking Management</h2>
-        
-        <div style="background: var(--card-bg); border-radius: 10px; overflow: hidden; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr style="background: var(--light); text-align: left;">
-                    <th style="padding: 15px;">ID</th>
-                    <th>User & Identity</th>
-                    <th>Car</th>
-                    <th>Schedule</th> <th>Status</th>
-                    <th>Actions</th>
+    <div class="admin-content">
+        <h2>Bookings</h2>
+        <div style="overflow-x: auto; margin-top: 20px; background: var(--bg-card); border-radius:12px; border: 1px solid var(--border);">
+            <table>
+                <tr>
+                    <th>ID</th><th>User</th><th>Car</th><th>Mode</th><th>Status</th><th>Action</th>
                 </tr>
                 {% for booking in bookings %}
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px;">#{{ booking.id }}</td>
+                <tr>
+                    <td>#{{ booking.id }}</td>
+                    <td>{{ booking.user.name }}<br><small>{{ booking.user.phone }}</small></td>
+                    <td>{{ booking.car.name }}</td>
                     <td>
-                        {% if booking.user %}
-                            <strong>{{ booking.user.name }}</strong><br>
-                            <small style="color: #777;">{{ booking.user.email }}</small><br>
-                            
-                            {% if booking.user.gov_id %}
-                                <div style="margin-top: 5px; background: #eee; padding: 2px 6px; border-radius: 4px; display: inline-block; font-size: 0.75rem; color: black;">
-                                    <i class="fas fa-id-card"></i> ID: {{ booking.user.gov_id }}
-                                </div>
-                            {% else %}
-                                <div style="margin-top: 5px; color: red; font-size: 0.75rem; font-weight: bold;">
-                                    <i class="fas fa-exclamation-triangle"></i> NO ID PROVIDED
-                                </div>
-                            {% endif %}
-                        {% else %}
-                            <span style="color: red;">(User Deleted)</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if booking.car %}
-                            {{ booking.car.name }}
-                        {% else %}
-                            (Car Deleted)
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if booking.start_date and booking.end_date %}
-                            <div style="font-size: 0.9rem; font-weight: 600;">
-                                {{ booking.start_date.strftime('%b %d') }} - {{ booking.end_date.strftime('%b %d') }}
-                            </div>
-                            <div style="font-size: 0.8rem; color: #666;">
-                                {{ booking.start_date.strftime('%I:%M %p') }} to {{ booking.end_date.strftime('%I:%M %p') }}
+                        {% if booking.delivery_type == 'Delivery' %}
+                            <span style="color: var(--primary); font-weight: bold;">Home Delivery</span>
+                            <div style="font-size: 0.75rem; color: var(--text-light); max-width: 150px; white-space: normal;">
+                                {{ booking.delivery_address }}
                             </div>
                         {% else %}
-                            <span style="color: #ccc;">No dates</span>
+                            <span>Self Pickup</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if booking.status == 'Confirmed' or booking.status == 'Paid' %}
-                            <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                                {{ booking.status }}
-                            </span>
-                        {% elif booking.status == 'Cancelled' %}
-                            <span style="background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                                Cancelled
-                            </span>
-                        {% else %}
-                            <span style="background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                                {{ booking.status }}
-                            </span>
-                        {% endif %}
+                        <span style="padding:4px 8px; border-radius:4px; background:{{ '#d4edda' if booking.status=='Paid' else '#fff3cd' }}; color:black;">
+                            {{ booking.status }}
+                        </span>
                     </td>
                     <td>
                         {% if booking.status != 'Cancelled' %}
-                        <a href="{{ url_for('update_booking', id=booking.id, status='Cancelled') }}" 
-                           style="padding: 5px 10px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-size: 0.8rem;"
-                           onclick="return confirm('Cancel this booking?')">
-                           Cancel
-                        </a>
+                        <a href="{{ url_for('update_booking', id=booking.id, status='Cancelled') }}" style="color:red;">Cancel</a>
                         {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </table>
-            
-            {% if not bookings %}
-            <div style="padding: 40px; text-align: center; color: #999;">
-                No bookings found.
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>
 {% endblock %}
-
 </body>
 </html>
