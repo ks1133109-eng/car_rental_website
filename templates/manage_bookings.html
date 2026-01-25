@@ -15,17 +15,20 @@
         <h3 style="margin-bottom: 30px;">Admin Panel</h3>
         <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
         <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Manage Cars</a>
+        
+        <a href="{{ url_for('manage_coupons') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Coupons</a>
+        
         <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Bookings</a>
         <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Users</a>
         <a href="{{ url_for('logout') }}" style="display:block; padding:10px; color:#ff6b6b; margin-top: 20px;">Logout</a>
     </div>
 
-    <div style="flex: 1; padding: 40px; background: #f8f9fa;">
+    <div style="flex: 1; padding: 40px; background: var(--bg-color); color: var(--text-color);">
         <h2>Booking Management</h2>
         
-        <div style="background: white; border-radius: 10px; overflow: hidden; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        <div style="background: var(--card-bg); border-radius: 10px; overflow: hidden; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
             <table style="width: 100%; border-collapse: collapse;">
-                <tr style="background: #eee; text-align: left;">
+                <tr style="background: var(--light); text-align: left;">
                     <th style="padding: 15px;">ID</th>
                     <th>User & Identity</th>
                     <th>Car</th>
@@ -41,7 +44,7 @@
                             <small style="color: #777;">{{ booking.user.email }}</small><br>
                             
                             {% if booking.user.gov_id %}
-                                <div style="margin-top: 5px; background: #eee; padding: 2px 6px; border-radius: 4px; display: inline-block; font-size: 0.75rem;">
+                                <div style="margin-top: 5px; background: #eee; padding: 2px 6px; border-radius: 4px; display: inline-block; font-size: 0.75rem; color: black;">
                                     <i class="fas fa-id-card"></i> ID: {{ booking.user.gov_id }}
                                 </div>
                             {% else %}
@@ -62,7 +65,7 @@
                     </td>
                     <td>
                         {% if booking.start_date and booking.end_date %}
-                            <div style="font-size: 0.9rem; font-weight: 600; color: #333;">
+                            <div style="font-size: 0.9rem; font-weight: 600;">
                                 {{ booking.start_date.strftime('%b %d') }} - {{ booking.end_date.strftime('%b %d') }}
                             </div>
                             <div style="font-size: 0.8rem; color: #666;">
