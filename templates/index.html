@@ -12,17 +12,18 @@
 {% block content %}
 
 <header class="hero">
-    <div class="badge">PREMIUM MOBILITY NETWORK 2.0</div>
+    <div style="background: rgba(37, 99, 235, 0.1); color: #60a5fa; padding: 5px 12px; border-radius: 20px; display: inline-block; font-weight: 700; font-size: 0.8rem; margin-bottom: 15px; border: 1px solid rgba(96, 165, 250, 0.3);">
+        PREMIUM MOBILITY 2.0
+    </div>
     <h1>Driving the<br><span style="color: #60a5fa;">Future.</span></h1>
     <p>India's first truly intelligent car ecosystem. Seamless access to luxury, from self-drive adventures to professional chauffeur services.</p>
-    <div style="margin-top: 20px;">
-        <a href="{{ url_for('fleet') }}" class="btn-login" style="padding: 12px 30px; text-decoration: none; display: inline-block;">
-            Explore Fleet <i class="fas fa-arrow-right"></i>
+    <div style="margin-top: 25px;">
+        <a href="{{ url_for('fleet') }}" class="btn-login" style="padding: 14px 35px; font-size: 1.1rem; text-decoration: none; display: inline-block;">
+            Explore Fleet <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
         </a>
     </div>
 
     <form action="{{ url_for('fleet') }}" method="GET" class="search-container">
-        
         <div class="search-group">
             <label>Location</label>
             <select name="location">
@@ -44,7 +45,7 @@
             <label>Return Date</label>
             <input type="date" name="end_date" required>
         </div>
-        <button type="submit" class="btn-search">Search</button>
+        <button type="submit" class="btn-search">Search Cars</button>
     </form>
 </header>
 
@@ -54,11 +55,11 @@
     <div class="car-card">
         <div class="car-header">
             <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
-            <div class="rating-badge"><i class="fas fa-star" style="color:orange;"></i> 5.0</div>
+            <div class="rating-badge"><i class="fas fa-star" style="color:#f59e0b;"></i> 5.0</div>
         </div>
         <div class="car-body">
             <h3 class="car-title">{{ car.name }}</h3>
-            <span class="car-subtitle">PREMIUM SELECTION</span>
+            <span class="car-subtitle">{{ car.category }} • {{ car.location }}</span>
             
             <div class="specs">
                 <div class="spec-chip"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
@@ -69,7 +70,9 @@
             <div class="car-footer">
                 <div class="price">₹{{ car.price_per_hr }}<span>/hr</span></div>
                 
-                <a href="{{ url_for('book_car_dates', car_id=car.id) }}" class="btn-arrow"><i class="fas fa-arrow-right"></i></a>
+                <a href="{{ url_for('book_car_dates', car_id=car.id) }}" class="btn-book">
+                    Book Now <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
         </div>
     </div>
