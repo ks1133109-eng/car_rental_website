@@ -10,12 +10,6 @@
 
         <div style="flex: 1; padding: 40px; min-width: 300px;">
             <h2 style="margin: 0 0 10px; color: var(--text-main);">{{ car.name }}</h2>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <span style="background: var(--input-bg); color: var(--text-light); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">{{ car.category }}</span>
-                <span style="background: var(--input-bg); color: var(--text-light); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">{{ car.transmission }}</span>
-                <span style="background: var(--input-bg); color: var(--text-light); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">{{ car.fuel_type }}</span>
-            </div>
-
             <div style="font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 30px;">
                 ₹{{ car.price_per_hr }}<span style="font-size: 1rem; color: var(--text-light); font-weight: normal;">/hr</span>
             </div>
@@ -33,9 +27,20 @@
                            style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
                 </div>
 
-                <div style="margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                     <input type="checkbox" name="with_driver" id="with_driver" style="width: 20px; height: 20px;">
-                    <label for="with_driver" style="font-weight: 600; color: var(--text-main);">Add Professional Driver (+₹500)</label>
+                    <label for="with_driver" style="font-weight: 600; color: var(--text-main);">Add Chauffeur (+₹500)</label>
+                </div>
+
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="with_delivery" id="with_delivery" style="width: 20px; height: 20px;">
+                    <label for="with_delivery" style="font-weight: 600; color: var(--text-main);">Home Delivery (Extra charge if no chauffeur)</label>
+                </div>
+
+                <div id="address_box" style="display: none; margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-main);">Delivery Address</label>
+                    <textarea name="delivery_address" placeholder="Enter full address..." 
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);"></textarea>
                 </div>
 
                 <div style="background: var(--input-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
@@ -61,6 +66,8 @@
     const startInput = document.getElementById('start_date');
     const endInput = document.getElementById('end_date');
     const driverInput = document.getElementById('with_driver');
+    const deliveryInput = document.getElementById('with_delivery');
+    const addressBox = document.getElementById('address_box');
     const durationDisplay = document.getElementById('duration_display');
     const totalDisplay = document.getElementById('total_display');
     const pricePerHour = {{ car.price_per_hr }};
@@ -69,15 +76,33 @@
     function calculatePrice() {
         const start = new Date(startInput.value);
         const end = new Date(endInput.value);
-        const withDriver = driverInput.checked;
+        
+        // Show/Hide Address Box
+        if (deliveryInput.checked) {
+            addressBox.style.display = 'block';
+        } else {
+            addressBox.style.display = 'none';
+        }
 
         if (start && end && end > start) {
             const diffMs = end - start;
             const diffHrs = Math.ceil(diffMs / (1000 * 60 * 60));
             
             let baseCost = diffHrs * pricePerHour;
-            let driverCost = withDriver ? 500 : 0;
-            let total = baseCost + driverCost + tax;
+            
+            // Logic: Driver is 500. Delivery is 500 ONLY if NO driver.
+            let driverCost = driverInput.checked ? 500 : 0;
+            let deliveryCost = 0;
+            
+            if (deliveryInput.checked) {
+                if (driverInput.checked) {
+                    deliveryCost = 0; // Free delivery if driver comes
+                } else {
+                    deliveryCost = 500; // Paid delivery if self-drive
+                }
+            }
+
+            let total = baseCost + driverCost + deliveryCost + tax;
 
             durationDisplay.innerText = diffHrs + " hours";
             totalDisplay.innerText = "₹" + total;
@@ -90,5 +115,6 @@
     startInput.addEventListener('change', calculatePrice);
     endInput.addEventListener('change', calculatePrice);
     driverInput.addEventListener('change', calculatePrice);
+    deliveryInput.addEventListener('change', calculatePrice);
 </script>
 {% endblock %}
