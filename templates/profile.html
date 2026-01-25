@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>Profile | DriveX</title>
 </head>
-
 <body>
   
   {% extends "base.html" %}
 {% block content %}
-<div style="max-width: 600px; margin: 50px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
-    <h2 style="margin-bottom: 20px;">Personal Profile</h2>
+<div style="max-width: 600px; margin: 50px auto; padding: 30px; background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border);">
+    <h2 style="margin-bottom: 20px; color: var(--text-main);">Personal Profile</h2>
     
     {% with messages = get_flashed_messages() %}
         {% if messages %}<div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px;">{{ messages[0] }}</div>{% endif %}
@@ -20,34 +17,37 @@
 
     <form method="POST">
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Full Name</label>
-            <input type="text" name="name" value="{{ current_user.name }}" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-main);">Full Name</label>
+            <input type="text" name="name" value="{{ current_user.name }}" 
+                   style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
         </div>
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email (Cannot be changed)</label>
-            <input type="text" value="{{ current_user.email }}" disabled style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-main);">Email</label>
+            <input type="text" value="{{ current_user.email }}" disabled 
+                   style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); opacity: 0.7; color: var(--text-main);">
         </div>
         
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Driving License / Aadhaar Number</label>
-            <input type="text" name="gov_id" value="{{ current_user.gov_id or '' }}" placeholder="Enter valid ID number" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; border-left: 5px solid #dc3545;">
-            <small style="color: #dc3545;">* Required for security verification before rental.</small>
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-main);">Driving License / Aadhaar Number</label>
+            <input type="text" name="gov_id" value="{{ current_user.gov_id or '' }}" placeholder="Enter valid ID number" 
+                   style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+            <small style="color: #ef4444;">* Required for security verification before rental.</small>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phone Number</label>
-            <input type="text" name="phone" value="{{ current_user.phone or '' }}" placeholder="+91 98765 43210" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-main);">Phone Number</label>
+            <input type="text" name="phone" value="{{ current_user.phone or '' }}" placeholder="+91 98765 43210" 
+                   style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
         </div>
         <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Address</label>
-            <textarea name="address" rows="3" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">{{ current_user.address or '' }}</textarea>
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-main);">Address</label>
+            <textarea name="address" rows="3" 
+                      style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">{{ current_user.address or '' }}</textarea>
         </div>
-        <button type="submit" style="background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer;">Save Changes</button>
-        <a href="{{ url_for('dashboard') }}" style="margin-left: 10px; color: #666; text-decoration: none;">Cancel</a>
+        <button type="submit" class="btn-login" style="width: 100%; padding: 12px; font-size: 1rem;">Save Changes</button>
     </form>
 </div>
 {% endblock %}
 
 </body>
-
 </html>
