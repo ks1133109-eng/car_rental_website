@@ -11,29 +11,32 @@
         <h3 style="margin-bottom: 30px;">Admin Panel</h3>
         <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
         <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Manage Cars</a>
+        
+        <a href="{{ url_for('manage_coupons') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Coupons</a>
+        
         <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Bookings</a>
         <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Users</a>
         <a href="{{ url_for('logout') }}" style="display:block; padding:10px; color:#ff6b6b; margin-top: 20px;">Logout</a>
     </div>
 
-    <div style="flex: 1; padding: 40px; background: #f8f9fa;">
+    <div style="flex: 1; padding: 40px; background: var(--bg-color);">
         <h2>Fleet Management</h2>
         
-        <div style="background: white; padding: 25px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        <div style="background: var(--card-bg); padding: 25px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
             <h3 style="margin-top: 0;">Add New Vehicle</h3>
             <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <input type="text" name="name" placeholder="Car Name (e.g. Toyota Innova)" required style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                <input type="number" name="price" placeholder="Price per Hour (₹)" required style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                <input type="text" name="image" placeholder="Image URL" required style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                <input type="text" name="name" placeholder="Car Name" required style="padding: 10px;">
+                <input type="number" name="price" placeholder="Price per Hour" required style="padding: 10px;">
+                <input type="text" name="image" placeholder="Image URL" required style="padding: 10px;">
                 
-                <select name="category" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                <select name="category" style="padding: 10px;">
                     <option value="Hatchback">Hatchback</option>
                     <option value="Sedan">Sedan</option>
                     <option value="SUV">SUV</option>
                     <option value="Luxury">Luxury</option>
                 </select>
 
-                <select name="location" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #eef2ff; border-color: #4f46e5;">
+                <select name="location" style="padding: 10px;">
                     <option value="Mumbai">Mumbai</option>
                     <option value="Delhi">Delhi</option>
                     <option value="Bangalore">Bangalore</option>
@@ -41,15 +44,13 @@
                     <option value="Chennai">Chennai</option>
                 </select>
 
-                <button type="submit" style="grid-column: span 2; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                    + Add to Fleet
-                </button>
+                <button type="submit" style="grid-column: span 2; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Add to Fleet</button>
             </form>
         </div>
 
-        <div style="margin-top: 30px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        <div style="margin-top: 30px; background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
             <table style="width: 100%; border-collapse: collapse;">
-                <tr style="background: #eee; text-align: left;">
+                <tr style="background: var(--light); text-align: left;">
                     <th style="padding: 15px;">Image</th>
                     <th>Name</th>
                     <th>Price</th>
@@ -60,9 +61,7 @@
                     <td style="padding: 10px;"><img src="{{ car.image_url }}" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
                     <td>{{ car.name }}<br><small style="color: #888;">{{ car.category }}</small></td>
                     <td>₹{{ car.price_per_hr }}/hr</td>
-                    
                     <td><span style="background: #eef2ff; color: #4f46e5; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;">{{ car.location }}</span></td>
-                    
                     <td>
                         <a href="{{ url_for('delete_car', id=car.id) }}" onclick="return confirm('Delete this car?')" style="color: red; text-decoration: none;">Delete</a>
                     </td>
@@ -70,7 +69,6 @@
                 {% endfor %}
             </table>
         </div>
-
     </div>
 </div>
 {% endblock %}
