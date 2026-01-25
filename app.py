@@ -1,28 +1,16 @@
 import os
-from threading import Thread
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from flask_mail import Mail, Message
 
 # --- Configuration ---
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# ✅ FINAL EMAIL CONFIGURATION (Port 465 SSL)
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465               
-app.config['MAIL_USE_TLS'] = False          
-app.config['MAIL_USE_SSL'] = True           
-app.config['MAIL_USERNAME'] = 'ks1133109@gmail.com'  
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
-app.config['MAIL_DEFAULT_SENDER'] = 'ks1133109@gmail.com'
-
-# ✅ Initialize Mail
-mail = Mail(app)
+# (Email Configuration Removed)
 
 # Database Configuration
 database_url = os.environ.get('DATABASE_URL')
@@ -109,43 +97,7 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- BACKGROUND EMAIL LOGIC ---
-def async_send_mail(app, msg):
-    with app.app_context():
-        try:
-            mail.send(msg)
-            print("✅ Email sent successfully in background!")
-        except Exception as e:
-            print(f"❌ Email failed: {e}")
-
-def send_booking_email(user, booking):
-    if not app.config.get('MAIL_PASSWORD'):
-        print("⚠️ Skipping email: No MAIL_PASSWORD set.")
-        return
-
-    msg = Message(f"Booking Confirmed! #{booking.id}", recipients=[user.email])
-    msg.body = f"""
-    Hello {user.name},
-    Your booking for {booking.car.name} is confirmed.
-    Total: ₹{booking.total_cost}
-    """
-    Thread(target=async_send_mail, args=(app, msg)).start()
-
 # --- Routes ---
-
-# ✅ PUBLIC DEBUG ROUTE (No Login Required)
-@app.route('/debug-email')
-def debug_email():
-    try:
-        # Sends directly to the Admin email to test connection
-        recipient = 'ks1133109@gmail.com'
-        msg = Message("DriveX Debug Email", recipients=[recipient])
-        msg.body = "This is a test email from your Render Server. If you see this, email is working!"
-        mail.send(msg)
-        return f"<h1>✅ SUCCESS!</h1><p>Email sent to {recipient}. Check your Inbox and Spam folder.</p>"
-    except Exception as e:
-        return f"<h1>❌ FAILED</h1><p>Error: {str(e)}</p>"
-
 @app.route('/')
 def home():
     locations = [c[0] for c in db.session.query(Car.location).distinct().all()]
@@ -347,6 +299,7 @@ def apply_coupon():
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
+    # ✅ 1. Get Data from Form
     car = Car.query.get_or_404(car_id)
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
@@ -360,6 +313,7 @@ def confirm_booking(car_id):
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
+    # ✅ 2. Save Booking to Database
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
@@ -376,8 +330,7 @@ def confirm_booking(car_id):
     db.session.add(new_booking)
     db.session.commit()
     
-    # Send Email in Background
-    send_booking_email(current_user, new_booking)
+    # ❌ EMAIL REMOVED - Redirects immediately to success page
     
     return redirect(url_for('booking_success', booking_id=new_booking.id))
 
@@ -397,7 +350,6 @@ def invoice(booking_id):
         return redirect(url_for('dashboard'))
     return render_template('invoice.html', booking=booking)
 
-# --- REVIEWS ---
 @app.route('/review/submit', methods=['POST'])
 @login_required
 def submit_review():
