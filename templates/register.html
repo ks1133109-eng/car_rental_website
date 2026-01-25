@@ -1,62 +1,51 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>Register | DriveX</title>
 </head>
-
 <body>
-  {% extends "base.html" %}
-{% set hide_nav = True %}
+{% extends "base.html" %}
 {% block content %}
+
 <div class="auth-container">
     <div class="auth-box">
-        <div class="auth-header">
-            <div class="logo" style="justify-content: center; margin-bottom: 20px; font-size: 2rem;">
-                <i class="fas fa-car-side"></i> Drive<span>X</span>
-            </div>
-            <h2>Create an Account</h2>
-            <p style="color: #666;">Join the premium mobility network.</p>
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="margin: 0; font-size: 2rem; font-weight: 800; color: var(--text-main);">Join DriveX</h1>
+            <p style="color: var(--text-light); margin-top: 10px;">Create an account to start your journey</p>
         </div>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div style="background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
-                    {{ messages[0] }}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('register') }}">
-            <div class="search-group" style="margin-bottom: 15px;">
-                <label>Full Name</label>
-                <input type="text" name="name" placeholder="John Doe" required>
+        <form method="POST">
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Full Name</label>
+                <input type="text" name="name" placeholder="John Doe" required 
+                       style="margin-top: 8px;">
             </div>
 
-            <div class="search-group" style="margin-bottom: 15px;">
-                <label>Email Address</label>
-                <input type="email" name="email" placeholder="you@example.com" required>
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Email Address</label>
+                <input type="email" name="email" placeholder="name@example.com" required 
+                       style="margin-top: 8px;">
             </div>
 
-            <div class="search-group" style="margin-bottom: 20px;">
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Create a password" required>
+            <div style="margin-bottom: 25px;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Password</label>
+                <input type="password" name="password" placeholder="Create a strong password" required 
+                       style="margin-top: 8px;">
             </div>
 
-            <button type="submit" class="btn-login" style="width: 100%; padding: 12px;">
-                Sign Up <i class="fas fa-arrow-right"></i>
+            <button type="submit" class="btn-login" style="width: 100%; padding: 14px; font-size: 1rem;">
+                Create Account
             </button>
         </form>
 
-        <p style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
-            Already have an account? <a href="{{ url_for('login') }}" style="color: var(--primary);">Log in</a>
-        </p>
+        <div style="text-align: center; margin-top: 25px; font-size: 0.9rem; color: var(--text-light);">
+            Already have an account? <a href="{{ url_for('login') }}" style="color: var(--primary); font-weight: 700; text-decoration: none;">Log In</a>
+        </div>
     </div>
 </div>
+
 {% endblock %}
-
 </body>
-
 </html>
