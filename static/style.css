@@ -10,7 +10,7 @@
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* ✅ PREMIUM DARK MODE (Clean Black/Grey) */
+/* ✅ PREMIUM DARK MODE */
 body.dark-mode {
     --primary: #3b82f6;
     --primary-dark: #60a5fa;
@@ -50,15 +50,16 @@ body {
 }
 .logo { font-weight: 900; font-size: 1.5rem; color: var(--text-main); display: flex; align-items: center; gap: 5px; text-decoration: none; }
 .logo span { color: var(--primary); }
-.nav-links a { text-decoration: none; color: var(--text-main); margin-left: 20px; font-weight: 500; font-size: 0.95rem; transition: 0.2s; }
+.nav-links { display: flex; align-items: center; gap: 20px; }
+.nav-links a { text-decoration: none; color: var(--text-main); font-weight: 500; font-size: 0.95rem; transition: 0.2s; }
 .nav-links a:hover { color: var(--primary); }
 .btn-login { background: var(--primary); color: white !important; padding: 10px 24px; border-radius: 8px; font-weight: 600; transition: background 0.2s; }
 .btn-login:hover { background: var(--primary-dark); }
 
-/* ✅ HERO SECTION (Fixed Size) */
+/* ✅ HERO SECTION (Desktop Default) */
 .hero {
-    height: 55vh; /* Much smaller than before */
-    min-height: 450px;
+    height: 60vh; 
+    min-height: 500px;
     background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6)), url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1600');
     background-size: cover;
     background-position: center;
@@ -68,15 +69,15 @@ body {
     padding: 0 5%;
     color: white;
     position: relative;
-    margin-bottom: 100px; /* ✅ SPACE FOR SEARCH BAR */
+    margin-bottom: 80px; /* Space for Desktop Search Bar */
 }
 .hero h1 { font-size: 3rem; margin-bottom: 15px; font-weight: 800; line-height: 1.1; color: white; }
 .hero p { font-size: 1.1rem; max-width: 550px; margin-bottom: 30px; opacity: 0.9; color: #cbd5e1; }
 
-/* ✅ FLOATING SEARCH BAR (No Overlap) */
+/* ✅ SEARCH CONTAINER (Desktop Default) */
 .search-container {
     position: absolute;
-    bottom: -50px; /* Hangs halfway out */
+    bottom: -50px;
     left: 5%;
     right: 5%;
     background: var(--bg-card);
@@ -87,34 +88,25 @@ body {
     gap: 20px;
     align-items: flex-end;
     border: 1px solid var(--border);
-    flex-wrap: wrap;
     z-index: 100;
 }
-.search-group { flex: 1; min-width: 200px; }
+.search-group { flex: 1; min-width: 150px; }
 .search-group label { display: block; font-size: 0.85rem; color: var(--text-light); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .search-group input, .search-group select {
-    width: 100%;
-    padding: 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--input-bg);
-    color: var(--text-main);
-    font-size: 1rem;
-    outline: none;
-    transition: border 0.2s;
+    width: 100%; padding: 14px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--input-bg); color: var(--text-main);
+    font-size: 1rem; outline: none;
 }
-.search-group input:focus, .search-group select:focus { border-color: var(--primary); }
 .btn-search {
     background: var(--primary); color: white; border: none;
     padding: 14px 30px; border-radius: 8px; cursor: pointer;
     font-weight: 700; font-size: 1rem; height: 50px;
-    transition: background 0.2s;
 }
-.btn-search:hover { background: var(--primary-dark); }
 
 /* Car Grid */
 .section-title { 
-    margin-top: 20px; 
+    margin-top: 40px; 
     margin-left: 5%; 
     font-size: 1.8rem; 
     font-weight: 800; 
@@ -161,7 +153,6 @@ body {
     font-weight: 500;
 }
 
-/* ✅ BOOKING BUTTON FIX */
 .car-footer { 
     display: flex; justify-content: space-between; align-items: center; 
     border-top: 1px solid var(--border); padding-top: 20px; 
@@ -222,19 +213,15 @@ footer a:hover { color: white !important; }
 .msg-bot { background: var(--input-bg); padding: 12px 16px; border-radius: 12px 12px 12px 2px; align-self: flex-start; max-width: 85%; color: var(--text-main); font-size: 0.95rem; line-height: 1.5; }
 .msg-user { background: var(--primary); color: white; padding: 12px 16px; border-radius: 12px 12px 2px 12px; align-self: flex-end; max-width: 85%; font-size: 0.95rem; line-height: 1.5; }
 
-/* =========================================
-   ✅ NEW AUTH PAGES STYLING (Login/Signup)
-   ========================================= */
-
+/* Auth Pages (Login/Register) */
 .auth-container {
     display: flex;
-    min-height: 85vh; /* Centers vertically */
+    min-height: 85vh;
     justify-content: center;
     align-items: center;
     background: var(--bg-body);
     padding: 20px;
 }
-
 .auth-box {
     width: 100%;
     max-width: 420px;
@@ -245,74 +232,132 @@ footer a:hover { color: white !important; }
     border: 1px solid var(--border);
     text-align: left;
 }
-
-/* Headings */
-.auth-box h1 {
-    color: var(--text-main);
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin-bottom: 5px;
-    text-align: center;
-}
-
-.auth-box p {
-    color: var(--text-light);
-    font-size: 0.95rem;
-    margin-bottom: 30px;
-    text-align: center;
-}
-
-/* Inputs */
-.auth-box label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--text-main);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
+.auth-box h1 { color: var(--text-main); font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; text-align: center; }
+.auth-box p { color: var(--text-light); font-size: 0.95rem; margin-bottom: 30px; text-align: center; }
+.auth-box label { display: block; margin-bottom: 8px; color: var(--text-main); font-weight: 600; font-size: 0.9rem; }
 .auth-box input {
-    width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 20px; /* Space between inputs */
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-main);
-    font-size: 1rem;
-    outline: none;
+    width: 100%; padding: 12px 16px; margin-bottom: 20px;
+    background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-main); font-size: 1rem; outline: none;
     transition: border 0.2s, box-shadow 0.2s;
 }
-
-.auth-box input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-    background: var(--bg-card);
-}
-
-/* Submit Button */
+.auth-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); background: var(--bg-card); }
 .auth-box .btn-login {
-    width: 100%;
-    padding: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    border: none;
+    width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
+    margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;
+    cursor: pointer; border: none;
 }
+.auth-box a { color: var(--primary); font-weight: 600; transition: 0.2s; }
+.auth-box a:hover { color: var(--primary-dark); text-decoration: underline; }
 
-/* Links (Forgot Password / Sign Up) */
-.auth-box a {
-    color: var(--primary);
-    font-weight: 600;
-    transition: 0.2s;
-}
+/* Admin Layout (Default Desktop) */
+.admin-container { display: flex; min-height: 100vh; }
+.sidebar { width: 250px; background: #0b121f; color: white; padding: 20px; flex-shrink: 0; }
+.admin-content { flex: 1; padding: 40px; background: var(--bg-body); overflow-y: auto; }
+.sidebar-link { display: block; padding: 12px; color: #a0aec0; text-decoration: none; margin-bottom: 5px; border-radius: 8px; }
+.sidebar-link.active, .sidebar-link:hover { background: var(--primary); color: white; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th { text-align: left; padding: 15px; background: var(--input-bg); color: var(--text-main); border-bottom: 2px solid var(--border); }
+td { padding: 15px; border-bottom: 1px solid var(--border); color: var(--text-main); }
 
-.auth-box a:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
+/* =========================================
+   📱 MOBILE RESPONSIVE RULES (Max Width 768px)
+   ========================================= */
+@media (max-width: 768px) {
+    
+    /* 1. Navbar: Stack Vertically */
+    .navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        gap: 15px;
+    }
+
+    /* 2. Hero: Allow height to grow */
+    .hero {
+        height: auto; 
+        min-height: auto;
+        padding: 60px 20px 40px 20px; 
+        margin-bottom: 0; /* Remove gap */
+        text-align: center;
+    }
+    .hero h1 { font-size: 2.2rem; }
+    
+    /* 3. Search Bar: UN-FLOAT (Stack Normally) */
+    .search-container {
+        position: relative; /* Back in normal flow */
+        bottom: auto;
+        left: auto;
+        right: auto;
+        margin: 20px 0;
+        flex-direction: column;
+        width: 100%;
+        gap: 15px;
+        box-shadow: none; /* Cleaner look on mobile */
+        border: none;
+        background: transparent;
+        padding: 0;
+    }
+    .search-group { width: 100%; }
+    .search-group label { color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .btn-search { width: 100%; }
+
+    /* 4. Car Grid: Single Column */
+    .car-grid {
+        grid-template-columns: 1fr; 
+        padding: 20px;
+        gap: 25px;
+    }
+    .section-title { 
+        margin-top: 20px; 
+        text-align: center; 
+        margin-left: 0; 
+        font-size: 1.5rem; 
+    }
+
+    /* 5. Admin Layout: Stack Sidebar on Top */
+    .admin-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        flex-direction: row; /* Horizontal scroll menu */
+        overflow-x: auto; 
+        align-items: center;
+        gap: 10px;
+    }
+    .sidebar h3 { display: none; }
+    .sidebar-link {
+        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        background: rgba(255,255,255,0.1);
+        margin-bottom: 0;
+    }
+    .admin-content { padding: 20px; }
+
+    /* 6. Admin Tables: Scrollable */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* 7. Chatbot: Full width */
+    .chatbot-window {
+        width: 90%;
+        right: 5%;
+        bottom: 90px;
+    }
+    .chatbot-btn {
+        bottom: 20px;
+        right: 20px;
+    }
 }
