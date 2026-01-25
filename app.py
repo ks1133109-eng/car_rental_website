@@ -40,7 +40,7 @@ class User(UserMixin, db.Model):
     user_selfie = db.Column(db.Text) 
     kyc_status = db.Column(db.String(20), default='Unverified')
     is_admin = db.Column(db.Boolean, default=False)
-    session_token = db.Column(db.String(100), nullable=True) # ✅ Single Session Fix
+    session_token = db.Column(db.String(100), nullable=True) 
 
 class Car(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -96,7 +96,6 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ✅ Security: Single Session Check
 @app.before_request
 def check_session_token():
     if current_user.is_authenticated:
@@ -105,28 +104,16 @@ def check_session_token():
             flash('Logged out: Account accessed from another device.')
             return redirect(url_for('login'))
 
-# --- ✅ INTELLIGENT CHATBOT LOGIC ---
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
     data = request.json
     msg = data.get('message', '').lower()
-    
     response = "I didn't understand that. You can ask about car prices, documents, or how to book."
-
-    # Rule-Based Logic
-    if 'hello' in msg or 'hi' in msg:
-        response = "Hello! Welcome to DriveX. How can I assist you today?"
-    elif 'price' in msg or 'cost' in msg or 'rate' in msg:
-        response = "Our cars start from ₹75/hr for Hatchbacks up to ₹180/hr for SUVs. Check the 'Cars' page for live rates."
-    elif 'book' in msg:
-        response = "To book, go to the 'Cars' page, select a vehicle, choose your dates, and proceed to payment."
-    elif 'document' in msg or 'id' in msg or 'kyc' in msg:
-        response = "You need a valid Driving License and an Aadhaar Card/Passport for KYC verification."
-    elif 'contact' in msg or 'support' in msg:
-        response = "You can email us at support@drivex.com or call +91 98765 43210."
-    elif 'cancel' in msg:
-        response = "You can cancel bookings from your 'My Bookings' section. Free cancellation up to 24 hours before."
-    
+    if 'hello' in msg or 'hi' in msg: response = "Hello! Welcome to DriveX. How can I assist you today?"
+    elif 'price' in msg or 'cost' in msg: response = "Our cars start from ₹75/hr. Check the 'Cars' page for details."
+    elif 'book' in msg: response = "To book, go to the 'Cars' page, select a vehicle, and proceed to payment."
+    elif 'document' in msg or 'id' in msg: response = "You need a valid Driving License and Aadhaar Card."
+    elif 'contact' in msg: response = "Email us at support@drivex.com."
     return jsonify({'response': response})
 
 # --- Routes ---
@@ -143,7 +130,6 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
-            # Session Token Logic
             new_token = str(uuid.uuid4())
             user.session_token = new_token
             db.session.commit()
@@ -275,11 +261,16 @@ def book_car_dates(car_id):
 
         base_cost = int(days * 24 * car.price_per_hr) if days > 0 else int(duration_delta.seconds/3600 * car.price_per_hr)
         if base_cost < car.price_per_hr: base_cost = car.price_per_hr * 24
+        
+        driver_fee = 500 if 'with_driver' in request.form else 0
+        tax = 648
+        total = base_cost + driver_fee + tax
 
+        # ✅ FIX: Pass 'discount=0' to prevent template crash
         return render_template('booking_payment.html', 
                                car=car, start_date=start_str, end_date=end_str,
-                               base_cost=base_cost, driver_fee=500 if 'with_driver' in request.form else 0,
-                               tax=648, total=base_cost + 648 + (500 if 'with_driver' in request.form else 0),
+                               base_cost=base_cost, driver_fee=driver_fee, tax=tax,
+                               discount=0, total=total,
                                with_driver=('with_driver' in request.form))
 
     return render_template('booking_dates.html', car=car)
@@ -327,13 +318,20 @@ def confirm_booking(car_id):
     start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
     end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
 
+    # ✅ FIX: Safe conversion to prevent crashes if value is empty
+    def safe_float(val):
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return 0.0
+
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
-        base_cost=float(request.form.get('base_cost')),
-        driver_cost=float(request.form.get('driver_fee')),
-        discount=float(request.form.get('discount', 0)),
-        total_cost=float(request.form.get('total_cost')),
+        base_cost=safe_float(request.form.get('base_cost')),
+        driver_cost=safe_float(request.form.get('driver_fee')),
+        discount=safe_float(request.form.get('discount')),
+        total_cost=safe_float(request.form.get('total_cost')),
         with_driver=request.form.get('with_driver') == 'True',
         payment_method=request.form.get('payment_method'),
         status='Paid' if request.form.get('payment_method') != 'cod' else 'Confirmed',
