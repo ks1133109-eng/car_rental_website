@@ -6,7 +6,6 @@
 {% block content %}
 
 <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
-    
     <h2 style="margin-bottom: 20px; text-align: center; color: var(--text-main);">Secure Payment</h2>
 
     <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border);">
@@ -15,13 +14,15 @@
             <input type="hidden" name="start_date" value="{{ start_date }}">
             <input type="hidden" name="end_date" value="{{ end_date }}">
             <input type="hidden" name="with_driver" value="{{ with_driver }}">
+            
+            <input type="hidden" name="delivery_fee" value="{{ delivery_fee }}">
+            <input type="hidden" name="delivery_type" value="{{ delivery_type }}">
+            <input type="hidden" name="delivery_address" value="{{ delivery_address }}">
 
-            <input type="text" name="coupon_code" placeholder="Enter Code (e.g. WELCOME20)" value="{{ applied_coupon }}" 
+            <input type="text" name="coupon_code" placeholder="Enter Code" value="{{ applied_coupon }}" 
                    style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
             
-            <button type="submit" style="background: var(--text-light); color: var(--bg-card); border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                Apply
-            </button>
+            <button type="submit" style="background: var(--text-light); color: var(--bg-card); border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">Apply</button>
         </form>
     </div>
 
@@ -33,25 +34,45 @@
         <input type="hidden" name="discount" value="{{ discount }}">
         <input type="hidden" name="total_cost" value="{{ total }}">
         <input type="hidden" name="with_driver" value="{{ with_driver }}">
+        
+        <input type="hidden" name="delivery_fee" value="{{ delivery_fee }}">
+        <input type="hidden" name="delivery_type" value="{{ delivery_type }}">
+        <input type="hidden" name="delivery_address" value="{{ delivery_address }}">
 
         <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border); box-shadow: var(--shadow);">
             <h3 style="margin-top: 0; color: var(--text-main);">Bill Details</h3>
+            
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-light);">
                 <span>Car Rental</span> <span>₹{{ base_cost }}</span>
             </div>
+            
             {% if driver_fee > 0 %}
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-light);">
                 <span>Driver Fee</span> <span>₹{{ driver_fee }}</span>
             </div>
             {% endif %}
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-light);">
+                <span>{{ delivery_type }} Fee</span> 
+                <span>{{ 'FREE' if delivery_fee == 0 and delivery_type == 'Delivery' else '₹' ~ delivery_fee }}</span>
+            </div>
+
+            {% if delivery_type == 'Delivery' %}
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 10px; background: var(--input-bg); padding: 8px; border-radius: 4px;">
+                <strong>Deliver to:</strong> {{ delivery_address }}
+            </div>
+            {% endif %}
+
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-light);">
                 <span>Taxes & Fees</span> <span>₹{{ tax }}</span>
             </div>
+            
             {% if discount > 0 %}
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #28a745; font-weight: bold;">
                 <span>Discount Applied</span> <span>-₹{{ discount }}</span>
             </div>
             {% endif %}
+            
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
             <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 800; color: var(--text-main);">
                 <span>Total Pay</span> <span>₹{{ total }}</span>
@@ -61,16 +82,10 @@
         <h3 style="margin-bottom: 15px; color: var(--text-main);">Select Payment Method</h3>
         <div style="display: flex; flex-direction: column; gap: 15px; color: var(--text-main);">
             <label style="padding: 15px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--bg-card);">
-                <input type="radio" name="payment_method" value="upi" required> UPI (GPay / PhonePe / Paytm)
+                <input type="radio" name="payment_method" value="upi" required> UPI
             </label>
             <label style="padding: 15px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--bg-card);">
-                <input type="radio" name="payment_method" value="card"> Credit / Debit Card
-            </label>
-            <label style="padding: 15px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--bg-card);">
-                <input type="radio" name="payment_method" value="netbanking"> Net Banking
-            </label>
-            <label style="padding: 15px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--bg-card);">
-                <input type="radio" name="payment_method" value="cod"> Pay at Pickup
+                <input type="radio" name="payment_method" value="cod"> Pay at Pickup/Delivery
             </label>
         </div>
 
@@ -79,7 +94,6 @@
         </button>
     </form>
 </div>
-
 {% endblock %}
 </body>
 </html>
