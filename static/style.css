@@ -10,7 +10,7 @@
     --card-bg: white;
 }
 
-/* ✅ FIX #5: Dark Mode Variables */
+/* ✅ DARK MODE FIXES */
 body.dark-mode {
     --bg-color: #1a1a2e;
     --text-color: #e0e0e0;
@@ -20,6 +20,21 @@ body.dark-mode {
     --gray: #a0a0a0;
 }
 
+/* Fix "Dirty" White Elements in Dark Mode */
+body.dark-mode table { background-color: #16213e; color: #e0e0e0; }
+body.dark-mode tr { background-color: #16213e !important; border-bottom: 1px solid #333; }
+body.dark-mode th { background-color: #0f3460 !important; color: white; }
+body.dark-mode td { background-color: #16213e !important; color: #ddd; }
+body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+    background-color: #0f3460 !important;
+    border: 1px solid #333;
+    color: white !important;
+}
+body.dark-mode .car-card, body.dark-mode .stat-card, body.dark-mode .dashboard-card {
+    background-color: #16213e !important;
+    border: 1px solid #333;
+}
+
 body {
     font-family: 'Inter', -apple-system, sans-serif;
     background-color: var(--bg-color);
@@ -27,7 +42,7 @@ body {
     margin: 0;
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* ✅ FIX #8: Sticky Footer Setup */
+    min-height: 100vh;
 }
 
 /* Navbar */
@@ -45,9 +60,9 @@ body {
 .nav-links a { text-decoration: none; color: var(--text-color); margin-left: 20px; font-weight: 500; font-size: 0.9rem; }
 .btn-login { background: var(--primary); color: white !important; padding: 8px 20px; border-radius: 6px; }
 
-/* Hero Section */
+/* Hero Section (Small Size) */
 .hero {
-    height: 60vh; /* ✅ FIX #9: Made Homepage smaller */
+    height: 60vh; /* ✅ Reduced Height */
     background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1485291571150-772bcfc10da5?w=1600');
     background-size: cover;
     background-position: center;
@@ -57,16 +72,16 @@ body {
     padding: 0 5%;
     color: white;
     position: relative;
-    margin-bottom: 80px; /* Space for search bar */
+    margin-bottom: 80px; /* ✅ Prevents Overlap */
 }
 
 .hero h1 { font-size: 3.5rem; margin-bottom: 10px; font-weight: 800; }
 .hero p { font-size: 1.1rem; max-width: 600px; margin-bottom: 30px; opacity: 0.9; }
 
-/* Search Bar (Floating) */
+/* Search Bar (Floating & Overlap Fix) */
 .search-container {
     position: absolute;
-    bottom: -50px; /* ✅ FIX #7: Prevent Overlap */
+    bottom: -50px;
     left: 5%;
     right: 5%;
     background: var(--card-bg);
@@ -83,126 +98,53 @@ body {
 .search-group input, .search-group select { width: 100%; padding: 12px; border: 1px solid #e9ecef; border-radius: 6px; background: var(--bg-color); color: var(--text-color); }
 .btn-search { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 
-/* Car Grid */
-.section-title { margin-left: 5%; font-size: 2rem; font-weight: 700; }
-.car-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 25px;
-    padding: 30px 5%;
-}
-
-.car-card {
-    background: var(--card-bg);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-    transition: transform 0.2s;
-    border: 1px solid #eee;
-}
-.car-card:hover { transform: translateY(-5px); }
-
-.car-header { position: relative; }
-.car-img { width: 100%; height: 200px; object-fit: cover; }
-.rating-badge {
-    position: absolute;
-    top: 15px; right: 15px;
-    background: white;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    color: black;
-}
-
-.car-body { padding: 20px; color: var(--text-color); }
-.car-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
-.car-subtitle { font-size: 0.8rem; color: var(--gray); margin-bottom: 15px; display: block; }
-
-.specs { display: flex; gap: 10px; margin-bottom: 20px; }
-.spec-chip { background: var(--bg-color); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; color: var(--gray); display: flex; align-items: center; gap: 5px; }
-
-.car-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f1f1; padding-top: 15px; }
-.price { font-size: 1.2rem; font-weight: 800; }
-.price span { font-size: 0.8rem; color: var(--gray); font-weight: normal; }
-.btn-arrow { background: var(--primary); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; }
-
-/* Auth Pages */
-.auth-container { display: flex; height: 100vh; justify-content: center; align-items: center; background: var(--bg-color); }
-.auth-box { width: 100%; max-width: 400px; padding: 40px; background: var(--card-bg); border-radius: 12px; box-shadow: var(--card-shadow); }
-.auth-header { text-align: center; margin-bottom: 30px; }
-.toggle-btn { display: flex; background: var(--bg-color); padding: 5px; border-radius: 8px; margin-bottom: 20px; }
-.toggle-btn button { flex: 1; border: none; padding: 10px; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 600; color: var(--gray); }
-.toggle-btn button.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
-/* Dashboard */
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
-.dash-card { background: var(--card-bg); padding: 25px; border-radius: 12px; border: 1px solid #eee; display: flex; gap: 15px; align-items: center; cursor: pointer; color: var(--text-color); }
-.dash-icon { width: 40px; height: 40px; background: #e0f2ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-/* Admin */
-.admin-layout { display: flex; height: 100vh; }
-.sidebar { width: 250px; background: #0b121f; color: white; padding: 20px; }
-.sidebar-link { display: block; padding: 12px; color: #a0aec0; text-decoration: none; margin-bottom: 5px; border-radius: 8px; }
-.sidebar-link.active { background: var(--primary); color: white; }
-.admin-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--bg-color); }
-.stat-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: var(--card-shadow); color: var(--text-color); }
-
 /* Footer */
 footer {
   background: #0b121f; 
   color: white; 
   padding: 40px 10%; 
-  margin-top: auto !important; /* ✅ FIX #8: Ensures footer stays at bottom */
+  margin-top: auto !important; 
 }
 
-/* Chatbot */
+/* Chatbot UI */
 .chatbot-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--primary);
-    color: white;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--primary); color: white;
+    width: 60px; height: 60px; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     z-index: 1000;
 }
 
 .chatbot-window {
-    position: fixed;
-    bottom: 90px;
-    right: 20px;
-    width: 300px;
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-    display: none;
-    flex-direction: column;
-    z-index: 1000;
-    overflow: hidden;
+    position: fixed; bottom: 90px; right: 20px;
+    width: 300px; background: var(--card-bg);
+    border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    display: none; flex-direction: column;
+    z-index: 1000; overflow: hidden; border: 1px solid #ddd;
 }
 
 .chat-header {
-    background: var(--primary);
-    color: white;
-    padding: 15px;
-    font-weight: bold;
-    display: flex;
-    justify-content: space-between;
+    background: var(--primary); color: white; padding: 15px;
+    font-weight: bold; display: flex; justify-content: space-between;
 }
 
 .chat-body {
-    height: 300px;
-    padding: 15px;
-    overflow-y: auto;
-    background: var(--bg-color);
-    color: var(--text-color);
+    height: 300px; padding: 15px; overflow-y: auto;
+    background: var(--bg-color); color: var(--text-color);
+    display: flex; flex-direction: column; gap: 10px;
 }
+
+.chat-input-area {
+    display: flex; border-top: 1px solid #ddd;
+}
+.chat-input-area input {
+    flex: 1; border: none; padding: 15px; outline: none;
+    background: var(--bg-color); color: var(--text-color);
+}
+.chat-input-area button {
+    background: var(--primary); color: white; border: none; padding: 0 20px; cursor: pointer;
+}
+
+.msg-bot { background: #e0f2ff; padding: 8px 12px; border-radius: 10px; align-self: flex-start; max-width: 80%; color: black; }
+.msg-user { background: var(--primary); color: white; padding: 8px 12px; border-radius: 10px; align-self: flex-end; max-width: 80%; }
