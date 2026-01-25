@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, redirect, url_for, request, flash
+import uuid  # ✅ Required for Single Session Security
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,8 +10,6 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'drivex-secret-key-2026'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
-
-# (Email Configuration Removed)
 
 # Database Configuration
 database_url = os.environ.get('DATABASE_URL')
@@ -41,6 +40,9 @@ class User(UserMixin, db.Model):
     user_selfie = db.Column(db.Text) 
     kyc_status = db.Column(db.String(20), default='Unverified')
     is_admin = db.Column(db.Boolean, default=False)
+    
+    # ✅ FIX #4: Single Session Token
+    session_token = db.Column(db.String(100), nullable=True)
 
 class Car(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -97,6 +99,15 @@ class Booking(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# ✅ FIX #4: Force Logout if logged in elsewhere
+@app.before_request
+def check_session_token():
+    if current_user.is_authenticated:
+        if current_user.session_token != session.get('token'):
+            logout_user()
+            flash('You have been logged out because your account was accessed from another device.')
+            return redirect(url_for('login'))
+
 # --- Routes ---
 @app.route('/')
 def home():
@@ -111,8 +122,20 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
+            
+            # ✅ FIX #4: Generate unique session token
+            new_token = str(uuid.uuid4())
+            user.session_token = new_token
+            db.session.commit()
+            
             login_user(user)
-            return redirect(url_for('dashboard') if not user.is_admin else url_for('admin_dashboard'))
+            session['token'] = new_token  # Save to browser session
+            
+            # ✅ FIX #10: Redirect to Home (unless admin)
+            if user.is_admin:
+                return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('home'))
+            
         flash('Invalid credentials')
     return render_template('login.html')
 
@@ -130,7 +153,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('home')) # Redirect to Home
     return render_template('register.html')
 
 @app.route('/fleet')
@@ -219,11 +242,17 @@ def book_car_dates(car_id):
             flash("Invalid date format.")
             return redirect(url_for('book_car_dates', car_id=car.id))
 
+        # ✅ FIX #1: Minimum 1 day, Maximum 30 days
         duration_delta = end_date - start_date
         duration_hours = duration_delta.total_seconds() / 3600
+        days = duration_delta.days
 
-        if duration_hours <= 0:
-            flash("End date must be after start date!")
+        if days < 1:
+            flash("❌ Minimum booking duration is 24 hours (1 Day).")
+            return redirect(url_for('book_car_dates', car_id=car.id))
+        
+        if days > 30:
+            flash("❌ Maximum booking duration is 30 Days.")
             return redirect(url_for('book_car_dates', car_id=car.id))
 
         collision = Booking.query.filter(
@@ -299,7 +328,6 @@ def apply_coupon():
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
 @login_required
 def confirm_booking(car_id):
-    # ✅ 1. Get Data from Form
     car = Car.query.get_or_404(car_id)
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
@@ -313,7 +341,6 @@ def confirm_booking(car_id):
     with_driver = request.form.get('with_driver') == 'True'
     payment_method = request.form.get('payment_method')
 
-    # ✅ 2. Save Booking to Database
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
@@ -330,7 +357,7 @@ def confirm_booking(car_id):
     db.session.add(new_booking)
     db.session.commit()
     
-    # ❌ EMAIL REMOVED - Redirects immediately to success page
+    # ❌ Email Removed as requested
     
     return redirect(url_for('booking_success', booking_id=new_booking.id))
 
