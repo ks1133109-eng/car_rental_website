@@ -17,19 +17,13 @@
             <a href="{{ url_for('about') }}">About Us</a>
             
             {% if current_user.is_authenticated %}
-                
                 {% if current_user.is_admin %}
                     <a href="{{ url_for('admin_dashboard') }}" style="color: #ffc107; font-weight: bold; border: 1px solid #ffc107; padding: 5px 10px; border-radius: 4px;">
                         <i class="fas fa-crown"></i> Admin Panel
                     </a>
                 {% endif %}
-
-                <a href="{{ url_for('dashboard') }}">
-                    <i class="fas fa-user-circle"></i> {{ current_user.name }}
-                </a>
-                
+                <a href="{{ url_for('dashboard') }}"><i class="fas fa-user-circle"></i> {{ current_user.name }}</a>
                 <a href="{{ url_for('logout') }}" class="btn-login" style="background: #dc3545; margin-left: 10px;">Logout</a>
-            
             {% else %}
                 <a href="{{ url_for('login') }}" class="btn-login">Login</a>
             {% endif %}
@@ -41,9 +35,7 @@
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <div style="text-align: center; background: #333; color: #fff; padding: 10px;">
-                {{ messages[0] }}
-            </div>
+            <div style="text-align: center; background: #333; color: #fff; padding: 10px;">{{ messages[0] }}</div>
         {% endif %}
     {% endwith %}
 
@@ -52,74 +44,63 @@
     </div>
 
     <footer>
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px;">
-            <div style="flex: 1; min-width: 250px;">
-                <h3>DriveX</h3>
-                <p style="color: #aaa; line-height: 1.6;">
-                    India's leading premium self-drive and chauffeur service. 
-                    Verified cars, transparent pricing, and 24/7 support.
-                </p>
-            </div>
-            <div style="flex: 1; min-width: 200px;">
-                <h4>Company</h4>
-                <ul style="list-style: none; padding: 0; line-height: 2;">
-                    <li><a href="{{ url_for('about') }}" style="color: #aaa; text-decoration: none;">About Us</a></li>
-                    <li><a href="{{ url_for('fleet') }}" style="color: #aaa; text-decoration: none;">Our Fleet</a></li>
-                    <li><a href="{{ url_for('contact') }}" style="color: #aaa; text-decoration: none;">Contact / Support</a></li>
-                </ul>
-            </div>
-            <div style="flex: 1; min-width: 200px;">
-                <h4>Contact</h4>
-                <ul style="list-style: none; padding: 0; line-height: 2;">
-                    <li style="color: #aaa;"><i class="fas fa-phone" style="margin-right: 10px;"></i> +91 98765 43210</li>
-                    <li style="color: #aaa;"><i class="fas fa-envelope" style="margin-right: 10px;"></i> support@drivex.com</li>
-                </ul>
-            </div>
-        </div>
-        <div style="border-top: 1px solid #222; margin-top: 30px; padding-top: 20px; text-align: center; color: #555; font-size: 0.9rem;">
-            &copy; 2026 DriveX Technologies. All rights reserved.
-        </div>
+        <div style="text-align: center; color: #aaa;">&copy; 2026 DriveX Technologies. All rights reserved.</div>
     </footer>
 
     <div class="chatbot-btn" onclick="toggleChat()">💬</div>
     <div class="chatbot-window" id="chatWindow">
-        <div class="chat-header">
-            Support Chat
-            <span style="cursor:pointer" onclick="toggleChat()">&times;</span>
+        <div class="chat-header">Support Chat <span style="cursor:pointer" onclick="toggleChat()">&times;</span></div>
+        <div class="chat-body" id="chatBody">
+            <div class="msg-bot">Hi! I'm DriveBot. Ask me about prices, docs, or booking!</div>
         </div>
-        <div class="chat-body">
-            <p><strong>Bot:</strong> Hi! How can I help you today?</p>
-            <p style="font-size:0.8rem; color:#666;">(This is a demo chat. For real support, email us.)</p>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()">Send</button>
         </div>
     </div>
 
     <script>
-        // Chatbot Toggle
         function toggleChat() {
             var chat = document.getElementById('chatWindow');
             chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
         }
 
+        function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+
+        function sendMessage() {
+            var input = document.getElementById('chatInput');
+            var msg = input.value.trim();
+            if(!msg) return;
+
+            var chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML += `<div class="msg-user">${msg}</div>`;
+            input.value = '';
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            fetch('/chatbot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg})
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatBody.innerHTML += `<div class="msg-bot">${data.response}</div>`;
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+
         // Dark Mode Logic
         const toggle = document.getElementById('darkModeToggle');
         const body = document.body;
-        
-        if(localStorage.getItem('dark-mode') === 'enabled'){
-            body.classList.add('dark-mode');
-            toggle.innerText = '☀️';
-        }
-
+        if(localStorage.getItem('dark-mode') === 'enabled'){ body.classList.add('dark-mode'); toggle.innerText = '☀️'; }
         toggle.addEventListener('click', () => {
             body.classList.toggle('dark-mode');
             if(body.classList.contains('dark-mode')){
-                localStorage.setItem('dark-mode', 'enabled');
-                toggle.innerText = '☀️';
+                localStorage.setItem('dark-mode', 'enabled'); toggle.innerText = '☀️';
             } else {
-                localStorage.setItem('dark-mode', 'disabled');
-                toggle.innerText = '🌙';
+                localStorage.setItem('dark-mode', 'disabled'); toggle.innerText = '🌙';
             }
         });
     </script>
-
 </body>
 </html>
