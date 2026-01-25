@@ -83,6 +83,12 @@ class Booking(db.Model):
     base_cost = db.Column(db.Integer)
     driver_cost = db.Column(db.Integer, default=0)
     discount = db.Column(db.Integer, default=0)
+    
+    # ✅ NEW: Delivery Fields
+    delivery_type = db.Column(db.String(20), default='Pickup') # 'Pickup' or 'Delivery'
+    delivery_address = db.Column(db.String(500), nullable=True)
+    delivery_fee = db.Column(db.Integer, default=0)
+
     total_cost = db.Column(db.Integer)
     with_driver = db.Column(db.Boolean, default=False)
     payment_method = db.Column(db.String(30))
@@ -262,16 +268,34 @@ def book_car_dates(car_id):
         base_cost = int(days * 24 * car.price_per_hr) if days > 0 else int(duration_delta.seconds/3600 * car.price_per_hr)
         if base_cost < car.price_per_hr: base_cost = car.price_per_hr * 24
         
-        driver_fee = 500 if 'with_driver' in request.form else 0
-        tax = 648
-        total = base_cost + driver_fee + tax
+        # ✅ FIX: Handle Delivery & Chauffeur Logic
+        with_driver = 'with_driver' in request.form
+        with_delivery = 'with_delivery' in request.form
+        
+        driver_fee = 500 if with_driver else 0
+        
+        # Logic: If chauffeur selected, delivery is FREE (or included). 
+        # If no chauffeur but delivery selected, CHARGE extra.
+        delivery_fee = 0
+        if with_delivery:
+            if not with_driver:
+                delivery_fee = 500  # Paid delivery if self-drive
+            else:
+                delivery_fee = 0    # Free delivery if with driver
+        
+        delivery_address = request.form.get('delivery_address') if with_delivery else "Self Pickup"
+        delivery_type = "Delivery" if with_delivery else "Pickup"
 
-        # ✅ FIX: Pass 'discount=0' to prevent template crash
+        tax = 648
+        total = base_cost + driver_fee + delivery_fee + tax
+
         return render_template('booking_payment.html', 
                                car=car, start_date=start_str, end_date=end_str,
-                               base_cost=base_cost, driver_fee=driver_fee, tax=tax,
-                               discount=0, total=total,
-                               with_driver=('with_driver' in request.form))
+                               base_cost=base_cost, driver_fee=driver_fee, 
+                               delivery_fee=delivery_fee, delivery_type=delivery_type,
+                               delivery_address=delivery_address,
+                               tax=tax, discount=0, total=total,
+                               with_driver=with_driver)
 
     return render_template('booking_dates.html', car=car)
 
@@ -281,7 +305,13 @@ def apply_coupon():
     car_id = request.form.get('car_id')
     start_str = request.form.get('start_date')
     end_str = request.form.get('end_date')
+    
     with_driver = request.form.get('with_driver') == 'True'
+    # ✅ Retrieve delivery info
+    delivery_fee = float(request.form.get('delivery_fee', 0))
+    delivery_type = request.form.get('delivery_type')
+    delivery_address = request.form.get('delivery_address')
+
     coupon_code = request.form.get('coupon_code').strip().upper()
     
     car = Car.query.get_or_404(car_id)
@@ -301,12 +331,15 @@ def apply_coupon():
     else:
         flash('❌ Invalid or Expired Coupon Code')
     
-    total_cost = max(0, (base_cost + driver_fee + tax) - discount)
+    total_cost = max(0, (base_cost + driver_fee + delivery_fee + tax) - discount)
 
     return render_template('booking_payment.html', 
                            car=car, start_date=start_str, end_date=end_str,
-                           base_cost=base_cost, driver_fee=driver_fee, tax=tax,
-                           discount=discount, total=total_cost, with_driver=with_driver,
+                           base_cost=base_cost, driver_fee=driver_fee, 
+                           delivery_fee=delivery_fee, delivery_type=delivery_type,
+                           delivery_address=delivery_address,
+                           tax=tax, discount=discount, total=total_cost, 
+                           with_driver=with_driver,
                            applied_coupon=coupon_code if discount > 0 else "")
 
 @app.route('/book/confirm/<int:car_id>', methods=['POST'])
@@ -318,18 +351,21 @@ def confirm_booking(car_id):
     start_date = datetime.strptime(start_str, '%Y-%m-%dT%H:%M')
     end_date = datetime.strptime(end_str, '%Y-%m-%dT%H:%M')
 
-    # ✅ FIX: Safe conversion to prevent crashes if value is empty
     def safe_float(val):
-        try:
-            return float(val)
-        except (ValueError, TypeError):
-            return 0.0
+        try: return float(val)
+        except (ValueError, TypeError): return 0.0
 
     new_booking = Booking(
         user_id=current_user.id,
         car_id=car.id,
         base_cost=safe_float(request.form.get('base_cost')),
         driver_cost=safe_float(request.form.get('driver_fee')),
+        
+        # ✅ Save Delivery Info
+        delivery_fee=safe_float(request.form.get('delivery_fee')),
+        delivery_type=request.form.get('delivery_type'),
+        delivery_address=request.form.get('delivery_address'),
+
         discount=safe_float(request.form.get('discount')),
         total_cost=safe_float(request.form.get('total_cost')),
         with_driver=request.form.get('with_driver') == 'True',
