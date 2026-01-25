@@ -1,114 +1,128 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>Dashboard | DriveX</title>
 </head>
-
 <body>
 
 {% extends "base.html" %}
 {% block content %}
 
-<div style="background-color: #f8f9fa; min-height: 90vh; padding: 40px 10%;">
+<div style="background-color: var(--bg-body); min-height: 90vh; padding: 40px 10%;">
     
-    <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee;">
+    <div style="background: var(--bg-card); padding: 30px; border-radius: 16px; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); flex-wrap: wrap; gap: 20px;">
         <div style="display: flex; gap: 20px; align-items: center;">
-            <div style="width: 80px; height: 80px; background: #e0f2ff; color: var(--primary); font-size: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+            <div style="width: 80px; height: 80px; background: var(--input-bg); color: var(--primary); font-size: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
                 {{ current_user.name[0] | upper }}
             </div>
             <div>
-                <h2 style="margin: 0; font-size: 1.8rem;">Welcome, {{ current_user.name }}!</h2>
-                <p style="margin: 5px 0 10px; color: #666;">{{ current_user.email }}</p>
+                <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-main);">Welcome, {{ current_user.name }}!</h2>
+                <p style="margin: 5px 0 10px; color: var(--text-light);">{{ current_user.email }}</p>
                 
                 {% if current_user.kyc_status == 'Verified' %}
-                    <span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                        <i class="fas fa-check-circle"></i> KYC Verified
+                    <span style="background: #d1fae5; color: #065f46; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">
+                        ✅ KYC Verified
                     </span>
                 {% elif current_user.kyc_status == 'Pending' %}
-                    <span style="background: #fff3cd; color: #856404; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                        <i class="fas fa-clock"></i> Verification Pending
+                    <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">
+                        ⏳ Verification Pending
                     </span>
                 {% else %}
-                    <a href="{{ url_for('kyc') }}" style="background: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-decoration: none;">
-                        <i class="fas fa-exclamation-circle"></i> Complete KYC
+                    <a href="{{ url_for('kyc') }}" style="background: #fee2e2; color: #b91c1c; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-decoration: none;">
+                        ⚠️ Complete KYC Now
                     </a>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <h3 style="margin-top: 40px; margin-bottom: 20px; font-weight: 700; color: #333;">Account Overview</h3>
-    
-    <div class="dashboard-grid">
-        <a href="{{ url_for('profile') }}" class="dash-card" style="text-decoration: none; color: inherit;">
-            <div class="dash-icon"><i class="far fa-user"></i></div>
-            <div>
-                <h4 style="margin: 0; font-size: 1rem;">Personal Profile</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">Edit your name, phone, and address</p>
+    <h3 style="margin-top: 40px; margin-bottom: 20px; color: var(--text-main);">Quick Actions</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+        
+        <a href="{{ url_for('profile') }}" style="text-decoration: none;">
+            <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; transition: transform 0.2s; box-shadow: var(--shadow);">
+                <div style="background: var(--input-bg); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; color: var(--text-main);">Edit Profile</h4>
+                    <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-light);">Update personal info</p>
+                </div>
             </div>
         </a>
 
-        <a href="{{ url_for('my_bookings') }}" class="dash-card" style="text-decoration: none; color: inherit;">
-            <div class="dash-icon"><i class="far fa-calendar-alt"></i></div>
-            <div>
-                <h4 style="margin: 0; font-size: 1rem;">My Bookings</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">View active, upcoming, and past trips</p>
+        <a href="{{ url_for('my_bookings') }}" style="text-decoration: none;">
+            <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; transition: transform 0.2s; box-shadow: var(--shadow);">
+                <div style="background: var(--input-bg); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
+                    <i class="fas fa-car"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; color: var(--text-main);">My Bookings</h4>
+                    <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-light);">View trip history</p>
+                </div>
             </div>
         </a>
 
-        <a href="{{ url_for('security') }}" class="dash-card" style="text-decoration: none; color: inherit;">
-            <div class="dash-icon"><i class="fas fa-shield-alt"></i></div>
-            <div>
-                <h4 style="margin: 0; font-size: 1rem;">Security & Privacy</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">Manage password settings</p>
+        <a href="{{ url_for('security') }}" style="text-decoration: none;">
+            <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; transition: transform 0.2s; box-shadow: var(--shadow);">
+                <div style="background: var(--input-bg); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; color: var(--text-main);">Security</h4>
+                    <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-light);">Change password</p>
+                </div>
             </div>
         </a>
 
-        <a href="{{ url_for('help_support') }}" class="dash-card" style="text-decoration: none; color: inherit;">
-            <div class="dash-icon"><i class="far fa-question-circle"></i></div>
-            <div>
-                <h4 style="margin: 0; font-size: 1rem;">Help & Support</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">FAQs and customer support</p>
+        <a href="{{ url_for('help_support') }}" style="text-decoration: none;">
+            <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; transition: transform 0.2s; box-shadow: var(--shadow);">
+                <div style="background: var(--input-bg); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.2rem;">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; color: var(--text-main);">Help & Support</h4>
+                    <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-light);">Get assistance</p>
+                </div>
             </div>
         </a>
+
     </div>
 
-    <div style="margin-top: 50px;">
-        <h3 style="margin-bottom: 20px; font-weight: 700;">Recent Trip History</h3>
-        {% if bookings %}
-            <div style="background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
-                {% for booking in bookings %}
-                <div style="padding: 20px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; gap: 20px; align-items: center;">
-                        <img src="{{ booking.car.image_url }}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px;">
-                        <div>
-                            <h4 style="margin: 0;">{{ booking.car.name }}</h4>
-                            <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">
-                                {{ booking.date_booked.strftime('%d %b %Y') }}
-                            </p>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700;">₹{{ booking.total_cost }}</div>
-                        <span style="background: #e6fffa; color: #2c7a7b; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{{ booking.status }}</span>
+    <h3 style="margin-top: 40px; margin-bottom: 20px; color: var(--text-main);">Recent Bookings</h3>
+    
+    {% if bookings %}
+        <div style="background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border);">
+            {% for booking in bookings %}
+            <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <img src="{{ booking.car.image_url }}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px;">
+                    <div>
+                        <h4 style="margin: 0; color: var(--text-main);">{{ booking.car.name }}</h4>
+                        <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-light);">
+                            {{ booking.date_booked.strftime('%d %b %Y') }}
+                        </p>
                     </div>
                 </div>
-                {% endfor %}
+                <div style="text-align: right;">
+                    <div style="font-weight: 700; color: var(--text-main);">₹{{ booking.total_cost }}</div>
+                    <span style="background: var(--input-bg); color: var(--text-light); font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{{ booking.status }}</span>
+                </div>
             </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="{{ url_for('my_bookings') }}" style="color: var(--primary); font-weight: 600; text-decoration: none;">View All Bookings &rarr;</a>
-            </div>
-        {% else %}
-            <p style="color: #999;">No recent trips.</p>
-        {% endif %}
-    </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('my_bookings') }}" style="color: var(--primary); font-weight: 600; text-decoration: none;">View All Bookings &rarr;</a>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 40px; background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
+            <p style="color: var(--text-light);">You haven't booked any cars yet.</p>
+            <a href="{{ url_for('fleet') }}" class="btn-login" style="display: inline-block; margin-top: 10px;">Find a Car</a>
+        </div>
+    {% endif %}
 
 </div>
+
 {% endblock %}
-
 </body>
-
 </html>
