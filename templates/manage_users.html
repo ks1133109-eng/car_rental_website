@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <title>Admin | Manage Users</title>
 </head>
-
 <body>
   {% extends "base.html" %}
 {% block content %}
@@ -15,15 +13,19 @@
         <h3 style="margin-bottom: 30px;">Admin Panel</h3>
         <a href="{{ url_for('admin_dashboard') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Dashboard</a>
         <a href="{{ url_for('manage_cars') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Manage Cars</a>
+        
+        <a href="{{ url_for('manage_coupons') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Coupons</a>
+        
         <a href="{{ url_for('manage_bookings') }}" style="display:block; padding:10px; color:#aaa; text-decoration:none;">Bookings</a>
         <a href="{{ url_for('manage_users') }}" style="display:block; padding:10px; color:white; background:var(--primary); border-radius:5px;">Users</a>
+        <a href="{{ url_for('logout') }}" style="display:block; padding:10px; color:#ff6b6b; margin-top: 20px;">Logout</a>
     </div>
 
-    <div style="flex: 1; padding: 40px; background: #f8f9fa;">
+    <div style="flex: 1; padding: 40px; background: var(--bg-color);">
         <h2>User Management</h2>
-        <div style="background: white; border-radius: 10px; overflow: hidden; margin-top: 20px;">
+        <div style="background: var(--card-bg); border-radius: 10px; overflow: hidden; margin-top: 20px;">
             <table style="width: 100%; border-collapse: collapse;">
-                <tr style="background: #eee; text-align: left;">
+                <tr style="background: var(--light); text-align: left;">
                     <th style="padding: 15px;">ID</th>
                     <th>Name</th>
                     <th>Email</th>
@@ -48,7 +50,5 @@
     </div>
 </div>
 {% endblock %}
-
 </body>
-
 </html>
