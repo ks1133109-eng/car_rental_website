@@ -2,32 +2,31 @@
 {% block content %}
 <div style="min-height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px;">
     
-    <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 500px; width: 100%;">
+    <div style="background: var(--bg-card); padding: 40px; border-radius: 20px; box-shadow: var(--shadow); max-width: 500px; width: 100%; border: 1px solid var(--border);">
         <div style="width: 80px; height: 80px; background: #d4edda; color: #155724; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px;">
             <i class="fas fa-check"></i>
         </div>
         
-        <h1 style="color: #333; margin-bottom: 10px;">Booking Confirmed!</h1>
-        <p style="color: #666; margin-bottom: 30px;">
+        <h1 style="color: var(--text-main); margin-bottom: 10px;">Booking Confirmed!</h1>
+        <p style="color: var(--text-light); margin-bottom: 30px;">
             Thank you, <strong>{{ booking.user.name }}</strong>. Your ride has been scheduled successfully.
         </p>
 
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
+        <div style="background: var(--input-bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: left; color: var(--text-main); border: 1px solid var(--border);">
             <p style="margin: 5px 0;"><strong>Car:</strong> {{ booking.car.name }}</p>
             <p style="margin: 5px 0;"><strong>Booking ID:</strong> #{{ booking.id }}</p>
             <p style="margin: 5px 0;"><strong>Amount Paid:</strong> ₹{{ booking.total_cost }}</p>
-            <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: green;">{{ booking.status }}</span></p>
+            <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #28a745; font-weight: bold;">{{ booking.status }}</span></p>
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <a href="{{ url_for('invoice', booking_id=booking.id) }}" target="_blank" style="background: #6c757d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+            <a href="{{ url_for('invoice', booking_id=booking.id) }}" target="_blank" style="background: var(--text-light); color: var(--bg-card); padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600;">
                 <i class="fas fa-download"></i> Invoice
             </a>
-            <a href="{{ url_for('dashboard') }}" style="background: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+            <a href="{{ url_for('dashboard') }}" class="btn-login" style="text-decoration: none;">
                 Go to Dashboard
             </a>
         </div>
     </div>
-
 </div>
 {% endblock %}
