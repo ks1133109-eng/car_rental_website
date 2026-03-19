@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-left">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);">Welcome Back</h1>
+        <p style="color: var(--text-light); margin-bottom: 20px;">Login to manage your bookings.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div style="
+                display: flex; align-items: flex-start; gap: 10px;
+                padding: 14px 16px; border-radius: 10px; margin-bottom: 20px;
+                font-size: 0.9rem; font-weight: 500; max-width: 400px;
+                {% if category == 'danger' %}
+                    background: rgba(239,68,68,0.1); color: #dc2626;
+                    border: 1px solid rgba(239,68,68,0.4);
+                {% elif category == 'success' %}
+                    background: rgba(16,185,129,0.1); color: #059669;
+                    border: 1px solid rgba(16,185,129,0.4);
+                {% elif category == 'warning' %}
+                    background: rgba(245,158,11,0.1); color: #b45309;
+                    border: 1px solid rgba(245,158,11,0.4);
+                {% else %}
+                    background: rgba(59,130,246,0.1); color: #1d4ed8;
+                    border: 1px solid rgba(59,130,246,0.3);
+                {% endif %}
+            ">
+                <i class="fas
+                    {% if category == 'danger' %} fa-exclamation-circle
+                    {% elif category == 'success' %} fa-check-circle
+                    {% elif category == 'warning' %} fa-exclamation-triangle
+                    {% else %} fa-info-circle
+                    {% endif %}" style="margin-top: 2px; flex-shrink: 0;"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" style="max-width: 400px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Email Address</label>
+                <input type="email" name="email" placeholder="you@example.com" required 
+                       style="width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); outline: none;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Password</label>
+                <input type="password" name="password" placeholder="••••••••" required 
+                       style="width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); outline: none;">
+            </div>
+            
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="{{ url_for('auth.forgot_password') }}" style="color: var(--primary); font-size: 0.9rem; font-weight: 600;">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="btn-login" style="width: 100%; height: 50px; font-size: 1rem;">Sign In</button>
+        </form>
+        
+        <p style="margin-top: 30px; color: var(--text-light);">
+            New here? <a href="{{ url_for('auth.register') }}" style="color: var(--primary); font-weight: 600;">Create Account</a>
+        </p>
+    </div>
+
+    <div class="auth-right"></div>
+</div>
+{% endblock %}

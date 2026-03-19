@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><title>Help & Support</title></head>
+<body>
+  {% extends "base.html" %}
+{% block content %}
+<div style="max-width: 800px; margin: 50px auto; padding: 0 20px;">
+    <h1 style="text-align: center; margin-bottom: 40px; color: var(--text-main);">How can we help?</h1>
+    
+    <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border);">
+        <h3 style="margin-top: 0; color: var(--text-main);">Documents Required?</h3>
+        <p style="color: var(--text-light); line-height: 1.6;">You need a valid Driving License, Aadhaar Card/Passport, and a credit card for the security deposit.</p>
+    </div>
+
+    <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border);">
+        <h3 style="margin-top: 0; color: var(--text-main);">Cancellation Policy?</h3>
+        <p style="color: var(--text-light); line-height: 1.6;">Free cancellation up to 24 hours before your trip start time. After that, a 50% fee applies.</p>
+    </div>
+
+    <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border);">
+        <h3 style="margin-top: 0; color: var(--text-main);">Fuel Policy?</h3>
+        <p style="color: var(--text-light); line-height: 1.6;">The car is provided with a full tank. Please return it with a full tank to avoid refueling charges.</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px;">
+        <p style="color: var(--text-light);">Still have questions?</p>
+        <a href="{{ url_for('main.contact') }}" class="btn-login" style="display: inline-block;">Contact Support</a>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

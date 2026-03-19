@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveX | Premium Rentals</title>
+
+    <!-- ══ PWA Meta Tags ══ -->
+    <meta name="theme-color" content="#2563EB">
+    <meta name="description" content="DriveX — Premium peer-to-peer car rental. Book luxury cars in minutes.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DriveX">
+    <meta name="msapplication-TileColor" content="#2563EB">
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="DriveX | Premium Car Rental">
+    <meta property="og:description" content="Book premium cars in minutes. DriveX peer-to-peer rentals.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200">
+
+
+
+    <!-- ══ PWA Manifest ══ -->
+    <link rel="manifest" href="/static/manifest.json">
+
+    <!-- Apple Touch Icons (self-hosted SVG — no external fetch, CSP-safe) -->
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="167x167" href="/static/icons/icon-192.svg">
+
+    <!-- Favicon (inline SVG data URI — zero external requests) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563EB'/%3E%3Ctext x='16' y='22' font-family='Arial Black' font-weight='900' font-size='18' fill='white' text-anchor='middle'%3EX%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/static/icons/icon-192.svg">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* ── Notification Bell Styles ── */
+        .notif-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .notif-bell-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 8px;
+            position: relative;
+            color: var(--text-light);
+            border-radius: 8px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .notif-bell-btn:hover {
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary);
+        }
+        .notif-bell-btn i { font-size: 1.1rem; }
+        .notif-badge {
+            display: none;
+            position: absolute;
+            top: 1px; right: 1px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 17px; height: 17px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            align-items: center;
+            justify-content: center;
+            line-height: 17px;
+            text-align: center;
+            border: 2px solid var(--bg-glass, white);
+        }
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            right: -60px;
+            top: calc(100% + 10px);
+            width: 320px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            z-index: 3000;
+            overflow: hidden;
+            animation: notifDrop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .notif-dropdown.open { display: block; }
+        @keyframes notifDrop {
+            from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)    scale(1);    }
+        }
+        .notif-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notif-header span {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+        .notif-mark-all {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0;
+            transition: opacity 0.2s;
+        }
+        .notif-mark-all:hover { opacity: 0.7; }
+        .notif-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .notif-list::-webkit-scrollbar { width: 4px; }
+        .notif-list::-webkit-scrollbar-track { background: transparent; }
+        .notif-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .notif-item {
+            display: block;
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+            text-decoration: none;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .notif-item:hover { background: rgba(37, 99, 235, 0.04); }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item-msg {
+            font-size: 0.85rem;
+            color: var(--text-main);
+            font-weight: 500;
+            line-height: 1.45;
+            margin-bottom: 4px;
+        }
+        .notif-item-time {
+            font-size: 0.72rem;
+            color: var(--text-light);
+        }
+        .notif-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+        .notif-empty i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 10px;
+            opacity: 0.35;
+        }
+
+        /* ── PWA Install Banner ── */
+        #pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+            z-index: 9998;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.12);
+            animation: slideUpBanner 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        #pwa-install-banner.show { display: block; }
+        .pwa-banner-inner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .pwa-banner-icon {
+            width: 48px; height: 48px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.3rem; flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+        }
+        .pwa-banner-text { flex: 1; }
+        .pwa-banner-text strong { display: block; color: var(--text-main); font-size: 0.95rem; }
+        .pwa-banner-text span { color: var(--text-light); font-size: 0.82rem; }
+        .pwa-install-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+        }
+        .pwa-install-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .pwa-dismiss-btn {
+            background: none; border: none;
+            color: var(--text-light); cursor: pointer;
+            padding: 8px; font-size: 1rem;
+        }
+        @keyframes slideUpBanner {
+            from { transform: translateY(100%); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        /* ── Offline Toast ── */
+        #offline-toast {
+            display: none;
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white;
+            padding: 10px 20px; border-radius: 50px;
+            font-size: 0.85rem; font-weight: 600;
+            border-left: 4px solid #ef4444;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        #offline-toast.show { display: block; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 30px; right: 30px;
+            background: #1e293b;
+            color: white;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.info    { border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <!-- Offline Indicator -->
+    <div id="offline-toast">
+        <i class="fas fa-wifi" style="margin-right:8px; color:#ef4444;"></i> You're offline — some features may be limited
+    </div>
+
+    <nav class="navbar">
+        <a href="{{ url_for('main.home') }}" class="logo">
+            <i class="fas fa-bolt"></i> Drive<span>X</span>
+        </a>
+
+        <!-- Desktop Nav Links (hidden on sidebar-admin pages) -->
+        <div class="nav-links" {% if hide_nav %}style="display:none"{% endif %}>
+            <a href="{{ url_for('main.home') }}">Home</a>
+            <a href="{{ url_for('main.fleet') }}">Fleet</a>
+
+            {% if current_user.is_authenticated %}
+                {% if current_user.role == 'Admin' %}
+                    <a href="{{ url_for('admin.admin_dashboard') }}" style="color: #f59e0b; font-weight: bold;">Admin Panel</a>
+                {% elif current_user.role == 'Client' %}
+                    <a href="{{ url_for('client.client_dashboard') }}" style="color: #10b981; font-weight: bold;">Partner Portal</a>
+                {% else %}
+                    <a href="{{ url_for('main.loyalty_page') }}" style="color: #f59e0b; font-weight: 600;">
+                        <i class="fas fa-star"></i> Rewards
+                        {% if current_user.loyalty_points > 0 %}
+                        <span style="background: #f59e0b; color: black; font-size: 0.7rem; padding: 1px 6px; border-radius: 10px; margin-left: 4px;">{{ current_user.loyalty_points }} pts</span>
+                        {% endif %}
+                    </a>
+                {% endif %}
+
+                <!-- ══ NOTIFICATION BELL ══ -->
+                <div class="notif-wrap" id="notifWrap">
+                    <button class="notif-bell-btn" onclick="toggleBell()" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+                    <div class="notif-dropdown" id="notifDrop">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+                        </div>
+                        <div class="notif-list" id="notifList">
+                            <div class="notif-empty">
+                                <i class="fas fa-bell-slash"></i>
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ══ END NOTIFICATION BELL ══ -->
+
+                <div class="profile-menu">
+                    <button class="profile-btn">
+                        <i class="fas fa-user-circle" style="font-size: 1.1rem;"></i>
+                        {{ current_user.name.split()[0] }}
+                        <i class="fas fa-chevron-down" style="font-size: 0.65rem; opacity: 0.6;"></i>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('main.dashboard') }}"><i class="fas fa-chart-line" style="width:18px;"></i> Dashboard</a>
+                        <a href="{{ url_for('main.profile') }}"><i class="fas fa-cog" style="width:18px;"></i> Settings</a>
+                        <a href="{{ url_for('main.my_bookings') }}"><i class="fas fa-car" style="width:18px;"></i> My Bookings</a>
+                        {% if current_user.role == 'User' %}
+                        <a href="{{ url_for('main.loyalty_page') }}"><i class="fas fa-star" style="width:18px; color:#f59e0b;"></i> Rewards &amp; Referrals</a>
+                        {% endif %}
+                        <div style="border-top: 1px solid var(--border); margin: 5px 0;"></div>
+                        <a href="{{ url_for('auth.logout') }}" style="color: #ef4444;"><i class="fas fa-sign-out-alt" style="width:18px;"></i> Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('auth.register_client') }}" style="color: #10b981; font-weight: bold; text-decoration: none;">Become a Partner</a>
+                <a href="{{ url_for('auth.login') }}" class="btn-login">Login</a>
+            {% endif %}
+        </div>
+
+        <!-- Hamburger (mobile only) -->
+        <button class="hamburger" {% if hide_nav %}style="display:none"{% endif %} id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- Mobile Nav Drawer -->
+    <div class="mobile-nav" id="mobileNav" onclick="closeMobileNav(event)">
+        <div class="mobile-nav-drawer" id="mobileDrawer">
+            <a href="{{ url_for('main.home') }}" onclick="closeNav()"><i class="fas fa-home" style="width:20px;"></i> Home</a>
+            <a href="{{ url_for('main.fleet') }}" onclick="closeNav()"><i class="fas fa-car" style="width:20px;"></i> Fleet</a>
+
+            {% if current_user.is_authenticated %}
+                {% if current_user.role == 'Admin' %}
+                    <a href="{{ url_for('admin.admin_dashboard') }}" style="color:#f59e0b;" onclick="closeNav()"><i class="fas fa-tachometer-alt" style="width:20px;"></i> Admin Panel</a>
+                {% elif current_user.role == 'Client' %}
+                    <a href="{{ url_for('client.client_dashboard') }}" style="color:#10b981;" onclick="closeNav()"><i class="fas fa-store" style="width:20px;"></i> Partner Portal</a>
+                {% else %}
+                    <a href="{{ url_for('main.loyalty_page') }}" style="color:#f59e0b;" onclick="closeNav()">
+                        <i class="fas fa-star" style="width:20px;"></i> Rewards
+                        {% if current_user.loyalty_points > 0 %}&middot; {{ current_user.loyalty_points }} pts{% endif %}
+                    </a>
+                {% endif %}
+
+                <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
+                <a href="{{ url_for('main.dashboard') }}" onclick="closeNav()"><i class="fas fa-chart-line" style="width:20px;"></i> Dashboard</a>
+                <a href="{{ url_for('main.profile') }}" onclick="closeNav()"><i class="fas fa-cog" style="width:20px;"></i> Settings</a>
+                <a href="{{ url_for('main.my_bookings') }}" onclick="closeNav()"><i class="fas fa-list" style="width:20px;"></i> My Bookings</a>
+                <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
+                <a href="{{ url_for('auth.logout') }}" style="color:#ef4444;" onclick="closeNav()"><i class="fas fa-sign-out-alt" style="width:20px;"></i> Logout</a>
+            {% else %}
+                <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
+                <a href="{{ url_for('auth.register_client') }}" style="color:#10b981;" onclick="closeNav()"><i class="fas fa-handshake" style="width:20px;"></i> Become a Partner</a>
+                <a href="{{ url_for('auth.login') }}" onclick="closeNav()"><i class="fas fa-sign-in-alt" style="width:20px;"></i> Login / Register</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div style="position: fixed; top: 65px; left: 0; right: 0; z-index: 5000;">
+        {% for category, message in messages %}
+        <div style="
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 14px 20px; font-weight: 600; font-size: 0.92rem;
+            text-align: center; animation: flashSlideIn 0.3s ease;
+            {% if category == 'danger' %}
+                background: #ef4444; color: white; border-bottom: 3px solid #dc2626;
+            {% elif category == 'success' %}
+                background: #10b981; color: white; border-bottom: 3px solid #059669;
+            {% elif category == 'warning' %}
+                background: #f59e0b; color: black; border-bottom: 3px solid #d97706;
+            {% elif category == 'info' %}
+                background: #3b82f6; color: white; border-bottom: 3px solid #2563eb;
+            {% else %}
+                background: var(--primary); color: white; border-bottom: 3px solid #1d4ed8;
+            {% endif %}
+        ">
+            <i class="fas
+                {% if category == 'danger' %} fa-exclamation-circle
+                {% elif category == 'success' %} fa-check-circle
+                {% elif category == 'warning' %} fa-exclamation-triangle
+                {% else %} fa-info-circle
+                {% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    <div style="height: {{ messages|length * 54 }}px;"></div>
+    {% endif %}
+    {% endwith %}
+    <style>
+    @keyframes flashSlideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+
+    <div style="min-height: 80vh; padding-top: 65px;">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% if not hide_footer %}
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <a href="#" class="logo" style="font-size: 1.4rem; margin-bottom: 12px; display: inline-flex;">
+                    Drive<span>X</span>
+                </a>
+                <p>Premium mobility for the modern era.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <a href="{{ url_for('main.home') }}">Home</a>
+                <a href="{{ url_for('main.fleet') }}">Browse Cars</a>
+                <a href="{{ url_for('auth.login') }}">Login / Sign Up</a>
+                <a href="{{ url_for('auth.register_client') }}" style="color: #10b981; font-weight: 600;">List Your Car (Partner)</a>
+            </div>
+            <div class="footer-col">
+                <h4>Rewards</h4>
+                {% if current_user.is_authenticated and current_user.role == 'User' %}
+                <a href="{{ url_for('main.loyalty_page') }}" style="color: #f59e0b;">My Rewards &amp; Points</a>
+                {% endif %}
+                <a href="{{ url_for('main.help_support') }}">Help &amp; Support</a>
+                <a href="{{ url_for('main.contact') }}">Contact Us</a>
+            </div>
+            <div class="footer-col">
+                <h4>Contact Us</h4>
+                <p><i class="fas fa-map-marker-alt"></i> Mumbai, India</p>
+                <p><i class="fas fa-envelope"></i> support@drivex.com</p>
+            </div>
+        </div>
+        <div style="text-align: center; border-top: 1px solid #334155; padding-top: 25px; color: #94a3b8; font-size: 0.85rem;">
+            &copy; 2026 DriveX Technologies. All rights reserved.
+        </div>
+    </footer>
+    {% endif %}
+
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner">
+        <div class="pwa-banner-inner">
+            <div class="pwa-banner-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div class="pwa-banner-text">
+                <strong>Install DriveX App</strong>
+                <span>Get faster access, offline support &amp; instant notifications</span>
+            </div>
+            <button class="pwa-install-btn" id="pwa-install-btn">
+                <i class="fas fa-download" style="margin-right:6px;"></i> Install
+            </button>
+            <button class="pwa-dismiss-btn" id="pwa-dismiss-btn" title="Dismiss">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script>gsap.registerPlugin(ScrollTrigger);</script>
+
+    <script>
+        // ── Mobile Hamburger ──────────────────────────────────────
+        const hamburger = document.getElementById('hamburger');
+        const mobileNav = document.getElementById('mobileNav');
+
+        hamburger && hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('open');
+            mobileNav.classList.toggle('open');
+            document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
+        });
+
+        function closeMobileNav(e) {
+            if (e.target === mobileNav) closeNav();
+        }
+        function closeNav() {
+            hamburger && hamburger.classList.remove('open');
+            mobileNav && mobileNav.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // ── Toast Helper ──────────────────────────────────────────
+        function showToast(msg, type = 'info') {
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${msg}`;
+            document.body.appendChild(t);
+            setTimeout(() => t.classList.add('show'), 50);
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // NOTIFICATION BELL
+        // ══════════════════════════════════════════════════════════
+        {% if current_user.is_authenticated %}
+
+        const CSRF = '{{ csrf_token() }}';
+
+        async function fetchNotifs() {
+            try {
+                const res = await fetch('/notifications');
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const badge = document.getElementById('notifBadge');
+                const list  = document.getElementById('notifList');
+                if (!badge || !list) return;
+
+                // Update badge
+                if (data.count > 0) {
+                    badge.style.display = 'flex';
+                    badge.textContent = data.count > 9 ? '9+' : data.count;
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                // Update list — SECURITY: use DOM APIs (not innerHTML) to prevent XSS
+                list.innerHTML = '';
+                if (data.notifications.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'notif-empty';
+                    empty.innerHTML = '<i class="fas fa-bell-slash"></i>';
+                    const txt = document.createTextNode(" You're all caught up!");
+                    empty.appendChild(txt);
+                    list.appendChild(empty);
+                } else {
+                    data.notifications.forEach(n => {
+                        const a = document.createElement('a');
+                        a.className = 'notif-item';
+                        // SECURITY: validate link is a relative path only (no javascript: or http:)
+                        const safeLink = (n.link && n.link.startsWith('/')) ? n.link : '/dashboard';
+                        a.href = safeLink;
+                        a.addEventListener('click', (e) => markRead(n.id, e));
+
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = 'notif-item-msg';
+                        msgDiv.textContent = n.message;  // textContent prevents XSS
+
+                        const timeDiv = document.createElement('div');
+                        timeDiv.className = 'notif-item-time';
+                        timeDiv.innerHTML = '<i class="fas fa-clock" style="margin-right:4px; opacity:0.6;"></i>';
+                        const timeText = document.createTextNode(n.time);
+                        timeDiv.appendChild(timeText);
+
+                        a.appendChild(msgDiv);
+                        a.appendChild(timeDiv);
+                        list.appendChild(a);
+                    });
+                }
+            } catch(e) {
+                console.warn('[DriveX] Notification fetch failed:', e);
+            }
+        }
+
+        function toggleBell() {
+            const drop = document.getElementById('notifDrop');
+            const isOpen = drop.classList.contains('open');
+            drop.classList.toggle('open', !isOpen);
+            if (!isOpen) fetchNotifs();
+        }
+
+        async function markRead(id, e) {
+            // Don't prevent navigation — just fire the request
+            try {
+                await fetch(`/notifications/read/${id}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' }
+                });
+                setTimeout(fetchNotifs, 300);
+            } catch(err) { /* non-critical */ }
+        }
+
+        async function markAllRead() {
+            try {
+                await fetch('/notifications/read-all', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' }
+                });
+                document.getElementById('notifDrop').classList.remove('open');
+                fetchNotifs();
+            } catch(err) { /* non-critical */ }
+        }
+
+        // Close bell dropdown when clicking outside
+        document.addEventListener('click', e => {
+            const wrap = document.getElementById('notifWrap');
+            const drop = document.getElementById('notifDrop');
+            if (wrap && drop && !wrap.contains(e.target)) {
+                drop.classList.remove('open');
+            }
+        });
+
+        // Initial fetch + poll every 60 seconds
+        fetchNotifs();
+        setInterval(fetchNotifs, 60000);
+
+        {% endif %}
+
+        // ══════════════════════════════════════════════════════════
+        // PWA — Service Worker Registration
+        // ══════════════════════════════════════════════════════════
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js', { scope: '/' })
+                    .then(reg => {
+                        console.log('[DriveX] SW registered:', reg.scope);
+                        setInterval(() => reg.update(), 60000);
+                        reg.addEventListener('updatefound', () => {
+                            const nw = reg.installing;
+                            nw.addEventListener('statechange', () => {
+                                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showToast('New version available — refresh to update!', 'info');
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.warn('[DriveX] SW registration failed (non-critical):', err));
+
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'SYNC_COMPLETE') {
+                        showToast('Your data has been synced!', 'success');
+                    }
+                });
+            });
+        }
+
+        // ── PWA Install Prompt ────────────────────────────────────
+        let deferredPrompt = null;
+        const installBanner  = document.getElementById('pwa-install-banner');
+        const installBtn     = document.getElementById('pwa-install-btn');
+        const dismissBtn     = document.getElementById('pwa-dismiss-btn');
+
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+        // Clear expired dismissal before checking
+        const dismissed = localStorage.getItem('pwa-banner-dismissed');
+        if (dismissed && Date.now() > parseInt(dismissed)) {
+            localStorage.removeItem('pwa-banner-dismissed');
+        }
+
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!isStandalone && !localStorage.getItem('pwa-banner-dismissed')) {
+                setTimeout(() => installBanner.classList.add('show'), 3000);
+            }
+        });
+
+        installBtn && installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') showToast('DriveX installed successfully! 🎉', 'success');
+            deferredPrompt = null;
+            installBanner.classList.remove('show');
+        });
+
+        dismissBtn && dismissBtn.addEventListener('click', () => {
+            installBanner.classList.remove('show');
+            localStorage.setItem('pwa-banner-dismissed', Date.now() + 7 * 24 * 60 * 60 * 1000);
+        });
+
+        // ── Offline / Online Detection ────────────────────────────
+        const offlineToast = document.getElementById('offline-toast');
+
+        function updateOnlineStatus() {
+            if (!navigator.onLine) {
+                offlineToast.classList.add('show');
+            } else {
+                offlineToast.classList.remove('show');
+                if (offlineToast._wasOffline) {
+                    showToast('Back online! ✓', 'success');
+                    offlineToast._wasOffline = false;
+                }
+            }
+        }
+
+        window.addEventListener('online',  () => { offlineToast._wasOffline = true; updateOnlineStatus(); });
+        window.addEventListener('offline', () => { offlineToast._wasOffline = true; updateOnlineStatus(); });
+        updateOnlineStatus();
+    </script>
+</body>
+</html>

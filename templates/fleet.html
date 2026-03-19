@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="padding: 40px 5%; min-height: 100vh;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h1 style="margin: 0; font-size: 2rem; color: var(--text-main);">Explore Fleet</h1>
+        <button onclick="toggleView()" id="viewBtn" class="btn-login" style="background: var(--text-main); color: var(--bg-body) !important; border: 1px solid var(--border);">
+            <i class="fas fa-map-marked-alt"></i> Switch to Map View
+        </button>
+    </div>
+
+    <div style="background: var(--bg-card); padding: 25px; border-radius: 16px; box-shadow: var(--shadow); margin-bottom: 40px; border: 1px solid var(--border);">
+        <form action="{{ url_for('main.fleet') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: end;">
+            
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); display: block; margin-bottom: 8px;">LOCATION</label>
+                <div style="display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--input-bg);">
+                    <input type="text" id="loc_input" name="location" value="{{ current_filters.get('location', '') }}" placeholder="Enter City..." style="width: 100%; padding: 12px; border: none; outline: none; background: transparent; color: var(--text-main);">
+                    <button type="button" onclick="getLocation()" title="Use Current Location" style="padding: 0 15px; background: var(--primary); color: white; border: none; cursor: pointer;">
+                        <i class="fas fa-location-arrow"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); display: block; margin-bottom: 8px;">PICKUP DATE</label>
+                <input type="datetime-local" name="start_date" value="{{ current_filters.get('start_date', '') }}" style="width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); display: block; margin-bottom: 8px;">DROP DATE</label>
+                <input type="datetime-local" name="end_date" value="{{ current_filters.get('end_date', '') }}" style="width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); display: block; margin-bottom: 8px;">CAR TYPE</label>
+                <select name="category" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                    <option value="All">All Types</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if current_filters.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); display: block; margin-bottom: 8px;">SEATER</label>
+                <select name="seats" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                    <option value="All">Any Capacity</option>
+                    <option value="4" {% if current_filters.get('seats') == '4' %}selected{% endif %}>4+ Seats</option>
+                    <option value="5" {% if current_filters.get('seats') == '5' %}selected{% endif %}>5+ Seats</option>
+                    <option value="7" {% if current_filters.get('seats') == '7' %}selected{% endif %}>7+ Seats</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn-login" style="flex: 1; height: 44px; border-radius: 8px;">Search</button>
+                <a href="{{ url_for('main.fleet') }}" class="btn-login" style="background: var(--text-light); height: 44px; border-radius: 8px; text-decoration: none;"><i class="fas fa-undo"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Map Container -->
+    <div id="mapContainer" style="display: none; border-radius: 16px; margin-bottom: 40px; border: 2px solid var(--primary); position: relative; overflow: hidden;">
+        <div id="mapDiv" style="height: 550px; width: 100%;"></div>
+        
+        <!-- Map controls overlay -->
+        <div style="position: absolute; top: 15px; left: 15px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
+            <button onclick="locateUserOnMap()" style="background: white; color: #1e293b; padding: 10px 14px; border-radius: 8px; border: 2px solid #e2e8f0; cursor: pointer; font-weight: 700; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 7px;">
+                <i class="fas fa-crosshairs" style="color: var(--primary);"></i> My Location
+            </button>
+        </div>
+
+        <!-- Map loading indicator -->
+        <div id="mapLoader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: none; align-items: center; gap: 10px; z-index: 1001; font-weight: 600; color: #1e293b;">
+            <div style="width:18px; height:18px; border:3px solid #e2e8f0; border-top-color: var(--primary); border-radius:50%; animation: spin 0.8s linear infinite;"></div>
+            Locating cars...
+        </div>
+
+        <!-- Car count badge -->
+        <div id="mapCarCount" style="position: absolute; bottom: 15px; left: 15px; background: var(--primary); color: white; padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; z-index: 1000; box-shadow: 0 4px 12px rgba(37,99,235,0.35); display: none;">
+            <i class="fas fa-car" style="margin-right: 6px;"></i><span id="mapCarCountNum">0</span> cars mapped
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Custom Leaflet marker cluster look */
+        .dx-marker {
+            background: #2563EB;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 18px !important;
+            height: 18px !important;
+            margin-left: -9px !important;
+            margin-top: -9px !important;
+            box-shadow: 0 3px 10px rgba(37,99,235,0.5);
+        }
+
+        /* Car popup styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 14px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.18) !important;
+            border: none !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            width: 220px !important;
+        }
+        .leaflet-popup-tip-container { display: none; }
+    </style>
+
+    <div id="listView" class="car-grid" style="padding: 0;">
+        {% if cars %}
+            {% for car in cars %}
+            <div class="car-card" 
+                 data-name="{{ car.name }}" 
+                 data-loc="{{ car.location }}" 
+                 data-price="{{ car.price_per_day }}" 
+                 data-img="{{ car.image_url }}" 
+                 data-id="{{ car.id }}"
+                 data-category="{{ car.category }}">
+                <div style="position: relative;">
+                    <img src="{{ car.image_url }}" class="car-img" alt="{{ car.name }}">
+                    <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); color: black; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
+                        <i class="fas fa-star" style="color: #f59e0b;"></i> {{ car.average_rating }}
+                    </div>
+                </div>
+                <div class="car-body">
+                    <h3 class="car-title">{{ car.name }}</h3>
+                    <span class="car-subtitle">{{ car.category }} • <i class="fas fa-map-marker-alt"></i> {{ car.location }}</span>
+                    <div class="car-specs">
+                        <div class="spec-item"><i class="fas fa-cog"></i> {{ car.transmission }}</div>
+                        <div class="spec-item"><i class="fas fa-gas-pump"></i> {{ car.fuel_type }}</div>
+                        <div class="spec-item"><i class="fas fa-user"></i> {{ car.seats }}</div>
+                    </div>
+                    <div class="car-footer">
+                        <div class="price">₹{{ car.price_per_day }}<span>/day</span></div>
+                        <a href="{{ url_for('booking.book_car_dates', car_id=car.id) }}" class="btn-login">Book Now</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1 / -1; text-align:center; padding: 60px; background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
+                <i class="fas fa-car-side" style="font-size: 3rem; color: var(--text-light); margin-bottom: 20px; opacity: 0.5;"></i>
+                <h3 style="color: var(--text-main);">No cars found</h3>
+                <p style="color: var(--text-light);">Try adjusting your filters or location to see more options.</p>
+                <a href="{{ url_for('main.fleet') }}" class="btn-login" style="margin-top: 15px;">Clear Filters</a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+    // ── GPS Geolocation for text input ──
+    function getLocation() {
+        const locInput = document.getElementById('loc_input');
+        locInput.placeholder = "Detecting location...";
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const data = await response.json();
+                    const city = data.address.city || data.address.town || data.address.village || data.address.state;
+                    locInput.value = city;
+                } catch (error) {
+                    locInput.value = "";
+                    locInput.placeholder = "Location failed. Type manually.";
+                }
+            }, () => {
+                locInput.value = "";
+                locInput.placeholder = "Permission denied.";
+            });
+        } else {
+            locInput.placeholder = "GPS not supported.";
+        }
+    }
+
+    // ════════════════════════════════════════════
+    // MAP LOGIC — Accurate geocoding per city
+    // ════════════════════════════════════════════
+    let mapInitialized = false;
+    let mapInstance = null;
+    let markerGroup = null;
+
+    // Geocode cache to avoid re-fetching same cities
+    const geocodeCache = {};
+
+    // India-specific city fallback coords for offline/error scenarios
+    const INDIA_FALLBACKS = {
+        'mumbai':     [19.0760, 72.8777],
+        'delhi':      [28.6139, 77.2090],
+        'bangalore':  [12.9716, 77.5946],
+        'bengaluru':  [12.9716, 77.5946],
+        'hyderabad':  [17.3850, 78.4867],
+        'chennai':    [13.0827, 80.2707],
+        'kolkata':    [22.5726, 88.3639],
+        'pune':       [18.5204, 73.8567],
+        'ahmedabad':  [23.0225, 72.5714],
+        'jaipur':     [26.9124, 75.7873],
+        'surat':      [21.1702, 72.8311],
+        'lucknow':    [26.8467, 80.9462],
+        'kanpur':     [26.4499, 80.3319],
+        'nagpur':     [21.1458, 79.0882],
+        'indore':     [22.7196, 75.8577],
+        'bhopal':     [23.2599, 77.4126],
+        'goa':        [15.2993, 74.1240],
+        'panaji':     [15.4909, 73.8278],
+        'kochi':      [9.9312,  76.2673],
+        'coimbatore': [11.0168, 76.9558],
+        'vadodara':   [22.3072, 73.1812],
+        'agra':       [27.1767, 78.0081],
+        'varanasi':   [25.3176, 82.9739],
+        'chandigarh': [30.7333, 76.7794],
+        'mysore':     [12.2958, 76.6394],
+        'mysuru':     [12.2958, 76.6394],
+        'visakhapatnam': [17.6868, 83.2185],
+        'bhubaneswar': [20.2961, 85.8245],
+        'patna':      [25.5941, 85.1376],
+        'dehradun':   [30.3165, 78.0322],
+        'shimla':     [31.1048, 77.1734],
+        'guwahati':   [26.1445, 91.7362],
+        'ranchi':     [23.3441, 85.3096],
+        'raipur':     [21.2514, 81.6296],
+    };
+
+    // Geocode a city name → [lat, lng] with cache + fallback
+    async function geocodeCity(cityName) {
+        const key = cityName.toLowerCase().trim();
+
+        // 1. Return cached result
+        if (geocodeCache[key]) return geocodeCache[key];
+
+        // 2. Try fallback dict first for Indian cities (instant, no API)
+        if (INDIA_FALLBACKS[key]) {
+            geocodeCache[key] = INDIA_FALLBACKS[key];
+            return INDIA_FALLBACKS[key];
+        }
+
+        // 3. Try Nominatim API (free, no key required)
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)},India&limit=1&addressdetails=1`;
+            const res = await fetch(url, {
+                headers: { 'Accept-Language': 'en' }
+            });
+            const data = await res.json();
+
+            if (data && data.length > 0) {
+                const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                geocodeCache[key] = coords;
+                return coords;
+            }
+        } catch (err) {
+            console.warn('[Map] Geocoding failed for', cityName, err);
+        }
+
+        // 4. Final fallback: centre of India
+        console.warn('[Map] Could not geocode city:', cityName, '— defaulting to India centre');
+        return [20.5937, 78.9629];
+    }
+
+    // Build a custom SVG pin icon for Leaflet
+    function buildCarIcon(category) {
+        const colors = {
+            'Luxury':    '#f59e0b',
+            'SUV':       '#10b981',
+            'Sedan':     '#3b82f6',
+            'Hatchback': '#8b5cf6',
+            'Electric':  '#06b6d4',
+        };
+        const color = colors[category] || '#2563EB';
+
+        const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="38" height="48" viewBox="0 0 38 48">
+            <defs>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,0.35)"/>
+                </filter>
+            </defs>
+            <!-- Pin body -->
+            <path d="M19 2 C9.6 2 2 9.6 2 19 C2 30 19 46 19 46 C19 46 36 30 36 19 C36 9.6 28.4 2 19 2 Z"
+                  fill="${color}" filter="url(#shadow)"/>
+            <!-- White circle -->
+            <circle cx="19" cy="19" r="10" fill="white" opacity="0.95"/>
+            <!-- Car icon path (simplified) -->
+            <text x="19" y="24" font-size="12" text-anchor="middle" fill="${color}" font-family="Arial">🚗</text>
+        </svg>`.trim();
+
+        return L.divIcon({
+            html: svg,
+            className: '',
+            iconSize: [38, 48],
+            iconAnchor: [19, 46],
+            popupAnchor: [0, -46]
+        });
+    }
+
+    function toggleView() {
+        const list = document.getElementById('listView');
+        const mapDiv = document.getElementById('mapContainer');
+        const btn = document.getElementById('viewBtn');
+
+        if (mapDiv.style.display === 'none') {
+            list.style.display = 'none';
+            mapDiv.style.display = 'block';
+            btn.innerHTML = '<i class="fas fa-list"></i> Switch to List View';
+
+            if (!mapInitialized) {
+                initMap();
+                mapInitialized = true;
+            } else {
+                setTimeout(() => mapInstance && mapInstance.invalidateSize(), 100);
+            }
+        } else {
+            list.style.display = 'grid';
+            mapDiv.style.display = 'none';
+            btn.innerHTML = '<i class="fas fa-map-marked-alt"></i> Switch to Map View';
+        }
+    }
+
+    async function initMap() {
+        // Initialise Leaflet map centred on India
+        mapInstance = L.map('mapDiv', {
+            zoomControl: true,
+            scrollWheelZoom: true
+        }).setView([20.5937, 78.9629], 5);
+
+        // Clean OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18,
+            tileSize: 256
+        }).addTo(mapInstance);
+
+        // Layer group so we can clear/re-add markers easily
+        markerGroup = L.layerGroup().addTo(mapInstance);
+
+        await loadCarMarkers();
+        setTimeout(() => mapInstance.invalidateSize(), 150);
+    }
+
+    async function loadCarMarkers() {
+        const cards = document.querySelectorAll('.car-card');
+        if (cards.length === 0) return;
+
+        const loader = document.getElementById('mapLoader');
+        const countBadge = document.getElementById('mapCarCount');
+        const countNum = document.getElementById('mapCarCountNum');
+
+        loader.style.display = 'flex';
+        markerGroup.clearLayers();
+
+        // Group cars by city to avoid redundant geocode calls
+        const cityMap = {}; // city → [carData]
+        cards.forEach(card => {
+            const city = card.getAttribute('data-loc') || '';
+            if (!cityMap[city]) cityMap[city] = [];
+            cityMap[city].push({
+                name:     card.getAttribute('data-name'),
+                img:      card.getAttribute('data-img'),
+                price:    card.getAttribute('data-price'),
+                id:       card.getAttribute('data-id'),
+                category: card.getAttribute('data-category') || 'Sedan'
+            });
+        });
+
+        const bounds = L.latLngBounds();
+        let mappedCount = 0;
+        const cityKeys = Object.keys(cityMap);
+
+        for (const city of cityKeys) {
+            const coords = await geocodeCity(city);
+            const cars = cityMap[city];
+
+            // If multiple cars in same city, spread them slightly
+            cars.forEach((car, idx) => {
+                const spread = cars.length > 1 ? 0.015 : 0;
+                const angle = (idx / cars.length) * 2 * Math.PI;
+                const lat = coords[0] + (spread * Math.sin(angle));
+                const lng = coords[1] + (spread * Math.cos(angle));
+
+                const icon = buildCarIcon(car.category);
+
+                const marker = L.marker([lat, lng], { icon })
+                    .addTo(markerGroup);
+
+                // Rich popup card
+                marker.bindPopup(`
+                    <div style="width: 220px; overflow: hidden; font-family: system-ui, sans-serif;">
+                        <div style="position: relative;">
+                            <img src="${car.img}" 
+                                 style="width: 100%; height: 115px; object-fit: cover; display: block;"
+                                 onerror="this.src='https://via.placeholder.com/220x115/1e3a8a/fff?text=Car'">
+                            <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">
+                                ${car.category}
+                            </div>
+                        </div>
+                        <div style="padding: 12px 14px 14px;">
+                            <div style="font-weight: 700; font-size: 0.95rem; color: #0f172a; margin-bottom: 4px;">${car.name}</div>
+                            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">
+                                <i class="fas fa-map-marker-alt" style="color: #2563EB; margin-right: 4px;"></i>${city}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 1.05rem; font-weight: 800; color: #0f172a;">₹${parseInt(car.price).toLocaleString()}<span style="font-size: 0.75rem; font-weight: 400; color: #64748b;">/day</span></span>
+                                <a href="/book/${car.id}" style="background: #2563EB; color: white; padding: 7px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                `, { maxWidth: 240, minWidth: 220 });
+
+                bounds.extend([lat, lng]);
+                mappedCount++;
+            });
+        }
+
+        loader.style.display = 'none';
+
+        // Fit map to show all markers with padding
+        if (mappedCount > 0 && bounds.isValid()) {
+            mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+            countNum.textContent = mappedCount;
+            countBadge.style.display = 'block';
+        }
+    }
+
+    function locateUserOnMap() {
+        if (!navigator.geolocation) return alert("GPS not supported.");
+        navigator.geolocation.getCurrentPosition(pos => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            mapInstance.setView([lat, lng], 12);
+
+            // Add a "you are here" marker
+            const youIcon = L.divIcon({
+                html: `<div style="width:16px;height:16px;background:#ef4444;border:3px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(239,68,68,0.3);"></div>`,
+                className: '',
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+            L.marker([lat, lng], { icon: youIcon })
+             .addTo(mapInstance)
+             .bindPopup('<strong style="font-family:system-ui">📍 You are here</strong>')
+             .openPopup();
+        }, () => alert("Could not access location. Please allow GPS."));
+    }
+</script>
+{% endblock %}

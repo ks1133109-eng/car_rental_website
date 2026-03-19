@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin | Manage Coupons</title>
+</head>
+<body>
+     {% set hide_nav = False %}
+    {% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex;" class="admin-container">
+    <div class="sidebar">
+        <h3 style="margin-bottom: 30px;">Admin Panel</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-link">Dashboard</a>
+        <a href="{{ url_for('admin.manage_cars') }}" class="sidebar-link">Manage Cars</a>
+        <a href="{{ url_for('admin.manage_coupons') }}" class="sidebar-link active">Coupons</a>
+        <a href="{{ url_for('admin.manage_bookings') }}" class="sidebar-link">Bookings</a>
+        <a href="{{ url_for('admin.manage_users') }}" class="sidebar-link">Users</a>
+        <a href="{{ url_for('admin.manage_clients') }}" class="sidebar-link">Manage Clients</a>
+        <a href="{{ url_for('admin.manage_offers') }}" class="sidebar-link">Manage Offers</a>
+       <a href="{{ url_for('admin.admin_logs') }}" style="
+    display: inline-block; 
+    padding: 15px 25px; 
+    background: #333; 
+    color: white; 
+    border-radius: 8px; 
+    text-decoration: none; 
+    border: 1px solid #555;
+    margin: 10px;">
+    📜 View Audit Logs
+</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color:#ff6b6b; margin-top: 20px;">Logout</a>
+    </div>
+
+    <div style="flex: 1; padding: 40px; background: var(--bg-body);" class="admin-content">
+        <h2 style="color: var(--text-main);">Coupon Management</h2>
+        
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; margin-top: 20px; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <h3 style="margin-top: 0; color: var(--text-main);">Create New Coupon</h3>
+            <form method="POST" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="text" name="code" placeholder="Code (e.g. SUMMER50)" required 
+                       style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                
+                <input type="number" name="discount" placeholder="Discount (₹)" required 
+                       style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                
+                <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    + Create
+                </button>
+            </form>
+        </div>
+
+        <div style="margin-top: 30px; background: var(--bg-card); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: var(--input-bg); text-align: left;">
+                    <th style="padding: 15px; color: var(--text-main);">Code</th>
+                    <th style="color: var(--text-main);">Discount</th>
+                    <th style="color: var(--text-main);">Actions</th>
+                </tr>
+                {% for coupon in coupons %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 15px; font-weight: bold; color: var(--primary);">{{ coupon.code }}</td>
+                    <td style="color: var(--text-main);">₹{{ coupon.discount_amount }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.delete_coupon', id=coupon.id) }}" style="color: #ef4444; text-decoration: none; font-weight: 500;">Delete</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="padding: 20px; text-align: center; color: var(--text-light);">No coupons active.</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

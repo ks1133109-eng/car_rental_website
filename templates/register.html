@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-left">
+        <h1 style="font-size: 2.2rem; margin-bottom: 8px; color: var(--text-main);">Join DriveX</h1>
+        <p style="color: var(--text-light); margin-bottom: 35px;">Start your premium journey today.</p>
+
+        <form method="POST" style="max-width: 400px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; margin-bottom: 7px; font-weight: 600; color: var(--text-main); font-size: 0.9rem;">Full Name</label>
+                <input type="text" name="name" placeholder="John Doe" required
+                       style="width: 100%; padding: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); outline: none;">
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; margin-bottom: 7px; font-weight: 600; color: var(--text-main); font-size: 0.9rem;">Email Address</label>
+                <input type="email" name="email" placeholder="you@example.com" required
+                       style="width: 100%; padding: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); outline: none;">
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; margin-bottom: 7px; font-weight: 600; color: var(--text-main); font-size: 0.9rem;">Password</label>
+                <input type="password" name="password" id="reg_pw" placeholder="Min 8 characters" required
+                       style="width: 100%; padding: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); outline: none;">
+                <div style="margin-top:7px;font-size:0.78rem;color:var(--text-light);">
+                    <i class="fas fa-info-circle"></i>
+                    Min <strong>8 characters</strong> with at least one <strong>number or special character</strong> (!, @, #, $…)
+                </div>
+                <div id="reg_pw_str" style="margin-top:5px;font-size:0.78rem;font-weight:700;display:none;"></div>
+                <!-- Password strength hint -->
+                <div style="margin-top: 6px; padding: 10px 12px; background: rgba(37,99,235,0.06); border-radius: 7px; border: 1px solid rgba(37,99,235,0.15);">
+                    <p style="margin:0 0 4px; font-size:0.78rem; font-weight:700; color:var(--primary); letter-spacing:0.3px;">
+                        <i class="fas fa-shield-alt" style="margin-right:4px;"></i>Password must have:
+                    </p>
+                    <ul style="margin:0; padding-left:16px; font-size:0.77rem; color:var(--text-light); line-height:1.7;">
+                        <li id="hint-len">At least 8 characters</li>
+                        <li id="hint-num">At least 1 number <span style="color:var(--text-light);">or</span> special character (!@#$%^&amp;*)</li>
+                    </ul>
+                </div>
+                <div id="pw-strength-bar" style="height:4px; border-radius:4px; margin-top:6px; background:var(--border); transition:0.3s;">
+                    <div id="pw-strength-fill" style="height:100%; width:0%; border-radius:4px; background:#ef4444; transition:width 0.3s, background 0.3s;"></div>
+                </div>
+                <p id="pw-strength-label" style="font-size:0.75rem; color:var(--text-light); margin:3px 0 0; min-height:14px;"></p>
+            </div>
+
+            <!-- Referral code field -->
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 7px; font-weight: 600; color: var(--text-main); font-size: 0.9rem;">
+                    Referral Code <span style="color: var(--text-light); font-weight: 400;">(optional — get 100 bonus points!)</span>
+                </label>
+                <div style="position: relative;">
+                    <i class="fas fa-gift" style="position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
+                    <input type="text" name="referral_code" value="{{ ref_code }}" placeholder="e.g. ABCD1234"
+                           style="width: 100%; padding: 13px 13px 13px 40px; border-radius: 8px; border: 1px solid {% if ref_code %}var(--primary){% else %}var(--border){% endif %}; background: {% if ref_code %}rgba(37,99,235,0.04){% else %}var(--bg-card){% endif %}; color: var(--text-main); outline: none; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">
+                </div>
+                {% if ref_code %}
+                <p style="color: #10b981; font-size: 0.82rem; margin-top: 5px; font-weight: 600;">
+                    <i class="fas fa-check-circle"></i> Referral code applied! You'll earn 100 bonus points on signup.
+                </p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-login" style="width: 100%; height: 48px; font-size: 1rem;">Create Account</button>
+        </form>
+
+        <p style="margin-top: 25px; color: var(--text-light);">
+            Already have an account? <a href="{{ url_for('auth.login') }}" style="color: var(--primary); font-weight: 600;">Log In</a>
+        </p>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+            <p style="color: var(--text-light); font-size: 0.9rem;">
+                Want to list your car and earn money?<br>
+                <a href="{{ url_for('auth.register_client') }}" style="color: #10b981; font-weight: bold; display: inline-block; margin-top: 4px;">Join as a Partner &rarr;</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="auth-right" style="background-image: url('https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=1600');"></div>
+</div>
+
+<script>
+    // Auto-uppercase referral code
+    const refInput = document.querySelector('input[name="referral_code"]');
+    if (refInput) {
+        refInput.addEventListener('input', () => { refInput.value = refInput.value.toUpperCase(); });
+    }
+</script>
+<script>
+(function() {
+    const pwInput = document.querySelector('input[name="password"]');
+    if (!pwInput) return;
+    const hintLen  = document.getElementById('hint-len');
+    const hintNum  = document.getElementById('hint-num');
+    const bar      = document.getElementById('pw-strength-fill');
+    const label    = document.getElementById('pw-strength-label');
+    const SPECIAL  = new Set('!@#$%^&*()_+-=[]{}|;:,.<>?');
+
+    function check(pw) {
+        const hasLen  = pw.length >= 8;
+        const hasNum  = /[0-9]/.test(pw);
+        const hasSp   = [...pw].some(c => SPECIAL.has(c));
+        const hasUpp  = /[A-Z]/.test(pw);
+        const hasLow  = /[a-z]/.test(pw);
+        const score   = [hasLen, hasNum || hasSp, hasUpp, hasLow, pw.length >= 12].filter(Boolean).length;
+
+        // Update hints
+        hintLen.style.color = hasLen ? '#10b981' : 'var(--text-light)';
+        hintLen.innerHTML   = (hasLen ? '✓ ' : '') + 'At least 8 characters';
+        hintNum.style.color = (hasNum || hasSp) ? '#10b981' : 'var(--text-light)';
+        hintNum.innerHTML   = (hasNum || hasSp ? '✓ ' : '') + 'At least 1 number <span style="color:var(--text-light);">or</span> special character (!@#$%^&amp;*)';
+
+        // Strength bar
+        const pct    = pw.length === 0 ? 0 : Math.min(100, score * 20);
+        const colour = score <= 1 ? '#ef4444' : score <= 2 ? '#f59e0b' : score <= 3 ? '#3b82f6' : '#10b981';
+        const text   = pw.length === 0 ? '' : ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][score] || 'Strong';
+        bar.style.width      = pct + '%';
+        bar.style.background = colour;
+        label.style.color    = colour;
+        label.textContent    = text;
+    }
+
+    pwInput.addEventListener('input', () => check(pwInput.value));
+})();
+    // Live password strength indicator
+    const pwInput = document.getElementById('reg_password');
+    const pwStrength = document.getElementById('pw_strength');
+    if (pwInput) {
+        pwInput.addEventListener('input', function() {
+            const v = this.value;
+            if (!v) { pwStrength.style.display = 'none'; return; }
+            pwStrength.style.display = 'block';
+            const hasLen = v.length >= 8;
+            const hasNum = /[0-9]/.test(v);
+            const hasSpc = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(v);
+            if (hasLen && (hasNum || hasSpc)) {
+                pwStrength.textContent = '✓ Strong password';
+                pwStrength.style.color = '#10b981';
+            } else if (v.length >= 6) {
+                pwStrength.textContent = '⚠ Weak — add a number or special character, min 8 chars';
+                pwStrength.style.color = '#f59e0b';
+            } else {
+                pwStrength.textContent = '✗ Too short (minimum 8 characters)';
+                pwStrength.style.color = '#ef4444';
+            }
+        });
+    }
+</script>
+
+<script>
+(function(){
+    var inp = document.getElementById('reg_pw');
+    var str = document.getElementById('reg_pw_str');
+    if(!inp || !str) return;
+    inp.addEventListener('input', function(){
+        var v = this.value;
+        if(!v){ str.style.display='none'; return; }
+        str.style.display = 'block';
+        var ok = v.length >= 8 && (/[0-9]/.test(v) || /[!@#$%^&*()\-_=+\[\]{}|;:,.<>?]/.test(v));
+        if(ok){
+            str.textContent = '✓ Strong password';
+            str.style.color = '#10b981';
+        } else if(v.length >= 5){
+            str.textContent = '⚠ Add a number or special character (min 8 chars)';
+            str.style.color = '#f59e0b';
+        } else {
+            str.textContent = '✗ Too short — minimum 8 characters';
+            str.style.color = '#ef4444';
+        }
+    });
+})();
+</script>
+{% endblock %}

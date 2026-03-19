@@ -1,0 +1,138 @@
+{% set hide_nav = False %}
+{% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-container">
+    
+    <div class="sidebar">
+        <h3 style="margin-bottom: 20px; padding-left: 12px;">Admin Panel</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-link">Dashboard</a>
+        <a href="{{ url_for('admin.manage_cars') }}" class="sidebar-link active">Manage Cars</a>
+        <a href="{{ url_for('admin.manage_coupons') }}" class="sidebar-link">Coupons</a>
+        <a href="{{ url_for('admin.manage_bookings') }}" class="sidebar-link">Bookings</a>
+        <a href="{{ url_for('admin.manage_users') }}" class="sidebar-link">Users</a>
+        
+       <a href="{{ url_for('admin.manage_clients') }}" class="sidebar-link">Manage Clients</a>
+       <a href="{{ url_for('admin.manage_offers') }}" class="sidebar-link">Manage Offers</a>
+        
+        <a href="{{ url_for('admin.admin_logs') }}" style="display: inline-block; padding: 12px 20px; background: #1E293B; color: white; border-radius: 8px; text-decoration: none; border: 1px solid #334155; margin: 15px 12px; font-size: 0.9rem; text-align: center;">📜 View Audit Logs</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color:#ef4444; margin-top:10px;">Logout</a>
+    </div>
+    
+    <div class="admin-content">
+        <h2 style="color: var(--text-main); margin-bottom: 25px;">Fleet Management</h2>
+        
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <h3 style="margin-top: 0; color: var(--text-main);">Add New Vehicle</h3>
+            
+            <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; display: block;">CAR NAME</label>
+                    <input type="text" name="name" placeholder="e.g. BMW 5 Series" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; display: block;">PRICE PER DAY (₹)</label>
+                    <input type="number" name="price" placeholder="e.g. 5000" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; display: block;">CATEGORY</label>
+                    <select name="category" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                        <option value="Hatchback">Hatchback</option>
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Luxury">Luxury</option>
+                        <option value="Electric">Electric</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--primary); margin-bottom: 5px; display: block;">DYNAMIC LOCATION (Type City Name)</label>
+                    <input type="text" name="location" placeholder="e.g. Mumbai, Goa, Delhi..." required style="width: 100%; padding: 12px; border: 1px solid var(--primary); border-radius: 6px; background: rgba(37, 99, 235, 0.05); color: var(--text-main);">
+                </div>
+
+                <div style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 15px; border: 1px dashed var(--border); border-radius: 8px;">
+                     <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; display: block;">IMAGE URL (Option A)</label>
+                        <input type="text" name="image_url" placeholder="https://..." style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); margin-bottom: 5px; display: block;">OR UPLOAD FILE (Option B)</label>
+                        <input type="file" id="car_image_upload" accept="image/*" style="width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                        <input type="hidden" name="image_base64" id="car_image_hidden">
+                    </div>
+                </div>
+
+                <div style="grid-column: span 2;">
+                    <button type="submit" class="btn-login" style="padding: 12px 30px; background: #10b981; border-radius: 8px;">+ Add to Fleet</button>
+                </div>
+            </form>
+        </div>
+        
+        <div style="margin-top: 40px; background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: var(--input-bg); text-align: left;">
+                    <th style="padding: 15px; color: var(--text-main);">Image</th>
+                    <th style="color: var(--text-main);">Name & Type</th>
+              <th style="color: var(--text-main);">Price</th>
+                    <th style="color: var(--text-main);">Location</th>
+                    <th style="color: var(--text-main);">Status</th>
+                    <th style="color: var(--text-main);">Actions</th>
+                </tr>
+                {% for car in cars %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 15px;">
+                        <img src="{{ car.image_url }}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);">
+                    </td>
+                    <td>
+                        <strong style="color: var(--text-main);">{{ car.name }}</strong><br>
+                        <small style="color: var(--text-light);">{{ car.category }}</small>
+                    </td>
+                    <td style="font-weight: 600; color: var(--text-main);">₹{{ car.price_per_day }}</td>
+                    <td><span style="background: rgba(59, 130, 246, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">{{ car.location }}</span></td>
+                    <td>
+                        {% if car.status == 'Available' %}
+                            <span style="color: #10b981; font-weight: bold; font-size: 0.85rem;">Available</span>
+                        {% elif car.status == 'Maintenance' %}
+                            <span style="color: #f59e0b; font-weight: bold; font-size: 0.85rem;">Maintenance</span>
+                        {% elif car.status == 'Booked' %}
+                            <span style="color: #3b82f6; font-weight: bold; font-size: 0.85rem;">Booked</span>
+                        {% elif car.status == 'Pending' %}
+                            <span style="color: #8b5cf6; font-weight: bold; font-size: 0.85rem;"><i class="fas fa-hourglass-half" style="margin-right:4px;"></i> Pending Approval</span>
+                        {% else %}
+                            <span style="color: var(--text-light); font-weight: bold; font-size: 0.85rem;"><i class="fas fa-eye-slash" style="margin-right:4px;"></i> Hidden</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 10px;">
+                            {% if car.status == 'Pending' %}
+                            <a href="{{ url_for('admin.approve_car', id=car.id) }}" style="color: white; background: #10b981; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold;">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('admin.edit_car', id=car.id) }}" style="color: var(--primary); text-decoration: none; padding: 6px 12px; border: 1px solid var(--primary); border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-pen"></i> Edit</a>
+                            <a href="{{ url_for('admin.delete_car', id=car.id) }}" onclick="return confirm('Delete this car permanently?')" style="color: #ef4444; text-decoration: none; padding: 6px 12px; border: 1px solid #ef4444; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JS for converting Image Upload to Base64
+    document.getElementById('car_image_upload').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('car_image_hidden').value = e.target.result; };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

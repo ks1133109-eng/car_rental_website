@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Payment Method</h2>
+
+<form method="POST" action="/pay/{{ booking.id }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <label>
+    <input type="radio" name="payment_method" value="upi" required>
+    UPI (GPay / PhonePe / Paytm)
+  </label><br><br>
+
+  <label>
+    <input type="radio" name="payment_method" value="card">
+    Credit / Debit Card
+  </label><br><br>
+
+  <label>
+    <input type="radio" name="payment_method" value="netbanking">
+    Net Banking
+  </label><br><br>
+
+  <label>
+    <input type="radio" name="payment_method" value="cash">
+    Pay at Pickup
+  </label><br><br>
+
+  <button type="submit" id="payNowBtn">
+    Pay Now
+  </button>
+
+</form>
+
+{% endblock %}

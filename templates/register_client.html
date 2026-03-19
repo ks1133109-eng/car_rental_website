@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-left">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);">Become a Partner</h1>
+        <p style="color: var(--text-light); margin-bottom: 40px;">List your car and start earning with DriveX.</p>
+        
+        <form method="POST" style="max-width: 400px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Full Name</label>
+                <input type="text" name="name" required style="width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Email Address</label>
+                <input type="email" name="email" required style="width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Password</label>
+                <input type="password" name="password" id="client_pw" placeholder="Min 8 characters" required style="width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                <!-- Password strength hint -->
+                <div style="margin-top: 6px; padding: 10px 12px; background: rgba(37,99,235,0.06); border-radius: 7px; border: 1px solid rgba(37,99,235,0.15);">
+                    <p style="margin:0 0 4px; font-size:0.78rem; font-weight:700; color:var(--primary); letter-spacing:0.3px;">
+                        <i class="fas fa-shield-alt" style="margin-right:4px;"></i>Password must have:
+                    </p>
+                    <ul style="margin:0; padding-left:16px; font-size:0.77rem; color:var(--text-light); line-height:1.7;">
+                        <li id="hint-len">At least 8 characters</li>
+                        <li id="hint-num">At least 1 number <span style="color:var(--text-light);">or</span> special character (!@#$%^&amp;*)</li>
+                    </ul>
+                </div>
+                <div id="pw-strength-bar" style="height:4px; border-radius:4px; margin-top:6px; background:var(--border); transition:0.3s;">
+                    <div id="pw-strength-fill" style="height:100%; width:0%; border-radius:4px; background:#ef4444; transition:width 0.3s, background 0.3s;"></div>
+                </div>
+                <p id="pw-strength-label" style="font-size:0.75rem; color:var(--text-light); margin:3px 0 0; min-height:14px;"></p>
+            </div>
+            
+            <button type="submit" class="btn-login" style="width: 100%; height: 50px; background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Join as Partner</button>
+        </form>
+    </div>
+    <div class="auth-right" style="background-image: url('https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=1600');"></div>
+</div>
+<script>
+(function() {
+    const pwInput = document.querySelector('input[name="password"]');
+    if (!pwInput) return;
+    const hintLen  = document.getElementById('hint-len');
+    const hintNum  = document.getElementById('hint-num');
+    const bar      = document.getElementById('pw-strength-fill');
+    const label    = document.getElementById('pw-strength-label');
+    const SPECIAL  = new Set('!@#$%^&*()_+-=[]{}|;:,.<>?');
+
+    function check(pw) {
+        const hasLen  = pw.length >= 8;
+        const hasNum  = /[0-9]/.test(pw);
+        const hasSp   = [...pw].some(c => SPECIAL.has(c));
+        const hasUpp  = /[A-Z]/.test(pw);
+        const hasLow  = /[a-z]/.test(pw);
+        const score   = [hasLen, hasNum || hasSp, hasUpp, hasLow, pw.length >= 12].filter(Boolean).length;
+
+        // Update hints
+        hintLen.style.color = hasLen ? '#10b981' : 'var(--text-light)';
+        hintLen.innerHTML   = (hasLen ? '✓ ' : '') + 'At least 8 characters';
+        hintNum.style.color = (hasNum || hasSp) ? '#10b981' : 'var(--text-light)';
+        hintNum.innerHTML   = (hasNum || hasSp ? '✓ ' : '') + 'At least 1 number <span style="color:var(--text-light);">or</span> special character (!@#$%^&amp;*)';
+
+        // Strength bar
+        const pct    = pw.length === 0 ? 0 : Math.min(100, score * 20);
+        const colour = score <= 1 ? '#ef4444' : score <= 2 ? '#f59e0b' : score <= 3 ? '#3b82f6' : '#10b981';
+        const text   = pw.length === 0 ? '' : ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][score] || 'Strong';
+        bar.style.width      = pct + '%';
+        bar.style.background = colour;
+        label.style.color    = colour;
+        label.textContent    = text;
+    }
+
+    pwInput.addEventListener('input', () => check(pwInput.value));
+})();
+</script>
+<script>
+(function(){
+    var inp = document.getElementById('client_pw');
+    if(!inp) return;
+    var str = document.createElement('div');
+    str.style.cssText = 'margin-top:6px;font-size:0.78rem;font-weight:700;display:none;';
+    inp.parentNode.insertBefore(str, inp.nextSibling);
+    inp.addEventListener('input', function(){
+        var v = this.value;
+        if(!v){ str.style.display='none'; return; }
+        str.style.display = 'block';
+        var ok = v.length >= 8 && (/[0-9]/.test(v) || /[!@#$%^&*()\-_=+|;:,.<>?]/.test(v));
+        if(ok){ str.textContent='✓ Strong'; str.style.color='#10b981'; }
+        else if(v.length >= 5){ str.textContent='⚠ Add a number or special char, min 8 chars'; str.style.color='#f59e0b'; }
+        else { str.textContent='✗ Too short — min 8 characters'; str.style.color='#ef4444'; }
+    });
+})();
+</script>
+{% endblock %}

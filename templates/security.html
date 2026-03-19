@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="background: var(--bg-body); min-height: 100vh; padding: 40px 5%;">
+    <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 250px 1fr; gap: 40px;">
+
+        <!-- Sidebar -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); text-align: center; margin-bottom: 20px;">
+                <div style="width: 80px; height: 80px; background: var(--input-bg); color: var(--primary); font-size: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 15px;">
+                    {{ current_user.name[0] | upper }}
+                </div>
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">{{ current_user.name }}</h3>
+                <p style="margin: 5px 0 0; font-size: 0.85rem; color: var(--text-light);">{{ current_user.email }}</p>
+            </div>
+            <a href="{{ url_for('main.dashboard') }}" style="padding:12px 20px;border-radius:8px;color:var(--text-light);font-weight:500;transition:0.2s;text-decoration:none;"><i class="fas fa-chart-line" style="width:25px;"></i> Dashboard</a>
+            <a href="{{ url_for('main.profile') }}" style="padding:12px 20px;border-radius:8px;color:var(--text-light);font-weight:500;transition:0.2s;text-decoration:none;"><i class="fas fa-user-edit" style="width:25px;"></i> Edit Profile</a>
+            <a href="{{ url_for('main.security') }}" style="padding:12px 20px;border-radius:8px;background:var(--primary);color:white;font-weight:600;box-shadow:0 4px 10px var(--primary-glow);text-decoration:none;"><i class="fas fa-lock" style="width:25px;"></i> Security</a>
+            <a href="{{ url_for('main.kyc') }}" style="padding:12px 20px;border-radius:8px;color:var(--text-light);font-weight:500;transition:0.2s;text-decoration:none;"><i class="fas fa-id-card" style="width:25px;"></i> KYC Status</a>
+        </div>
+
+        <!-- Main content -->
+        <div style="background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+
+            <h2 style="margin-top:0; margin-bottom:20px; color:var(--text-main);">Login &amp; Security</h2>
+            <p style="color:var(--text-light); margin-bottom:30px;">Manage your password and account security settings.</p>
+
+            <!-- Change password form -->
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-weight:600; margin-bottom:8px; color:var(--text-main);">New Password</label>
+                    <input type="password" name="new_password" placeholder="••••••••" required
+                           style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-main);outline:none;">
+                </div>
+                <div style="margin-bottom:30px;">
+                    <label style="display:block; font-weight:600; margin-bottom:8px; color:var(--text-main);">Confirm New Password</label>
+                    <input type="password" name="confirm_password" placeholder="••••••••" required
+                           style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-body);color:var(--text-main);outline:none;">
+                </div>
+                <div style="text-align:right;">
+                    <button type="submit" class="btn-login" style="padding:12px 30px;background:#ef4444;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:600;">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+
+            <hr style="border:0;border-top:1px solid var(--border);margin:40px 0;">
+
+            <!-- ── Two-Factor Authentication (Email OTP) ─────────────────── -->
+            <h3 style="color:var(--text-main);margin-bottom:8px;">Two-Factor Authentication</h3>
+            <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:24px;">
+                When enabled, you will receive a <strong>6-digit code by email</strong> every time you log in.
+            </p>
+
+            {% if current_user.two_fa_enabled %}
+            <!-- 2FA is ON -->
+            <div style="background:rgba(16,185,129,0.08);padding:22px;border-radius:14px;border:1px solid rgba(16,185,129,0.4);display:flex;align-items:flex-start;gap:18px;margin-bottom:20px;">
+                <div style="background:#10b981;color:white;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div style="flex:1;">
+                    <h4 style="color:#10b981;margin:0 0 5px;">2FA is Enabled</h4>
+                    <p style="color:var(--text-light);margin:0 0 16px;font-size:0.88rem;">
+                        Your account is protected. A one-time code is emailed to <strong>{{ current_user.email }}</strong> on every login.
+                    </p>
+                    <form method="POST" action="{{ url_for('auth.disable_2fa') }}" onsubmit="return confirm('Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.4);padding:9px 22px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.88rem;transition:0.2s;"
+                                onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                            <i class="fas fa-lock-open" style="margin-right:6px;"></i>Disable 2FA
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- 2FA is OFF -->
+            <div style="background:rgba(245,158,11,0.08);padding:22px;border-radius:14px;border:1px solid rgba(245,158,11,0.4);">
+                <div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:20px;">
+                    <div style="background:#f59e0b;color:white;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h4 style="color:#f59e0b;margin:0 0 6px;">Secure Your Account with Email OTP</h4>
+                        <p style="color:var(--text-light);margin:0;font-size:0.88rem;">
+                            Enable 2FA to receive a verification code at <strong>{{ current_user.email }}</strong> every time you log in.
+                            Even if someone steals your password, they won't be able to access your account.
+                        </p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <form method="POST" action="{{ url_for('auth.enable_2fa') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" style="background:#f59e0b;color:black;border:none;padding:11px 26px;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.92rem;transition:0.2s;"
+                                onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
+                            <i class="fas fa-shield-alt" style="margin-right:7px;"></i>Enable 2FA
+                        </button>
+                    </form>
+                    <span style="color:var(--text-light);font-size:0.8rem;"><i class="fas fa-info-circle" style="margin-right:4px;"></i>No app required — just your email inbox</span>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: 250px"] { grid-template-columns: 1fr !important; }
+}
+</style>
+{% endblock %}

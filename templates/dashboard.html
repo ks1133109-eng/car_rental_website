@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="padding: 35px 5%; background: var(--bg-body); min-height: 100vh;">
+
+    <!-- Header -->
+    <div style="margin-bottom: 35px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h1 style="margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); color: var(--text-main);">Hello, {{ current_user.name.split()[0] }} 👋</h1>
+            <p style="color: var(--text-light); margin-top: 4px;">Welcome to your premium command center.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <a href="{{ url_for('main.loyalty_page') }}"
+               style="background: linear-gradient(135deg, {{ loyalty_config.color }}, {{ loyalty_config.color }}99); color: white; padding: 10px 18px; border-radius: 30px; font-weight: 700; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px {{ loyalty_config.color }}44;">
+                {{ loyalty_config.icon }} {{ loyalty }} · {{ current_user.loyalty_points }} pts
+            </a>
+            <a href="{{ url_for('main.profile') }}" class="btn-login" style="text-decoration: none; padding: 10px 18px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main) !important; font-size: 0.9rem;">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
+        <div style="background: var(--bg-card); padding: 22px; border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+            <div style="color: var(--text-light); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">TOTAL SPENT</div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--text-main);">₹{{ total_spent }}</div>
+        </div>
+        <div style="background: var(--bg-card); padding: 22px; border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+            <div style="color: var(--text-light); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">TOTAL TRIPS</div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--text-main);">{{ total_trips }}</div>
+        </div>
+        <div style="background: var(--bg-card); padding: 22px; border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+            <div style="color: var(--text-light); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">KYC STATUS</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: {% if current_user.kyc_status == 'Verified' %}#10b981{% else %}#f59e0b{% endif %};">
+                {{ current_user.kyc_status }}
+            </div>
+            {% if current_user.kyc_status != 'Verified' %}
+            <a href="{{ url_for('main.kyc') }}" style="font-size: 0.82rem; color: var(--primary); text-decoration: underline;">Complete Verification</a>
+            {% endif %}
+        </div>
+
+        <!-- Loyalty card -->
+        <a href="{{ url_for('main.loyalty_page') }}" style="text-decoration: none;">
+            <div style="background: linear-gradient(135deg, #0f172a, #1e3a8a); padding: 22px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); box-shadow: var(--shadow); cursor: pointer; height: 100%;">
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">REWARDS POINTS</div>
+                <div style="font-size: 2rem; font-weight: 800; color: white;">{{ current_user.loyalty_points }}</div>
+                {% if next_tier %}
+                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 5px;">{{ next_tier[1].min - total_spent }} to {{ next_tier[0] }}</div>
+                {% else %}
+                <div style="font-size: 0.78rem; color: #f59e0b; margin-top: 5px;">💎 Platinum Member</div>
+                {% endif %}
+            </div>
+        </a>
+    </div>
+
+    <!-- Loyalty progress bar (if not max tier) -->
+    {% if next_tier %}
+    <div style="background: var(--bg-card); padding: 20px 25px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 35px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div style="flex-shrink: 0;">
+            <span style="font-size: 1.8rem;">{{ loyalty_config.icon }}</span>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">{{ loyalty }} Tier</span>
+                <span style="color: var(--text-light); font-size: 0.85rem;">{{ next_tier[0] }} at ₹{{ next_tier[1].min }}</span>
+            </div>
+            <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                {% set progress = ((total_spent - loyalty_config.min) / (next_tier[1].min - loyalty_config.min) * 100) | int %}
+                <div style="width: {{ [progress, 100]|min }}%; height: 100%; background: linear-gradient(90deg, var(--primary), #6366f1); border-radius: 3px; transition: width 1s ease;"></div>
+            </div>
+        </div>
+        <a href="{{ url_for('main.loyalty_page') }}" style="font-size: 0.85rem; color: var(--primary); font-weight: 600; white-space: nowrap; text-decoration: none; flex-shrink: 0;">
+            View Rewards <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Recent Bookings -->
+    <h2 style="margin-bottom: 18px; color: var(--text-main); font-size: 1.4rem;">Recent Journeys</h2>
+
+    {% if bookings %}
+    <div style="overflow-x: auto; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+        <table style="width: 100%; border-collapse: collapse; min-width: 550px;">
+            <thead>
+                <tr style="background: rgba(0,0,0,0.02); text-align: left;">
+                    <th style="padding: 16px 20px; color: var(--text-light); font-weight: 700; font-size: 0.78rem; text-transform: uppercase;">CAR</th>
+                    <th style="padding: 16px 20px; color: var(--text-light); font-weight: 700; font-size: 0.78rem; text-transform: uppercase;">DATES</th>
+                    <th style="padding: 16px 20px; color: var(--text-light); font-weight: 700; font-size: 0.78rem; text-transform: uppercase;">TOTAL</th>
+                    <th style="padding: 16px 20px; color: var(--text-light); font-weight: 700; font-size: 0.78rem; text-transform: uppercase;">STATUS</th>
+                    <th style="padding: 16px 20px; color: var(--text-light); font-weight: 700; font-size: 0.78rem; text-transform: uppercase;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bookings %}
+                <tr style="border-top: 1px solid var(--border);">
+                    <td style="padding: 16px 20px; font-weight: 600; color: var(--text-main);">{{ b.car.name }}</td>
+                    <td style="padding: 16px 20px; color: var(--text-light); font-size: 0.9rem;">
+                        {{ b.start_date.strftime('%b %d') }} – {{ b.end_date.strftime('%b %d') }}
+                    </td>
+                    <td style="padding: 16px 20px; font-weight: bold; color: var(--text-main);">₹{{ b.total_cost }}</td>
+                    <td style="padding: 16px 20px;">
+                        <span style="padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+                            background: {% if b.status == 'Completed' or b.status == 'Paid' %}rgba(16,185,129,0.1){% elif b.status == 'Cancelled' %}rgba(239,68,68,0.1){% else %}rgba(59,130,246,0.1){% endif %};
+                            color: {% if b.status == 'Completed' or b.status == 'Paid' %}#10b981{% elif b.status == 'Cancelled' %}#ef4444{% else %}#3b82f6{% endif %};">
+                            {{ b.status }}
+                        </span>
+                    </td>
+                    <td style="padding: 16px 20px;">
+                        <a href="{{ url_for('booking.invoice', booking_id=b.id) }}" style="color: var(--text-light); margin-right: 12px;" title="Invoice"><i class="fas fa-file-invoice"></i></a>
+                        {% if b.status == 'Completed' or b.status == 'Paid' %}
+                            <button onclick="openReviewModal('{{ b.car.id }}', '{{ b.car.name }}')" style="background: none; border: none; color: #f59e0b; cursor: pointer;" title="Rate">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="text-align: center; margin-top: 18px;">
+        <a href="{{ url_for('main.my_bookings') }}" style="color: var(--primary); font-size: 0.9rem; font-weight: 600; text-decoration: none;">View all bookings <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i></a>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 50px; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border);">
+        <i class="fas fa-car-side" style="font-size: 2.5rem; color: var(--text-light); opacity: 0.4; margin-bottom: 16px; display: block;"></i>
+        <p style="color: var(--text-light); margin-bottom: 20px;">You haven't booked any trips yet.</p>
+        <a href="{{ url_for('main.fleet') }}" class="btn-login" style="text-decoration: none;">Book your first car</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 2000; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: var(--bg-card); padding: 30px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; border: 1px solid var(--border);">
+        <h3 style="color: var(--text-main); margin-bottom: 8px;">Rate <span id="modalCarName">Car</span></h3>
+        <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 20px;">How was your experience?</p>
+        <form action="{{ url_for('main.submit_review') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="car_id" id="modalCarId">
+            <div style="margin: 0 0 20px; font-size: 2rem; color: #f59e0b; cursor: pointer;">
+                <i class="far fa-star star-btn" data-val="1" onclick="setRating(1)"></i>
+                <i class="far fa-star star-btn" data-val="2" onclick="setRating(2)"></i>
+                <i class="far fa-star star-btn" data-val="3" onclick="setRating(3)"></i>
+                <i class="far fa-star star-btn" data-val="4" onclick="setRating(4)"></i>
+                <i class="far fa-star star-btn" data-val="5" onclick="setRating(5)"></i>
+            </div>
+            <input type="hidden" name="rating" id="ratingInput" value="5">
+            <textarea name="comment" placeholder="Tell us about your drive..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); margin-bottom: 20px; outline: none; resize: none;" rows="3" required></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="document.getElementById('reviewModal').style.display='none'" style="flex: 1; padding: 11px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-light); cursor: pointer; font-weight: 600;">Cancel</button>
+                <button type="submit" class="btn-login" style="flex: 1; border-radius: 8px;">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openReviewModal(id, name) {
+    document.getElementById('reviewModal').style.display = 'flex';
+    document.getElementById('modalCarId').value = id;
+    document.getElementById('modalCarName').innerText = name;
+}
+function setRating(n) {
+    document.getElementById('ratingInput').value = n;
+    document.querySelectorAll('.star-btn').forEach(s => {
+        s.classList.toggle('fas', +s.getAttribute('data-val') <= n);
+        s.classList.toggle('far', +s.getAttribute('data-val') > n);
+    });
+}
+</script>
+{% endblock %}

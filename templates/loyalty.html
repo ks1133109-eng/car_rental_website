@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* ── Loyalty Page Styles ── */
+.loyalty-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #312e81 100%);
+    padding: 60px 5% 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.loyalty-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.tier-progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.tier-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+.tier-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.tier-card.active-tier {
+    border-color: var(--primary);
+    box-shadow: 0 0 30px rgba(37,99,235,0.2);
+}
+.tier-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+}
+.referral-box {
+    background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(99,102,241,0.08));
+    border: 1px solid rgba(37,99,235,0.2);
+    border-radius: 16px;
+    padding: 30px;
+}
+.copy-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.copy-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.points-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+    .tier-grid { grid-template-columns: 1fr 1fr !important; }
+    .loyalty-stats { grid-template-columns: 1fr 1fr !important; }
+    .referral-actions { flex-direction: column !important; }
+    .referral-input-group { flex-direction: column !important; }
+    .referral-input-group input { font-size: 0.85rem !important; }
+}
+@media (max-width: 480px) {
+    .tier-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+
+<div class="loyalty-hero">
+    <div style="position: relative; z-index: 1;">
+        <div style="font-size: 3rem; margin-bottom: 15px;">
+            {{ tier_config.icon }}
+        </div>
+        <h1 style="color: white; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; margin: 0 0 10px;">
+            {{ current_user.name }}'s Rewards
+        </h1>
+        <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem; margin-bottom: 30px;">
+            You're a <strong style="color: white;">{{ tier }}</strong> member
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-bottom: 35px;">
+            <div style="text-align: center;">
+                <div style="font-size: 2.2rem; font-weight: 900; color: white;">{{ current_user.loyalty_points }}</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Points Balance</div>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.15);"></div>
+            <div style="text-align: center;">
+                <div style="font-size: 2.2rem; font-weight: 900; color: white;">₹{{ total_spent }}</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Total Spent</div>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.15);"></div>
+            <div style="text-align: center;">
+                <div style="font-size: 2.2rem; font-weight: 900; color: white;">{{ referred_users|length }}</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Referrals</div>
+            </div>
+        </div>
+
+        {% if next_tier %}
+        <div style="max-width: 400px; margin: 0 auto;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">{{ tier }}</span>
+                <span style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">{{ next_tier[0] }} at ₹{{ next_tier[1].min }}</span>
+            </div>
+            <div class="tier-progress-bar">
+                {% set current_min = tier_config.min %}
+                {% set next_min = next_tier[1].min %}
+                {% set progress = ((total_spent - current_min) / (next_min - current_min) * 100) | int %}
+                <div class="tier-progress-fill" style="width: {{ [progress, 100]|min }}%;"></div>
+            </div>
+            <p style="color: rgba(255,255,255,0.6); font-size: 0.8rem; margin-top: 8px;">
+                ₹{{ next_tier[1].min - total_spent }} more to reach {{ next_tier[0] }}
+            </p>
+        </div>
+        {% else %}
+        <div style="display: inline-block; background: rgba(245,158,11,0.2); border: 1px solid #f59e0b; color: #fbbf24; padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+            💎 You've reached the highest tier — Platinum!
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="padding: 50px 5%; background: var(--bg-body); max-width: 1200px; margin: 0 auto;">
+
+    <!-- TIER OVERVIEW -->
+    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Membership Tiers</h2>
+    <p style="color: var(--text-light); margin-bottom: 30px;">Earn more points and unlock bigger rewards as you climb.</p>
+
+    <div class="tier-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 60px;">
+        {% for tier_name, t in loyalty_tiers.items() %}
+        <div class="tier-card {% if tier == tier_name %}active-tier{% endif %}" style="border-top-color: {{ t.color }};">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: {{ t.color }};"></div>
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">{{ t.icon }}</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px;">{{ tier_name }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 15px;">Spend ₹{{ t.min }}+</div>
+            <div style="background: var(--bg-body); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">{{ t.points_rate }}x</div>
+                <div style="font-size: 0.75rem; color: var(--text-light);">Points Multiplier</div>
+            </div>
+            <div style="background: var(--bg-body); border-radius: 8px; padding: 10px;">
+                <div style="font-size: 1.1rem; font-weight: 700; color: {{ t.color }};">{{ t.discount_pct }}%</div>
+                <div style="font-size: 0.75rem; color: var(--text-light);">Tier Discount</div>
+            </div>
+            {% if tier == tier_name %}
+            <div style="margin-top: 15px; background: rgba(37,99,235,0.1); color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                ✓ Your Current Tier
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- REFERRAL SECTION -->
+    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Refer & Earn</h2>
+    <p style="color: var(--text-light); margin-bottom: 25px;">Share your code. You get <strong>200 points</strong>, they get <strong>100 points</strong>.</p>
+
+    <div class="referral-box" style="margin-bottom: 50px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+            <div>
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">Your Referral Code</label>
+                    <div class="referral-input-group" style="display: flex; gap: 10px; align-items: center;">
+                        <input id="refCode" readonly value="{{ current_user.referral_code }}"
+                               style="flex: 1; padding: 14px 18px; border-radius: 10px; border: 2px solid var(--primary); background: var(--bg-card); color: var(--text-main); font-size: 1.2rem; font-weight: 800; letter-spacing: 3px; text-align: center;">
+                        <button class="copy-btn" onclick="copyCode('{{ current_user.referral_code }}', this)">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">Share Your Link</label>
+                    <div class="referral-input-group" style="display: flex; gap: 10px;">
+                        <input id="refLink" readonly value="{{ referral_link }}"
+                               style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-light); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <button class="copy-btn" onclick="copyCode('{{ referral_link }}', this)" style="background: var(--bg-card); color: var(--primary); border: 1px solid var(--primary);">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <div style="font-size: 4rem; margin-bottom: 15px;">🎁</div>
+                <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 120px;">
+                        <div style="font-size: 1.8rem; font-weight: 900; color: #10b981;">+200</div>
+                        <div style="font-size: 0.8rem; color: var(--text-light);">Points for you</div>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 120px;">
+                        <div style="font-size: 1.8rem; font-weight: 900; color: var(--primary);">+100</div>
+                        <div style="font-size: 0.8rem; color: var(--text-light);">Points for them</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-light); font-size: 0.85rem; margin-top: 15px;">
+                    {{ referred_users|length }} friend{{ 's' if referred_users|length != 1 else '' }} referred so far
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOW POINTS WORK -->
+    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 25px;">How Points Work</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 60px;">
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 14px; border: 1px solid var(--border); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 12px;">🚗</div>
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Book & Earn</div>
+            <div style="color: var(--text-light); font-size: 0.9rem;">Get 1 point per ₹100 spent (multiplied by your tier rate)</div>
+        </div>
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 14px; border: 1px solid var(--border); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 12px;">👥</div>
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Refer Friends</div>
+            <div style="color: var(--text-light); font-size: 0.9rem;">Earn 200 points when someone signs up with your code</div>
+        </div>
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 14px; border: 1px solid var(--border); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 12px;">💰</div>
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Redeem at Checkout</div>
+            <div style="color: var(--text-light); font-size: 0.9rem;">100 points = ₹50 off your next booking</div>
+        </div>
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 14px; border: 1px solid var(--border); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 12px;">⬆️</div>
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Climb Tiers</div>
+            <div style="color: var(--text-light); font-size: 0.9rem;">Higher tiers earn points faster and unlock bigger booking discounts</div>
+        </div>
+    </div>
+
+    <!-- RECENT POINTS HISTORY -->
+    {% if recent_bookings %}
+    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px;">Points History</h2>
+    <div style="background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--border); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
+            <thead>
+                <tr style="background: rgba(0,0,0,0.02);">
+                    <th style="padding: 15px 20px; text-align: left; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; font-weight: 700;">Booking</th>
+                    <th style="padding: 15px 20px; text-align: left; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; font-weight: 700;">Date</th>
+                    <th style="padding: 15px 20px; text-align: left; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; font-weight: 700;">Spent</th>
+                    <th style="padding: 15px 20px; text-align: left; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; font-weight: 700;">Points Earned</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in recent_bookings %}
+                <tr style="border-top: 1px solid var(--border);">
+                    <td style="padding: 15px 20px; color: var(--text-main); font-weight: 600;">{{ b.car.name }}</td>
+                    <td style="padding: 15px 20px; color: var(--text-light);">{{ b.date_booked.strftime('%b %d, %Y') }}</td>
+                    <td style="padding: 15px 20px; color: var(--text-main);">₹{{ b.total_cost }}</td>
+                    <td style="padding: 15px 20px;">
+                        {% if b.points_earned %}
+                        <span class="points-badge">+{{ b.points_earned }} pts</span>
+                        {% else %}
+                        <span style="color: var(--text-light); font-size: 0.85rem;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div style="text-align: center; margin-top: 50px;">
+        <a href="{{ url_for('main.fleet') }}" class="btn-login" style="padding: 15px 40px; font-size: 1.05rem;">
+            🚗 Book a Car & Earn Points
+        </a>
+    </div>
+</div>
+
+<script>
+function copyCode(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.style.background = '#10b981';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head><title>Manage Bookings</title></head>
+<body>
+     {% set hide_nav = False %}
+    {% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-container">
+    <div class="sidebar">
+        <h3>Admin Panel</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-link">Dashboard</a>
+        <a href="{{ url_for('admin.manage_cars') }}" class="sidebar-link">Manage Cars</a>
+        <a href="{{ url_for('admin.manage_coupons') }}" class="sidebar-link">Coupons</a>
+        <a href="{{ url_for('admin.manage_bookings') }}" class="sidebar-link active">Bookings</a>
+        <a href="{{ url_for('admin.manage_users') }}" class="sidebar-link">Users</a>
+        <<a href="{{ url_for('admin.manage_clients') }}" class="sidebar-link">Manage Clients</a>
+        <a href="{{ url_for('admin.manage_offers') }}" class="sidebar-link">Manage Offers</a>
+         <a href="{{ url_for('admin.admin_logs') }}" style="
+    display: inline-block; 
+    padding: 15px 25px; 
+    background: #333; 
+    color: white; 
+    border-radius: 8px; 
+    text-decoration: none; 
+    border: 1px solid #555;
+    margin: 10px;">
+    📜 View Audit Logs
+</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color:#ff6b6b;">Logout</a>
+    </div>
+
+    <div class="admin-content">
+        <h2>Bookings</h2>
+        <div style="overflow-x: auto; margin-top: 20px; background: var(--bg-card); border-radius:12px; border: 1px solid var(--border);">
+            <table>
+                <tr>
+                    <th>ID</th><th>User</th><th>Car</th><th>Mode</th><th>Status</th><th>Action</th>
+                </tr>
+                {% for booking in bookings %}
+                <tr>
+                    <td>#{{ booking.id }}</td>
+                    <td>{{ booking.user.name }}<br><small>{{ booking.user.phone }}</small></td>
+                    <td>{{ booking.car.name }}</td>
+                    <td>
+                        {% if booking.delivery_type == 'Delivery' %}
+                            <span style="color: var(--primary); font-weight: bold;">Home Delivery</span>
+                            <div style="font-size: 0.75rem; color: var(--text-light); max-width: 150px; white-space: normal;">
+                                {{ booking.delivery_address }}
+                            </div>
+                        {% else %}
+                            <span>Self Pickup</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="padding:4px 8px; border-radius:4px; background:{{ '#d4edda' if booking.status=='Paid' else '#fff3cd' }}; color:black;">
+                            {{ booking.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if booking.status != 'Cancelled' %}
+                        <a href="{{ url_for('admin.update_booking', id=booking.id, status='Cancelled') }}" style="color:red;">Cancel</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

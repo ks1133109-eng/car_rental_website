@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width: 500px; margin: 50px auto; text-align: center; padding: 40px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border);">
+    <h2>Enable 2FA Security</h2>
+    <p>Scan this QR code with Google Authenticator.</p>
+    
+    <img src="data:image/png;base64,{{ qr_code }}" style="margin: 20px 0; border: 5px solid white; border-radius: 8px;">
+    
+    <p style="font-family: monospace; background: #eee; padding: 10px; color: black;">Secret: {{ secret }}</p>
+    
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="text" name="code" placeholder="Enter 6-digit Code" required 
+               style="width: 100%; padding: 12px; margin-bottom: 15px; text-align: center; font-size: 1.2rem; letter-spacing: 5px;">
+        <button type="submit" class="btn-login" style="width: 100%;">Verify & Enable</button>
+    </form>
+</div>
+{% endblock %}

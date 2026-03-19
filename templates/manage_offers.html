@@ -1,0 +1,95 @@
+{% set hide_nav = False %}
+{% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex;" class="admin-container">
+    <div class="sidebar">
+        <h3 style="margin-bottom: 30px; padding-left: 12px;">Admin Panel</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-link">Dashboard</a>
+        <a href="{{ url_for('admin.manage_cars') }}" class="sidebar-link">Manage Cars</a>
+        <a href="{{ url_for('admin.manage_coupons') }}" class="sidebar-link">Coupons</a>
+        <a href="{{ url_for('admin.manage_bookings') }}" class="sidebar-link">Bookings</a>
+        <a href="{{ url_for('admin.manage_users') }}" class="sidebar-link">Users</a>
+        
+        <a href="{{ url_for('admin.manage_clients') }}" class="sidebar-link">Manage Clients</a>
+        <a href="{{ url_for('admin.manage_offers') }}" class="sidebar-link">Manage Offers</a>
+        
+        <a href="{{ url_for('admin.admin_logs') }}" style="display: inline-block; padding: 12px 20px; background: #1E293B; color: white; border-radius: 8px; text-decoration: none; border: 1px solid #334155; margin: 15px 12px; font-size: 0.9rem; text-align: center;">📜 View Audit Logs</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color:#ef4444; margin-top: 10px;">Logout</a>
+    </div>
+
+    <div style="flex: 1; padding: 40px; background: var(--bg-body);" class="admin-content">
+        <h2 style="color: var(--text-main); margin-bottom: 25px;">Platform Offers</h2>
+        
+        <div style="background: var(--bg-card); padding: 25px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <h3 style="margin-top: 0; color: var(--text-main);">Create Global Offer</h3>
+            <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 20px;">Active offers will display a banner on the homepage and automatically discount all vehicle bookings.</p>
+            
+            <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); display: block; margin-bottom: 5px;">OFFER TITLE</label>
+                    <input type="text" name="title" placeholder="e.g. Summer Getaway Sale" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); display: block; margin-bottom: 5px;">DISCOUNT PERCENTAGE (%)</label>
+                    <input type="number" name="discount" placeholder="e.g. 15" max="100" min="1" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+
+                <div style="grid-column: span 2;">
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-light); display: block; margin-bottom: 5px;">DESCRIPTION (Shows in Banner)</label>
+                    <input type="text" name="description" placeholder="e.g. Get 15% off on all bookings this weekend!" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                
+                <div style="grid-column: span 2; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="is_active" id="is_active" style="width: 20px; height: 20px;">
+                    <label for="is_active" style="font-weight: 600; color: var(--text-main);">Set as Active immediately</label>
+                </div>
+
+                <div style="grid-column: span 2;">
+                    <button type="submit" style="padding: 12px 25px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Create Offer</button>
+                </div>
+            </form>
+        </div>
+
+        <div style="margin-top: 30px; background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: var(--input-bg); text-align: left;">
+                    <th style="padding: 15px; color: var(--text-main);">Offer Details</th>
+                    <th style="color: var(--text-main);">Discount</th>
+                    <th style="color: var(--text-main);">Status</th>
+                    <th style="color: var(--text-main);">Actions</th>
+                </tr>
+                {% for offer in offers %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 15px;">
+                        <strong style="color: var(--text-main);">{{ offer.title }}</strong><br>
+                        <small style="color: var(--text-light);">{{ offer.description }}</small>
+                    </td>
+                    <td style="font-weight: bold; color: #10b981;">{{ offer.discount_percentage }}% OFF</td>
+                    <td>
+                        {% if offer.is_active %}
+                            <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold;">LIVE</span>
+                        {% else %}
+                            <span style="background: var(--input-bg); color: var(--text-light); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold;">INACTIVE</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="{{ url_for('admin.toggle_offer', id=offer.id) }}" class="btn-login" style="padding: 6px 12px; font-size: 0.85rem; background: {% if offer.is_active %}#f59e0b{% else %}var(--primary){% endif %};">
+                                {% if offer.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </a>
+                            <a href="{{ url_for('admin.delete_offer', id=offer.id) }}" onclick="return confirm('Delete this offer?')" style="color: #ef4444; text-decoration: none; padding: 6px 12px; border: 1px solid #ef4444; border-radius: 6px; font-size: 0.85rem;"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-light);">No offers created yet.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

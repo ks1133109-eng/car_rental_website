@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Journeys | DriveX</title>
+</head>
+<body>
+  {% extends "base.html" %}
+{% block content %}
+<div style="padding: 40px 10%; background: var(--bg-body); min-height: 90vh;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="color: var(--text-main);">My Journeys</h2>
+        <a href="{{ url_for('main.dashboard') }}" style="color: var(--primary); text-decoration: none; font-weight: bold;">&larr; Back to Dashboard</a>
+    </div>
+
+    {% if bookings %}
+        <div style="display: grid; gap: 20px;">
+            {% for booking in bookings %}
+            <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                
+                <img src="{{ booking.car.image_url }}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px;">
+                
+                <div style="flex: 1; min-width: 200px;">
+                    <h3 style="margin: 0 0 5px 0; color: var(--text-main);">{{ booking.car.name }}</h3>
+                    <p style="margin: 0; color: var(--text-light); font-size: 0.9rem;">
+                        {{ booking.start_date.strftime('%b %d') }} - {{ booking.end_date.strftime('%b %d, %Y') }}
+                    </p>
+                    <p style="margin: 5px 0 0; font-weight: bold; color: var(--text-main);">₹{{ booking.total_cost }}</p>
+                </div>
+
+                <div style="text-align: right;">
+                    <span style="display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; background: {{ '#d4edda' if booking.status == 'Paid' else '#fff3cd' }}; color: {{ '#155724' if booking.status == 'Paid' else '#856404' }};">
+                        {{ booking.status }}
+                    </span>
+                    <div style="margin-top: 10px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end;">
+                        <a href="{{ url_for('booking.booking_success', booking_id=booking.id) }}" style="color: var(--primary); text-decoration: none; font-size: 0.9rem;">View Ticket</a>
+                        <a href="{{ url_for('booking.invoice', booking_id=booking.id) }}" style="color: var(--text-light); text-decoration: none; font-size: 0.9rem;">Invoice</a>
+
+                        {% if booking.status in ('Paid', 'Completed') %}
+                        <button onclick="openReviewModal('{{ booking.car.id }}', '{{ booking.car.name }}')"
+                                style="background: none; border: 1px solid var(--primary); color: var(--primary); padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size:0.85rem;">
+                            &#9733; Rate
+                        </button>
+                        {% endif %}
+
+                        {% if booking.status not in ('Cancelled', 'Completed') %}
+                        <form action="{{ url_for('client.cancel_booking', booking_id=booking.id) }}" method="POST"
+                              onsubmit="return confirm('Cancel booking #{{ booking.id }} for {{ booking.car.name }}? This cannot be undone.');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit"
+                                  style="background:none;border:1px solid #ef4444;color:#ef4444;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:600;">
+                            &#10005; Cancel
+                          </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 60px; background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
+            <i class="fas fa-route" style="font-size: 3rem; color: var(--text-light); margin-bottom: 20px; opacity: 0.5;"></i>
+            <p style="color: var(--text-light);">You haven't made any bookings yet.</p>
+            <a href="{{ url_for('main.fleet') }}" class="btn-login" style="margin-top: 20px; display: inline-block;">Book Your First Car</a>
+        </div>
+    {% endif %}
+</div>
+
+<div id="reviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index: 2000;">
+    <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; position: relative;">
+        <span onclick="closeReviewModal()" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:1.5rem; color: var(--text-main);">&times;</span>
+        <h3 id="modalTitle" style="color: var(--text-main);">Rate your Ride</h3>
+        
+        <form action="{{ url_for('main.submit_review') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="car_id" id="reviewCarId">
+            
+            <label style="color: var(--text-main);">Rating:</label>
+            <div style="margin:10px 0; font-size:1.5rem; color:#ffc107;">
+                <select name="rating" style="font-size:1rem; padding:5px; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border);">
+                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                    <option value="4">⭐⭐⭐⭐ (4)</option>
+                    <option value="3">⭐⭐⭐ (3)</option>
+                    <option value="2">⭐⭐ (2)</option>
+                    <option value="1">⭐ (1)</option>
+                </select>
+            </div>
+
+            <textarea name="comment" placeholder="Describe your experience..." style="width:100%; height:80px; padding:10px; border:1px solid var(--border); border-radius:6px; margin-bottom:15px; background: var(--input-bg); color: var(--text-main);"></textarea>
+            
+            <button type="submit" style="width:100%; padding:10px; background: var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Submit Review</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openReviewModal(carId, carName) {
+        document.getElementById('reviewCarId').value = carId;
+        document.getElementById('modalTitle').innerText = "Rate " + carName;
+        document.getElementById('reviewModal').style.display = 'flex';
+    }
+    function closeReviewModal() {
+        document.getElementById('reviewModal').style.display = 'none';
+    }
+</script>
+
+{% endblock %}
+</body>
+</html>

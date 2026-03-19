@@ -1,0 +1,111 @@
+{% set hide_nav = False %}
+{% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-container">
+    
+    <div class="sidebar">
+        <h3 style="margin-bottom: 30px; padding-left: 12px;">Admin Panel</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-link">Dashboard</a>
+        <a href="{{ url_for('admin.manage_cars') }}" class="sidebar-link">Manage Cars</a>
+        <a href="{{ url_for('admin.manage_coupons') }}" class="sidebar-link">Coupons</a>
+        <a href="{{ url_for('admin.manage_bookings') }}" class="sidebar-link">Bookings</a>
+        <a href="{{ url_for('admin.manage_users') }}" class="sidebar-link active">Users</a>
+        
+       <a href="{{ url_for('admin.manage_clients') }}" class="sidebar-link">Manage Clients</a>
+       <a href="{{ url_for('admin.manage_offers') }}" class="sidebar-link">Manage Offers</a>
+        
+        <a href="{{ url_for('admin.admin_logs') }}" style="display: inline-block; padding: 12px 20px; background: #1E293B; color: white; border-radius: 8px; text-decoration: none; border: 1px solid #334155; margin: 15px 12px; font-size: 0.9rem; text-align: center;">📜 View Audit Logs</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color:#ef4444; margin-top: 10px;">Logout</a>
+    </div>
+
+    <div class="admin-content">
+        <h2 style="color: var(--text-main); margin-bottom: 25px;">User Management</h2>
+        
+        <div style="background: var(--bg-card); border-radius: 12px; overflow: hidden; margin-top: 20px; box-shadow: var(--shadow); border: 1px solid var(--border);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: var(--input-bg); text-align: left;">
+                    <th style="padding: 15px; color: var(--text-main);">User Info</th>
+                    <th style="color: var(--text-main);">Contact & Docs</th>
+                    <th style="color: var(--text-main);">Role</th>
+                    <th style="color: var(--text-main);">Status</th>
+                    <th style="color: var(--text-main);">Actions</th>
+                </tr>
+                {% for user in users %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 15px;">
+                        <strong style="color: var(--text-main);">{{ user.name }}</strong><br>
+                        <span style="color: var(--text-light); font-size: 0.9rem;">{{ user.email }}</span>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 8px;">
+                            <strong>Phone:</strong> {{ user.phone or 'N/A' }}<br>
+                            <strong>Gov ID:</strong> {{ user.gov_id or 'N/A' }}
+                        </div>
+                        
+                        <div style="display: flex; gap: 5px;">
+                            {% if user.gov_id_image %}
+                                <button onclick="openImage({{ user.id }}, 'gov_id')" style="padding: 4px 8px; background: var(--primary); color: white; border: none; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: bold;">View ID</button>
+                            {% endif %}
+                            {% if user.user_selfie %}
+                                <button onclick="openImage({{ user.id }}, 'selfie')" style="padding: 4px 8px; background: var(--secondary); color: white; border: none; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: bold;">View Selfie</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span style="background: {% if user.role == 'Admin' %}#f59e0b{% elif user.role == 'Client' %}#10b981{% else %}var(--border){% endif %}; color: {% if user.role == 'User' %}var(--text-main){% else %}white{% endif %}; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold;">
+                            {{ user.role }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.status == 'Active' %}
+                            <span style="color: #10b981; font-weight: bold; font-size: 0.85rem;"><i class="fas fa-check-circle" style="margin-right:4px;"></i> Active</span>
+                        {% elif user.status == 'Suspicious' %}
+                            <span style="color: #f59e0b; font-weight: bold; font-size: 0.85rem;"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i> Suspicious</span>
+                        {% else %}
+                            <span style="color: #ef4444; font-weight: bold; font-size: 0.85rem;"><i class="fas fa-ban" style="margin-right:4px;"></i> Banned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            {% if not user.is_admin %}
+                            <a href="{{ url_for('admin.edit_user', id=user.id) }}" style="color: var(--primary); text-decoration: none; padding: 6px 12px; border: 1px solid var(--primary); border-radius: 6px; font-size: 0.85rem;">
+                                <i class="fas fa-user-edit"></i> Edit
+                            </a>
+                            <a href="{{ url_for('admin.user_booking_history', id=user.id) }}" style="color: var(--text-main); text-decoration: none; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem;">
+                                <i class="fas fa-history"></i> History
+                            </a>
+                            <a href="{{ url_for('admin.delete_user', id=user.id) }}" onclick="return confirm('Permanently delete user?')" style="color: #ef4444; text-decoration: none; padding: 6px 12px; border: 1px solid #ef4444; border-radius: 6px; font-size: 0.85rem;">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function openImage(userId, docType) {
+        try {
+            const res  = await fetch('/admin/kyc-view/' + userId + '/' + docType);
+            const data = await res.json();
+            if (!res.ok || data.error) { alert('Could not load: ' + (data.error || 'Error')); return; }
+            const w = window.open('', '', 'width=900,height=700');
+            if (!w) { alert('Pop-up blocked. Please allow pop-ups.'); return; }
+            w.document.body.style.cssText = 'margin:0;background:#111;';
+            const img = w.document.createElement('img');
+            img.src = data.url;
+            img.style.cssText = 'max-width:100%;display:block;margin:0 auto;';
+            w.document.body.appendChild(img);
+            const note = w.document.createElement('p');
+            note.textContent = 'This link expires in 5 minutes.';
+            note.style.cssText = 'color:#94a3b8;text-align:center;font-family:system-ui;font-size:0.8rem;margin-top:8px;';
+            w.document.body.appendChild(note);
+        } catch(e) { alert('Failed to load document.'); }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="padding: 30px 5%; min-height: 100vh; background: var(--bg-body);">
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 35px; max-width: 1100px; margin: 0 auto;">
+
+        <!-- LEFT: Summary -->
+        <div>
+            <h1 style="font-size: clamp(1.5rem,3vw,2rem); margin-bottom: 20px; color: var(--text-main);">Confirm &amp; Pay</h1>
+
+            <!-- Booking summary card -->
+            <div style="background:var(--bg-card);border-radius:14px;padding:22px;border:1px solid var(--border);margin-bottom:20px;">
+                <h3 style="margin:0 0 18px;border-bottom:1px solid var(--border);padding-bottom:14px;color:var(--text-main);font-size:1rem;">Booking Summary</h3>
+                <div style="display:flex;gap:16px;margin-bottom:22px;flex-wrap:wrap;">
+                    <img src="{{ car.image_url }}" style="width:110px;height:75px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+                    <div>
+                        <h4 style="margin:0 0 5px;color:var(--text-main);">{{ car.name }}</h4>
+                        <p style="margin:0;color:var(--text-light);font-size:0.85rem;">
+                            {{ start_date }} <i class="fas fa-arrow-right" style="font-size:0.65rem;margin:0 4px;"></i> {{ end_date }}
+                        </p>
+                        {% if with_driver %}
+                        <span style="font-size:0.72rem;background:#333;color:#ccc;padding:2px 7px;border-radius:4px;margin-top:5px;display:inline-block;">With Chauffeur</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Cost breakdown -->
+                <div style="font-size:0.9rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:9px;color:var(--text-light);">
+                        <span>Base Fare</span><span>₹{{ base_cost }}</span>
+                    </div>
+                    {% if driver_fee > 0 %}
+                    <div style="display:flex;justify-content:space-between;margin-bottom:9px;color:var(--text-light);">
+                        <span>Chauffeur Fee</span><span>₹{{ driver_fee }}</span>
+                    </div>
+                    {% endif %}
+                    {% if delivery_fee > 0 %}
+                    <div style="display:flex;justify-content:space-between;margin-bottom:9px;color:var(--text-light);">
+                        <span>Delivery Fee</span><span>₹{{ delivery_fee }}</span>
+                    </div>
+                    {% endif %}
+                    <div style="display:flex;justify-content:space-between;margin-bottom:9px;color:var(--text-light);">
+                        <span>Taxes &amp; Fees (18%)</span><span>₹{{ tax }}</span>
+                    </div>
+                    {% if discount > 0 %}
+                    <div style="display:flex;justify-content:space-between;margin-bottom:9px;color:#10b981;">
+                        <span>{% if active_offer %}Offer Discount{% else %}Coupon{% endif %}</span>
+                        <span>−₹{{ discount }}</span>
+                    </div>
+                    {% endif %}
+                    {% if points_discount > 0 %}
+                    <div style="display:flex;justify-content:space-between;margin-bottom:9px;color:#f59e0b;">
+                        <span><i class="fas fa-star"></i> Points Redeemed</span>
+                        <span>−₹{{ points_discount }}</span>
+                    </div>
+                    {% endif %}
+                    <div style="border-top:1px dashed var(--border);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;font-size:1.15rem;font-weight:800;color:var(--text-main);">
+                        <span>Total To Pay</span>
+                        <span>₹{{ total }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loyalty points redemption -->
+            {% if current_user.loyalty_points >= 100 and not use_points %}
+            <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <div style="font-weight:700;color:var(--text-main);font-size:0.95rem;">
+                        <i class="fas fa-star" style="color:#f59e0b;"></i> You have {{ current_user.loyalty_points }} points
+                    </div>
+                    <div style="color:var(--text-light);font-size:0.82rem;margin-top:3px;">
+                        Worth ₹{{ (current_user.loyalty_points // 100) * 50 }} off — use them at checkout
+                    </div>
+                </div>
+                <form method="POST" action="{{ url_for('booking.book_car_dates', car_id=car.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="start_date"    value="{{ start_date }}">
+                    <input type="hidden" name="end_date"      value="{{ end_date }}">
+                    {% if with_driver %}<input type="hidden" name="with_driver" value="on">{% endif %}
+                    <input type="hidden" name="use_points" value="on">
+                    <button type="submit" style="background:#f59e0b;color:black;border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.88rem;">Use Points</button>
+                </form>
+            </div>
+            {% elif use_points %}
+            <div style="background:rgba(16,185,129,0.06);border:1px solid #10b981;border-radius:12px;padding:14px 18px;margin-bottom:20px;">
+                <div style="color:#10b981;font-weight:700;font-size:0.9rem;">
+                    <i class="fas fa-check-circle"></i> Points applied — saving ₹{{ points_discount }}!
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Coupon form -->
+            <form action="{{ url_for('booking.apply_coupon') }}" method="POST" style="display:flex;gap:10px;margin-bottom:25px;flex-wrap:wrap;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="car_id"           value="{{ car.id }}">
+                <input type="hidden" name="start_date"       value="{{ start_date }}">
+                <input type="hidden" name="end_date"         value="{{ end_date }}">
+                <input type="hidden" name="with_driver"      value="{{ with_driver }}">
+                <input type="hidden" name="delivery_fee"     value="{{ delivery_fee }}">
+                <input type="hidden" name="delivery_type"    value="{{ delivery_type }}">
+                <input type="hidden" name="delivery_address" value="{{ delivery_address }}">
+                <input type="text" name="coupon_code" placeholder="Coupon Code"
+                       value="{{ applied_coupon if applied_coupon else '' }}"
+                       style="flex:1;min-width:150px;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-main);outline:none;text-transform:uppercase;letter-spacing:1px;">
+                <button type="submit" class="btn-login" style="border-radius:8px;padding:0 22px;white-space:nowrap;">Apply</button>
+            </form>
+        </div>
+
+        <!-- RIGHT: Payment method -->
+        <div>
+            <div style="background:var(--bg-card);border-radius:14px;padding:28px;border:1px solid var(--border);position:sticky;top:90px;">
+                <h3 style="margin:0 0 22px;color:var(--text-main);">Payment Method</h3>
+
+                <!-- Hidden fields for JS and COD form -->
+                <input type="hidden" id="fieldCarId"          value="{{ car.id }}">
+                <input type="hidden" id="fieldStartDate"      value="{{ start_date }}">
+                <input type="hidden" id="fieldEndDate"        value="{{ end_date }}">
+                <input type="hidden" id="fieldBaseCost"       value="{{ base_cost }}">
+                <input type="hidden" id="fieldDriverFee"      value="{{ driver_fee }}">
+                <input type="hidden" id="fieldDeliveryFee"    value="{{ delivery_fee }}">
+                <input type="hidden" id="fieldDeliveryType"   value="{{ delivery_type }}">
+                <input type="hidden" id="fieldDeliveryAddr"   value="{{ delivery_address }}">
+                <input type="hidden" id="fieldDiscount"       value="{{ discount }}">
+                <input type="hidden" id="fieldPointsDiscount" value="{{ points_discount }}">
+                <input type="hidden" id="fieldUsePoints"      value="{{ use_points }}">
+                <input type="hidden" id="fieldWithDriver"     value="{{ with_driver }}">
+                <input type="hidden" id="fieldTotalCost"      value="{{ total }}">
+                <input type="hidden" id="fieldRazorpayKey"    value="{{ razorpay_key_id }}">
+                <input type="hidden" id="fieldUserName"       value="{{ current_user.name }}">
+                <input type="hidden" id="fieldUserEmail"      value="{{ current_user.email }}">
+                <input type="hidden" id="fieldUserPhone"      value="{{ current_user.phone or '' }}">
+                <input type="hidden" id="fieldCarName"        value="{{ car.name }}">
+
+                <!-- Payment option: Online (Razorpay) -->
+                <div id="opt-online" onclick="selectMethod('online')"
+                     style="border:2px solid var(--primary);padding:14px;border-radius:10px;background:rgba(37,99,235,0.05);display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:22px;height:22px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                            <div style="width:9px;height:9px;background:white;border-radius:50%;"></div>
+                        </div>
+                        <div>
+                            <span style="font-weight:600;color:var(--text-main);display:block;">Pay Online</span>
+                            <span style="font-size:0.75rem;color:var(--text-light);">Powered by Razorpay</span>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem;background:#22c55e;color:black;padding:2px 8px;border-radius:4px;font-weight:bold;">SECURE</span>
+                </div>
+
+                <!-- Payment option: COD -->
+                <div id="opt-cod" onclick="selectMethod('cod')"
+                     style="border:1px solid var(--border);padding:14px;border-radius:10px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:25px;opacity:0.7;">
+                    <div style="width:22px;height:22px;border:2px solid var(--text-light);border-radius:50%;"></div>
+                    <span style="font-weight:600;color:var(--text-light);">Pay Later (Cash)</span>
+                </div>
+
+                <!-- Hidden COD form (submitted directly for cash bookings) -->
+                <form id="codForm" action="{{ url_for('booking.confirm_booking_cod', car_id=car.id) }}" method="POST" style="display:none;">
+                    <input type="hidden" name="csrf_token"       value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="start_date"       value="{{ start_date }}">
+                    <input type="hidden" name="end_date"         value="{{ end_date }}">
+                    <input type="hidden" name="base_cost"        value="{{ base_cost }}">
+                    <input type="hidden" name="driver_fee"       value="{{ driver_fee }}">
+                    <input type="hidden" name="delivery_fee"     value="{{ delivery_fee }}">
+                    <input type="hidden" name="delivery_type"    value="{{ delivery_type }}">
+                    <input type="hidden" name="delivery_address" value="{{ delivery_address }}">
+                    <input type="hidden" name="discount"         value="{{ discount }}">
+                    <input type="hidden" name="points_discount"  value="{{ points_discount }}">
+                    <input type="hidden" name="use_points"       value="{{ use_points }}">
+                    <input type="hidden" name="with_driver"      value="{{ with_driver }}">
+                    <input type="hidden" name="total_cost"       value="{{ total }}">
+                </form>
+
+                <!-- Hidden Razorpay success form (submitted by JS after payment) -->
+                <form id="rzpSuccessForm" action="{{ url_for('booking.razorpay_payment_success') }}" method="POST" style="display:none;">
+                    <input type="hidden" name="csrf_token"            value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="razorpay_order_id"     id="rzpOrderId">
+                    <input type="hidden" name="razorpay_payment_id"   id="rzpPaymentId">
+                    <input type="hidden" name="razorpay_signature"    id="rzpSignature">
+                </form>
+
+                <button id="payBtn" onclick="handlePay()"
+                        class="btn-login"
+                        style="width:100%;font-size:1rem;padding:15px;justify-content:center;border-radius:10px;">
+                    Pay ₹{{ total }} Now
+                </button>
+
+                <p style="text-align:center;margin-top:12px;font-size:0.8rem;color:var(--text-light);">
+                    <i class="fas fa-lock"></i> Payments secured by <strong>Razorpay</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Checkout JS -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    let selectedMethod = 'online';
+
+    function selectMethod(method) {
+        selectedMethod = method;
+        const online = document.getElementById('opt-online');
+        const cod    = document.getElementById('opt-cod');
+        const btn    = document.getElementById('payBtn');
+        const total  = document.getElementById('fieldTotalCost').value;
+
+        if (method === 'online') {
+            online.style.border     = '2px solid var(--primary)';
+            online.style.background = 'rgba(37,99,235,0.05)';
+            online.style.opacity    = '1';
+            cod.style.border        = '1px solid var(--border)';
+            cod.style.opacity       = '0.7';
+            btn.textContent         = 'Pay ₹' + total + ' Now';
+        } else {
+            cod.style.border        = '2px solid var(--primary)';
+            cod.style.opacity       = '1';
+            online.style.border     = '1px solid var(--border)';
+            online.style.background = 'transparent';
+            online.style.opacity    = '0.7';
+            btn.textContent         = 'Confirm Booking (Pay Later)';
+        }
+    }
+
+    async function handlePay() {
+        const btn = document.getElementById('payBtn');
+
+        // ── COD path ──────────────────────────────────────────────
+        if (selectedMethod === 'cod') {
+            document.getElementById('codForm').submit();
+            return;
+        }
+
+        // ── Razorpay online path ──────────────────────────────────
+        btn.textContent = 'Opening Payment...';
+        btn.disabled    = true;
+
+        const csrf = document.querySelector('input[name="csrf_token"]');
+        const csrfToken = csrf ? csrf.value : '';
+
+        try {
+            // Step 1: Create Razorpay order on backend
+            const res = await fetch('{{ url_for("booking.create_razorpay_order_route") }}', {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken':  csrfToken,
+                },
+                body: JSON.stringify({
+                    car_id:           document.getElementById('fieldCarId').value,
+                    start_date:       document.getElementById('fieldStartDate').value,
+                    end_date:         document.getElementById('fieldEndDate').value,
+                    base_cost:        document.getElementById('fieldBaseCost').value,
+                    driver_fee:       document.getElementById('fieldDriverFee').value,
+                    delivery_fee:     document.getElementById('fieldDeliveryFee').value,
+                    delivery_type:    document.getElementById('fieldDeliveryType').value,
+                    delivery_address: document.getElementById('fieldDeliveryAddr').value,
+                    discount:         document.getElementById('fieldDiscount').value,
+                    points_discount:  document.getElementById('fieldPointsDiscount').value,
+                    use_points:       document.getElementById('fieldUsePoints').value === 'True',
+                    with_driver:      document.getElementById('fieldWithDriver').value === 'True',
+                    total_cost:       document.getElementById('fieldTotalCost').value,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                alert('Payment error: ' + data.error);
+                btn.textContent = 'Pay ₹{{ total }} Now';
+                btn.disabled    = false;
+                return;
+            }
+
+            // Step 2: Open Razorpay checkout popup
+            const options = {
+                key:         data.key_id,
+                amount:      data.amount,
+                currency:    data.currency,
+                name:        'DriveX',
+                description: 'Booking: ' + document.getElementById('fieldCarName').value,
+                order_id:    data.order_id,
+                prefill: {
+                    name:    document.getElementById('fieldUserName').value,
+                    email:   document.getElementById('fieldUserEmail').value,
+                    contact: document.getElementById('fieldUserPhone').value,
+                },
+                theme: { color: '#2563EB' },
+
+                // Step 3: On success, submit hidden form to verify signature server-side
+                handler: function(response) {
+                    document.getElementById('rzpOrderId').value   = response.razorpay_order_id;
+                    document.getElementById('rzpPaymentId').value = response.razorpay_payment_id;
+                    document.getElementById('rzpSignature').value = response.razorpay_signature;
+                    document.getElementById('rzpSuccessForm').submit();
+                },
+
+                modal: {
+                    ondismiss: function() {
+                        btn.textContent = 'Pay ₹{{ total }} Now';
+                        btn.disabled    = false;
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(response) {
+                alert('Payment failed: ' + response.error.description);
+                btn.textContent = 'Pay ₹{{ total }} Now';
+                btn.disabled    = false;
+            });
+            rzp.open();
+
+        } catch (err) {
+            console.error('Razorpay error:', err);
+            alert('Something went wrong. Please try again.');
+            btn.textContent = 'Pay ₹{{ total }} Now';
+            btn.disabled    = false;
+        }
+    }
+</script>
+
+<style>
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: 1.2fr 1fr"] { grid-template-columns: 1fr !important; }
+    div[style*="position: sticky"] { position: static !important; }
+}
+</style>
+{% endblock %}

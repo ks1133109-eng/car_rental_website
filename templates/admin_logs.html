@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top: 50px; max-width: 1000px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>🔐 Security Audit Logs</h2>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn-primary" style="text-decoration: none; padding: 10px 20px; border-radius: 5px;">&larr; Back to Admin</a>
+    </div>
+
+    <div style="background: var(--bg-card); padding: 20px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+            <thead>
+                <tr style="background: rgba(255, 255, 255, 0.05); text-align: left;">
+                    <th style="padding: 12px; border-bottom: 2px solid var(--border);">Time (IST)</th>
+                    <th style="padding: 12px; border-bottom: 2px solid var(--border);">User</th>
+                    <th style="padding: 12px; border-bottom: 2px solid var(--border);">Action</th>
+                    <th style="padding: 12px; border-bottom: 2px solid var(--border);">Details</th>
+                    <th style="padding: 12px; border-bottom: 2px solid var(--border);">IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px; font-family: monospace; color: #888;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }} <span style="font-size:0.7rem;color:#64748b">IST</span></td>
+                    
+                    <td style="padding: 12px;">
+                        {% if log.user %}
+                            <strong>{{ log.user.name }}</strong><br>
+                            <span style="font-size: 0.85em; color: #888;">{{ log.user.email }}</span>
+                        {% else %}
+                            <span style="color: red;">Unknown</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td style="padding: 12px;">
+                        <span style="
+                            padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;
+                            {% if 'Login' in log.action %} background: rgba(0, 255, 0, 0.1); color: #0f0;
+                            {% elif 'Delete' in log.action %} background: rgba(255, 0, 0, 0.1); color: #f55;
+                            {% elif 'Admin' in log.action %} background: rgba(255, 165, 0, 0.1); color: orange;
+                            {% else %} background: rgba(0, 0, 255, 0.1); color: #aaf; {% endif %}
+                        ">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    
+                    <td style="padding: 12px; color: #ccc;">{{ log.details }}</td>
+                    <td style="padding: 12px; font-family: monospace;">{{ log.ip_address }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="padding: 20px; text-align: center; color: #888;">No logs recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

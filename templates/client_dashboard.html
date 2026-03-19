@@ -1,0 +1,625 @@
+{% set hide_nav = False %}
+{% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  .cp-wrap { display:flex; min-height:calc(100vh - 64px); font-family:'Inter',sans-serif; background:var(--bg-main); }
+
+  /* Sidebar */
+  .cp-sidebar {
+    width:200px; flex-shrink:0; background:var(--bg-card);
+    border-right:1px solid var(--border); padding:20px 0;
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:calc(100vh - 64px); overflow-y:auto;
+  }
+  .cp-brand { padding:0 16px 18px; border-bottom:1px solid var(--border); margin-bottom:10px; }
+  .cp-brand-name { font-size:0.88rem; font-weight:800; color:var(--text-main); }
+  .cp-brand-sub  { font-size:0.68rem; color:var(--text-light); margin-top:2px; text-transform:uppercase; letter-spacing:1px; }
+  .cp-nav-link {
+    display:flex; align-items:center; gap:9px; padding:9px 16px;
+    color:var(--text-light); text-decoration:none; font-size:0.84rem; font-weight:500;
+    border-left:2px solid transparent; transition:all 0.15s;
+  }
+  .cp-nav-link:hover { color:var(--text-main); background:rgba(16,185,129,0.05); }
+  .cp-nav-link.active { color:#10b981; border-left-color:#10b981; background:rgba(16,185,129,0.07); font-weight:600; }
+  .cp-nav-link svg { width:15px; height:15px; flex-shrink:0; }
+  .cp-footer { margin-top:auto; padding:12px 16px 0; border-top:1px solid var(--border); }
+  .cp-section-label { padding:10px 16px 3px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-light); opacity:0.5; }
+
+  /* Main */
+  .cp-main { flex:1; padding:26px 30px; overflow-x:hidden; }
+  .cp-header { margin-bottom:22px; }
+  .cp-title { font-size:1.3rem; font-weight:800; color:var(--text-main); letter-spacing:-0.5px; }
+  .cp-subtitle { font-size:0.8rem; color:var(--text-light); margin-top:3px; }
+
+  /* KPI cards */
+  .kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:13px; margin-bottom:20px; }
+  .kpi { background:var(--bg-card); border:1px solid var(--border); border-radius:11px; padding:16px; }
+  .kpi-lbl { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; color:var(--text-light); }
+  .kpi-val { font-size:1.6rem; font-weight:800; color:var(--text-main); letter-spacing:-0.8px; margin:7px 0 2px; line-height:1; }
+  .kpi-sub { font-size:0.71rem; color:var(--text-light); }
+  .kpi-green  { border-top:3px solid #10b981; border-radius:11px; }
+  .kpi-blue   { border-top:3px solid #3b82f6; border-radius:11px; }
+  .kpi-purple { border-top:3px solid #8b5cf6; border-radius:11px; }
+  .kpi-amber  { border-top:3px solid #f59e0b; border-radius:11px; }
+
+  /* Cards / grid */
+  .g2 { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px; }
+  .card { background:var(--bg-card); border:1px solid var(--border); border-radius:11px; padding:18px; }
+  .card-hd { font-size:0.87rem; font-weight:700; color:var(--text-main); margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+  .hd-icon { width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0; }
+
+  /* Fleet table */
+  .fleet-tbl { width:100%; border-collapse:collapse; }
+  .fleet-tbl th { font-size:0.67rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-light); padding:0 0 10px; text-align:left; border-bottom:1px solid var(--border); }
+  .fleet-tbl td { padding:11px 0; border-bottom:1px solid var(--border); font-size:0.83rem; vertical-align:middle; }
+  .fleet-tbl tr:last-child td { border-bottom:none; }
+  .car-thumb { width:60px; height:40px; object-fit:cover; border-radius:6px; background:var(--input-bg); display:block; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.67rem; font-weight:700; text-transform:uppercase; }
+  .bg  { background:rgba(16,185,129,0.1);  color:#059669; }
+  .ba  { background:rgba(245,158,11,0.1);  color:#b45309; }
+  .br  { background:rgba(239,68,68,0.1);   color:#dc2626; }
+  .bgy { background:rgba(100,116,139,0.1); color:#475569; }
+  .bp  { background:rgba(139,92,246,0.1);  color:#7c3aed; }
+  .action-btn { padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main); text-decoration:none; font-size:0.75rem; font-weight:600; display:inline-block; transition:opacity 0.15s; }
+  .action-btn:hover { opacity:0.7; }
+  .action-btn.danger { border-color:#ef4444; color:#ef4444; }
+
+  /* Add car form */
+  .form-section { background:var(--bg-card); border:1px solid var(--border); border-radius:11px; padding:20px; margin-bottom:16px; }
+  .form-title { font-size:0.9rem; font-weight:700; color:var(--text-main); margin:0 0 4px; }
+  .form-subtitle { font-size:0.78rem; color:var(--text-light); margin:0 0 18px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group.full { grid-column:span 2; }
+  .form-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-light); }
+  .form-input { padding:10px 12px; border:1px solid var(--border); border-radius:7px; background:var(--input-bg); color:var(--text-main); font-size:0.85rem; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.15s; }
+  .form-input:focus { border-color:#10b981; }
+  .form-select { padding:10px 12px; border:1px solid var(--border); border-radius:7px; background:var(--input-bg); color:var(--text-main); font-size:0.85rem; font-family:'Inter',sans-serif; }
+  .submit-btn { padding:10px 24px; background:#10b981; color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
+  .submit-btn:hover { opacity:0.85; }
+
+  /* Per-car stats row */
+  .car-stat { font-size:0.72rem; color:var(--text-light); margin-top:2px; }
+
+  /* Section title */
+  .sec-title { font-size:0.93rem; font-weight:700; color:var(--text-main); margin:22px 0 12px; display:flex; align-items:center; gap:8px; }
+  .sec-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* Flash messages */
+  .flash-msg { padding:10px 16px; border-radius:8px; font-size:0.84rem; font-weight:500; margin-bottom:14px; }
+  .flash-success { background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.25); }
+  .flash-danger  { background:rgba(239,68,68,0.1);   color:#dc2626; border:1px solid rgba(239,68,68,0.25); }
+
+  @media(max-width:900px) { .g2{grid-template-columns:1fr} .form-grid{grid-template-columns:1fr} .form-group.full{grid-column:span 1} }
+  @media(max-width:600px) { .cp-sidebar{display:none} .cp-main{padding:14px} .kpi-row{grid-template-columns:repeat(2,1fr)} }
+</style>
+
+<div class="cp-wrap">
+
+  <!-- Sidebar -->
+  <nav class="cp-sidebar">
+    <div class="cp-brand">
+      <div class="cp-brand-name">Partner Portal</div>
+      <div class="cp-brand-sub">{{ current_user.name }}</div>
+    </div>
+
+    <div class="cp-section-label">Dashboard</div>
+    <a href="{{ url_for('client.client_dashboard') }}" class="cp-nav-link active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      My Fleet & Earnings
+    </a>
+
+    <div class="cp-section-label">Account</div>
+    <a href="{{ url_for('main.profile') }}" class="cp-nav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile Settings
+    </a>
+    <a href="{{ url_for('main.my_bookings') }}" class="cp-nav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      My Bookings
+    </a>
+
+    <div class="cp-footer">
+      <a href="{{ url_for('auth.logout') }}" class="cp-nav-link" style="color:#ef4444;padding-left:0;border-left-color:transparent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="cp-main">
+
+    <div class="cp-header">
+      <div class="cp-title">Partner Dashboard</div>
+      <div class="cp-subtitle">Track your fleet performance and earnings</div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash-msg flash-{{ 'success' if cat == 'success' else 'danger' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <div class="kpi kpi-green">
+        <div class="kpi-lbl">Total Earnings</div>
+        <div class="kpi-val">&#8377;{{ "{:,}".format(total_earnings) }}</div>
+        <div class="kpi-sub">All time revenue</div>
+      </div>
+      <div class="kpi kpi-blue">
+        <div class="kpi-lbl">Total Trips</div>
+        <div class="kpi-val">{{ total_trips }}</div>
+        <div class="kpi-sub">Completed bookings</div>
+      </div>
+      <div class="kpi kpi-amber">
+        <div class="kpi-lbl">Active Now</div>
+        <div class="kpi-val">{{ active_bookings_count }}</div>
+        <div class="kpi-sub">Cars currently booked</div>
+      </div>
+      <div class="kpi kpi-purple">
+        <div class="kpi-lbl">Fleet Size</div>
+        <div class="kpi-val">{{ cars|length }}</div>
+        <div class="kpi-sub">{{ cars|selectattr('status','eq','Available')|list|length }} live &middot; {{ cars|selectattr('status','eq','Pending')|list|length }} pending</div>
+      </div>
+    </div>
+
+    <!-- Earnings Chart + Per-car stats -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-hd">
+          <div class="hd-icon" style="background:rgba(16,185,129,0.1)">&#128200;</div>
+          Monthly Earnings
+        </div>
+        {% if total_earnings > 0 %}
+        <div style="height:220px"><canvas id="earningsChart"></canvas></div>
+        {% else %}
+        <div style="text-align:center;padding:50px 20px;color:var(--text-light)">
+          <div style="font-size:2rem;margin-bottom:8px">&#128664;</div>
+          <div style="font-size:0.85rem;font-weight:500">No earnings yet</div>
+          <div style="font-size:0.78rem;margin-top:4px">Earnings will appear here once your cars get booked</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div class="hd-icon" style="background:rgba(139,92,246,0.1)">&#127942;</div>
+          Per-Car Earnings
+        </div>
+        {% if car_stats %}
+        <div style="display:flex;flex-direction:column;gap:12px">
+          {% for s in car_stats %}
+          <div style="padding:10px;background:var(--input-bg);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-weight:600;font-size:0.83rem;color:var(--text-main);margin-bottom:2px">{{ s.car.name }}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="car-stat">{{ s.trips }} trip{{ 's' if s.trips != 1 }} &middot; {{ s.active }} active</div>
+              <div style="font-weight:700;font-size:0.85rem;color:#10b981">&#8377;{{ "{:,}".format(s.earnings) }}</div>
+            </div>
+            {% if total_earnings > 0 %}
+            <div style="height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden">
+              <div style="width:{{ (s.earnings/total_earnings*100)|int if total_earnings else 0 }}%;height:100%;background:#10b981;border-radius:2px"></div>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:30px;color:var(--text-light);font-size:0.83rem">Add a car to see stats</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Fleet Table -->
+    <div class="sec-title">
+      Your Fleet
+      <span style="background:var(--input-bg);border:1px solid var(--border);font-size:0.72rem;padding:2px 10px;border-radius:20px;font-weight:600;color:var(--text-light)">{{ cars|length }} cars</span>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      {% if cars %}
+      <table class="fleet-tbl">
+        <thead>
+          <tr>
+            <th style="width:70px">Photo</th>
+            <th>Car</th>
+            <th>Rate</th>
+            <th>Trips</th>
+            <th>Earned</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in car_stats %}
+          {% set car = s.car %}
+          <tr>
+            <td>
+              <img src="{{ car.image_url }}" class="car-thumb" alt="{{ car.name }}"
+                   onerror="this.src='/static/images/car_placeholder.jpg'">
+            </td>
+            <td>
+              <div style="font-weight:600;color:var(--text-main);font-size:0.85rem">{{ car.name }}</div>
+              <div style="font-size:0.72rem;color:var(--text-light)">{{ car.category or '—' }} &middot; {{ car.location or '—' }}</div>
+            </td>
+            <td style="font-weight:600;font-size:0.83rem">&#8377;{{ car.price_per_day }}/day</td>
+            <td style="font-weight:600;font-size:0.83rem">{{ s.trips }}</td>
+            <td style="font-weight:700;font-size:0.83rem;color:#10b981">&#8377;{{ "{:,}".format(s.earnings) }}</td>
+            <td>
+              {% if car.status == 'Available' %}
+                <span class="badge bg">Live</span>
+              {% elif car.status == 'Pending' %}
+                <span class="badge bp">Pending</span>
+              {% elif car.status == 'Maintenance' %}
+                <span class="badge ba">Maintenance</span>
+              {% else %}
+                <span class="badge bgy">{{ car.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <a href="{{ url_for('client.client_edit_car', id=car.id) }}" class="action-btn">Edit</a>
+                <a href="{{ url_for('client.client_delete_car', id=car.id) }}"
+                   onclick="return confirm('Remove this car?')" class="action-btn danger">Delete</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="text-align:center;padding:40px;color:var(--text-light)">
+        <div style="font-size:2rem;margin-bottom:8px">&#128664;</div>
+        <div style="font-weight:600;font-size:0.88rem">No cars listed yet</div>
+        <div style="font-size:0.78rem;margin-top:4px">Use the form below to list your first car</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Active Bookings on Client's Cars -->
+    {% if active_car_bookings %}
+    <div class="sec-title">
+      Active Bookings on Your Cars
+      <span style="background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid rgba(239,68,68,0.2);font-size:0.72rem;padding:2px 10px;border-radius:20px;font-weight:700;">{{ active_car_bookings|length }}</span>
+    </div>
+    <div class="card" style="margin-bottom:16px;overflow-x:auto;">
+      <table class="fleet-tbl" style="min-width:580px;">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Car</th>
+            <th>Renter</th>
+            <th>Dates</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bk in active_car_bookings %}
+          <tr>
+            <td style="font-size:0.78rem;color:var(--text-light);font-family:monospace;">#{{ bk.id }}</td>
+            <td style="font-weight:600;font-size:0.83rem;">{{ bk.car.name if bk.car else '—' }}</td>
+            <td style="font-size:0.8rem;color:var(--text-light);">{{ bk.user.name if bk.user else '—' }}</td>
+            <td style="font-size:0.78rem;color:var(--text-light);">
+              {{ bk.start_date.strftime('%d %b') if bk.start_date else '—' }}
+              <span style="opacity:0.5;">→</span>
+              {{ bk.end_date.strftime('%d %b %Y') if bk.end_date else '—' }}
+            </td>
+            <td style="font-weight:700;font-size:0.83rem;color:#10b981;">&#8377;{{ "{:,}".format(bk.total_cost or 0) }}</td>
+            <td>
+              {% if bk.status == 'Paid' %}
+                <span class="badge bg">Paid</span>
+              {% elif bk.status == 'Confirmed' %}
+                <span class="badge bb">Confirmed</span>
+              {% else %}
+                <span class="badge ba">{{ bk.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <form action="{{ url_for('client.cancel_booking', booking_id=bk.id) }}" method="POST"
+                    onsubmit="return confirm('Cancel booking #{{ bk.id }} for {{ bk.car.name if bk.car else '' }}?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn danger" style="font-size:0.73rem;">&#10005; Cancel</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Add Car Form -->
+    <div class="sec-title">List a New Car</div>
+
+    <div class="form-section">
+      <div class="form-title">Submit a Vehicle for Approval</div>
+      <div class="form-subtitle">Your car will be reviewed by an admin before going live on the platform.</div>
+
+      <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Car Name *</label>
+            <input type="text" name="name" required class="form-input" placeholder="e.g. Hyundai Creta SX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Price Per Day (&#8377;) *</label>
+            <input type="number" name="price" required min="100" class="form-input" placeholder="e.g. 2500">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+              <option value="Hatchback">Hatchback</option>
+              <option value="Sedan" selected>Sedan</option>
+              <option value="SUV">SUV</option>
+              <option value="Luxury">Luxury</option>
+              <option value="Sports">Sports</option>
+              <option value="EV">Electric (EV)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Location (City) *</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" name="location" id="client_location_input" required class="form-input" placeholder="e.g. Mumbai" style="flex:1;min-width:0;">
+              <button type="button" id="gpsLocBtn" title="Use my current location"
+                      onclick="detectClientLocation()"
+                      style="flex-shrink:0;padding:9px 12px;background:var(--primary);color:white;border:none;border-radius:7px;cursor:pointer;font-size:0.78rem;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:opacity 0.15s;">
+                <i class="fas fa-crosshairs"></i> Locate Me
+              </button>
+            </div>
+            <div id="gpsStatus" style="font-size:0.71rem;color:var(--text-light);margin-top:4px;min-height:14px;"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Transmission</label>
+            <select name="transmission" class="form-select">
+              <option value="Manual">Manual</option>
+              <option value="Auto">Automatic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fuel Type</label>
+            <select name="fuel_type" class="form-select">
+              <option value="Petrol">Petrol</option>
+              <option value="Diesel">Diesel</option>
+              <option value="CNG">CNG</option>
+              <option value="Electric">Electric</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Seats</label>
+            <select name="seats" class="form-select">
+              <option value="2">2</option>
+              <option value="4">4</option>
+              <option value="5" selected>5</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+          <div class="form-group full" style="padding:16px;border:1px dashed var(--border);border-radius:10px;background:var(--input-bg)">
+            <label class="form-label" style="margin-bottom:10px;display:block;">&#128247; Car Photo</label>
+
+            <!-- Preview -->
+            <div id="imgPreviewWrap" style="display:none;margin-bottom:12px;">
+              <img id="imgPreview" src="" alt="Preview"
+                   style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+              <button type="button" onclick="clearImage()"
+                      style="margin-top:6px;padding:4px 12px;background:none;border:1px solid #ef4444;color:#ef4444;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;">
+                &#10005; Remove Image
+              </button>
+            </div>
+
+            <!-- Upload area -->
+            <label for="car_image_file" id="uploadLabel"
+                   style="display:flex;flex-direction:column;align-items:center;padding:22px 16px;border:2px dashed var(--border);border-radius:8px;cursor:pointer;transition:border-color 0.2s;background:var(--bg-card);">
+              <i class="fas fa-cloud-upload-alt" style="font-size:1.8rem;color:var(--primary);margin-bottom:8px;"></i>
+              <span style="font-weight:700;font-size:0.85rem;color:var(--text-main);">Click to upload or drag & drop</span>
+              <span style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">JPG, PNG, WEBP up to 8MB — uploads to Cloudinary CDN</span>
+            </label>
+            <input type="file" id="car_image_file" name="car_image_file" accept="image/*"
+                   style="display:none;" onchange="handleCarImageSelect(this)">
+            <input type="hidden" name="image_base64" id="client_car_hidden">
+
+            <!-- URL fallback -->
+            <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+              <div style="flex:1;height:1px;background:var(--border);"></div>
+              <span style="font-size:0.72rem;color:var(--text-light);font-weight:600;">OR paste a URL</span>
+              <div style="flex:1;height:1px;background:var(--border);"></div>
+            </div>
+            <input type="text" name="image_url" id="image_url_input" class="form-input"
+                   placeholder="https://example.com/car.jpg"
+                   style="margin-top:10px;" oninput="handleUrlInput(this)">
+          </div>
+          <div class="form-group full">
+            <button type="submit" class="submit-btn">&#43; Submit for Approval</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<!-- Chart data -->
+<script type="application/json" id="d-earnings">{{ monthly_chart | safe }}</script>
+
+<script>
+  // ── GPS Location Detection ─────────────────────────────────────
+  function detectClientLocation() {
+    const btn    = document.getElementById('gpsLocBtn');
+    const input  = document.getElementById('client_location_input');
+    const status = document.getElementById('gpsStatus');
+
+    if (!navigator.geolocation) {
+      status.textContent = 'GPS not supported on this browser.';
+      status.style.color = '#ef4444';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Locating...';
+    status.style.display = 'block';
+    status.textContent = 'Detecting your location...';
+    status.style.color = 'var(--text-light)';
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      try {
+        const res  = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
+        const data = await res.json();
+        const city = data.address.city
+                  || data.address.town
+                  || data.address.village
+                  || data.address.county
+                  || data.address.state
+                  || '';
+        if (city) {
+          input.value = city;
+          status.textContent = `✓ Location set to "${city}"`;
+          status.style.color = '#10b981';
+        } else {
+          status.textContent = 'Could not determine city name. Please type manually.';
+          status.style.color = '#f59e0b';
+        }
+      } catch (err) {
+        status.textContent = 'Geocoding failed. Please type your city.';
+        status.style.color = '#ef4444';
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-crosshairs"></i> Locate Me';
+    }, (err) => {
+      let msg = 'Location access denied.';
+      if (err.code === 1) msg = 'Permission denied — please allow location access.';
+      if (err.code === 2) msg = 'Position unavailable. Please type your city.';
+      if (err.code === 3) msg = 'Location request timed out. Please try again.';
+      status.textContent = msg;
+      status.style.color = '#ef4444';
+      status.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-crosshairs"></i> Locate Me';
+    }, { timeout: 10000, enableHighAccuracy: false });
+  }
+
+  // ── Cloudinary-aware Image Upload ──────────────────────────────
+  function handleCarImageSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Validate type and size
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      input.value = '';
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert('Image must be under 8MB.');
+      input.value = '';
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('imgPreview').src    = e.target.result;
+      document.getElementById('imgPreviewWrap').style.display = 'block';
+      document.getElementById('uploadLabel').style.display    = 'none';
+      // Also store base64 for fallback (used when Cloudinary is not configured)
+      document.getElementById('client_car_hidden').value = e.target.result;
+      // Clear the URL field since file takes priority
+      document.getElementById('image_url_input').value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleUrlInput(urlInput) {
+    if (urlInput.value.trim()) {
+      // If user types a URL, clear the file/base64 fields
+      document.getElementById('car_image_file').value = '';
+      document.getElementById('client_car_hidden').value = '';
+      clearImagePreview();
+    }
+  }
+
+  function clearImagePreview() {
+    document.getElementById('imgPreviewWrap').style.display = 'none';
+    document.getElementById('uploadLabel').style.display    = 'flex';
+    document.getElementById('imgPreview').src = '';
+  }
+
+  function clearImage() {
+    document.getElementById('car_image_file').value = '';
+    document.getElementById('client_car_hidden').value = '';
+    clearImagePreview();
+  }
+
+  // Drag-and-drop on the upload label
+  document.addEventListener('DOMContentLoaded', function() {
+    const label = document.getElementById('uploadLabel');
+    if (!label) return;
+    label.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      label.style.borderColor = 'var(--primary)';
+      label.style.background  = 'rgba(16,185,129,0.04)';
+    });
+    label.addEventListener('dragleave', () => {
+      label.style.borderColor = 'var(--border)';
+      label.style.background  = 'var(--bg-card)';
+    });
+    label.addEventListener('drop', (e) => {
+      e.preventDefault();
+      label.style.borderColor = 'var(--border)';
+      label.style.background  = 'var(--bg-card)';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        const fileInput = document.getElementById('car_image_file');
+        fileInput.files = dt.files;
+        handleCarImageSelect(fileInput);
+      }
+    });
+  });
+
+  // Earnings chart
+  const earningsData = JSON.parse(document.getElementById('d-earnings').textContent);
+  const hasData = earningsData.some(v => v > 0);
+  if (hasData && document.getElementById('earningsChart')) {
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.color = '#64748B';
+    new Chart(document.getElementById('earningsChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets: [{
+          label: 'Earnings (₹)',
+          data: earningsData,
+          backgroundColor: 'rgba(16,185,129,0.15)',
+          borderColor: '#10b981',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBackgroundColor: 'rgba(16,185,129,0.3)'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, grid: { color: 'rgba(100,116,139,0.07)' }, ticks: { callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v), font: { size: 10 } } }
+        }
+      }
+    });
+  }
+</script>
+
+{% endblock %}

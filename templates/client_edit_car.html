@@ -1,0 +1,77 @@
+{% set hide_nav = False %}
+{% set hide_footer = True %}
+{% extends "base.html" %}
+{% block content %}
+<div style="background: var(--bg-body); min-height: 100vh; padding: 40px 5%; display: flex; justify-content: center;">
+    <div style="background: var(--bg-card); padding: 40px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); width: 100%; max-width: 800px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <h2 style="margin: 0; color: var(--text-main);">Update Listing: {{ car.name }}</h2>
+            <a href="{{ url_for('client.client_dashboard') }}" style="color: var(--text-light); text-decoration: none; font-weight: 600;"><i class="fas fa-times"></i> Cancel</a>
+        </div>
+
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #b45309; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 0.9rem;">
+            <strong>Note:</strong> Updating your vehicle details will temporarily hide the listing until an Admin re-approves it to ensure safety standards.
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 8px; display: block;">CAR NAME</label>
+                    <input type="text" name="name" value="{{ car.name }}" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 8px; display: block;">PRICE PER DAY (₹)</label>
+                    <input type="number" name="price" value="{{ car.price_per_day }}" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 8px; display: block;">CATEGORY</label>
+                    <select name="category" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                        <option value="Hatchback" {% if car.category == 'Hatchback' %}selected{% endif %}>Hatchback</option>
+                        <option value="Sedan" {% if car.category == 'Sedan' %}selected{% endif %}>Sedan</option>
+                        <option value="SUV" {% if car.category == 'SUV' %}selected{% endif %}>SUV</option>
+                        <option value="Luxury" {% if car.category == 'Luxury' %}selected{% endif %}>Luxury</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 8px; display: block;">LOCATION (CITY)</label>
+                    <input type="text" name="location" value="{{ car.location }}" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+            </div>
+
+            <div style="background: var(--input-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px;">
+                <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-light); margin-bottom: 15px; display: block;">UPDATE VEHICLE IMAGE</label>
+                
+                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                    <img src="{{ car.image_url }}" style="width: 150px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                    
+                    <div style="flex: 1;">
+                        <input type="text" name="image_url" placeholder="Paste new Image URL..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-main); margin-bottom: 10px;">
+                        <div style="font-size: 0.8rem; color: var(--text-light); text-align: center; margin-bottom: 10px;">OR UPLOAD FILE</div>
+                        <input type="file" id="client_edit_img" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-main);">
+                        <input type="hidden" name="image_base64" id="client_edit_hidden">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login" style="width: 100%; padding: 15px; font-size: 1.1rem; border-radius: 10px; background: #10b981;">Save & Submit for Review</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('client_edit_img').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('client_edit_hidden').value = e.target.result; };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}
