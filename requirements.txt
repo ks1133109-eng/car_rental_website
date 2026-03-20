@@ -14,6 +14,7 @@ psycopg2-binary
 # ── Security & utils ─────────────────────────────────────────────
 Werkzeug==3.0.1
 itsdangerous==2.2.0
+cryptography>=42.0.0   # field-level encryption for PII (gov_id)
 
 # ── Email ─────────────────────────────────────────────────────────
 resend

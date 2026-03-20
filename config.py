@@ -62,7 +62,8 @@ class Config:
 
     # ── Payment ─────────────────────────────────────
     RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
-    RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
+    RAZORPAY_KEY_SECRET     = os.environ.get('RAZORPAY_KEY_SECRET', '')
+    RAZORPAY_WEBHOOK_SECRET = os.environ.get('RAZORPAY_WEBHOOK_SECRET', '')
 
     # ── Email ─────────────────────────────────────
     RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
