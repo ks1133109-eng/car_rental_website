@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_required, current_user
 from extensions import db, limiter
 from services.cloudinary_service import upload_kyc_image
+from models.user import encrypt_field, decrypt_field
 from models.car import Car
 from models.other_models import Offer, Notification
 from models.booking import Booking
@@ -244,7 +245,7 @@ def kyc():
 
         current_user.phone        = phone
         current_user.address      = address
-        current_user.gov_id       = gov_id
+        current_user.gov_id       = encrypt_field(gov_id)  # encrypted at rest
         current_user.gov_id_image = gov_id_url   # Cloudinary URL, not raw base64
         current_user.user_selfie  = selfie_url   # Cloudinary URL, not raw base64
         current_user.kyc_status   = 'Pending'

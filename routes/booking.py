@@ -461,3 +461,74 @@ def invoice(booking_id):
     if booking.user_id != current_user.id and current_user.role != 'Admin':
         return redirect(url_for('main.dashboard'))
     return render_template('invoice.html', booking=booking)
+
+# ── Razorpay Webhook ──────────────────────────────────────────────
+
+@booking_bp.route('/payment/webhook', methods=['POST'])
+def razorpay_webhook():
+    """
+    Razorpay server-to-server webhook.
+    Catches payments that succeed but where the user closed the browser
+    before the redirect completed (ensures no paid booking is ever lost).
+
+    Setup in Razorpay Dashboard → Settings → Webhooks:
+      URL: https://yourdomain.com/payment/webhook
+      Secret: set RAZORPAY_WEBHOOK_SECRET env var to the same value
+      Events: payment.captured
+    """
+    import hmac as _hmac
+    import hashlib as _hl
+    import json as _json
+
+    webhook_secret = current_app.config.get('RAZORPAY_WEBHOOK_SECRET', '')
+    if not webhook_secret:
+        # Webhook secret not configured — skip processing but return 200
+        # so Razorpay doesn't keep retrying
+        return jsonify({'status': 'skipped', 'reason': 'webhook_secret_not_configured'}), 200
+
+    # Verify webhook signature
+    sig = request.headers.get('X-Razorpay-Signature', '')
+    body = request.get_data()
+    expected = _hmac.new(
+        webhook_secret.encode(), body, _hl.sha256
+    ).hexdigest()
+
+    if not _hmac.compare_digest(sig, expected):
+        return jsonify({'error': 'Invalid signature'}), 400
+
+    try:
+        payload = _json.loads(body)
+        event   = payload.get('event', '')
+
+        if event == 'payment.captured':
+            payment    = payload['payload']['payment']['entity']
+            order_id   = payment.get('order_id', '')
+            payment_id = payment.get('id', '')
+
+            # Check if booking already created (redirect already completed)
+            existing = Booking.query.filter_by(
+                razorpay_payment_id=payment_id
+            ).first()
+            if existing:
+                return jsonify({'status': 'already_processed'}), 200
+
+            # Try to find the pending booking by order_id
+            by_order = Booking.query.filter_by(
+                razorpay_order_id=order_id
+            ).first()
+            if by_order:
+                # Order exists but payment_id not set — update it
+                by_order.razorpay_payment_id = payment_id
+                by_order.status = 'Paid'
+                db.session.commit()
+                return jsonify({'status': 'updated'}), 200
+
+            # No booking record found — log for manual review
+            print(f"[Webhook] Unmatched payment: order={order_id} payment={payment_id}")
+            return jsonify({'status': 'unmatched', 'order_id': order_id}), 200
+
+    except Exception as e:
+        print(f"[Webhook error] {e}")
+        return jsonify({'error': 'Processing failed'}), 500
+
+    return jsonify({'status': 'ok'}), 200

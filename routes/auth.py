@@ -250,14 +250,91 @@ def register():
             send_referral_bonus_email(referrer, new_user)
 
         db.session.commit()
-        login_user(new_user)
-        log_action("Register", "New user account created")
 
-        if referrer:
-            flash('Welcome! You joined via referral and received 100 bonus points!')
-        return redirect(url_for('main.home'))
+        # SECURITY: require email verification before full access
+        otp_code = str(secrets.randbelow(900000) + 100000)
+        session['verify_user_id']    = new_user.id
+        session['verify_otp']        = otp_code
+        session['verify_otp_expiry'] = time.time() + 600   # 10 min
+        session['verify_attempts']   = 0
+        send_otp_email(new_user.email, new_user.name, otp_code)
+        log_action("Register", "New user account created — pending email verification")
+        flash('Account created! Please check your email for a 6-digit verification code.', 'info')
+        return redirect(url_for('auth.verify_registration_email'))
 
     return render_template('register.html', ref_code=ref_code)
+
+
+# ── Email verification after registration ─────────────────────────
+
+@auth_bp.route('/verify-email', methods=['GET', 'POST'])
+@limiter.limit("10 per minute", methods=["POST"])
+def verify_registration_email():
+    """Verify a newly registered user's email with OTP before granting access."""
+    if 'verify_user_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        entered  = request.form.get('code', '').strip()
+        attempts = session.get('verify_attempts', 0)
+
+        if attempts >= 5:
+            for k in ('verify_user_id', 'verify_otp', 'verify_otp_expiry', 'verify_attempts'):
+                session.pop(k, None)
+            flash('Too many incorrect attempts. Please register again.', 'danger')
+            return redirect(url_for('auth.register'))
+
+        if time.time() > session.get('verify_otp_expiry', 0):
+            for k in ('verify_user_id', 'verify_otp', 'verify_otp_expiry', 'verify_attempts'):
+                session.pop(k, None)
+            flash('Verification code expired. Please register again.', 'warning')
+            return redirect(url_for('auth.register'))
+
+        if entered == session.get('verify_otp'):
+            user = User.query.get(session['verify_user_id'])
+            if user:
+                user.email_verified = True
+                db.session.commit()
+            for k in ('verify_user_id', 'verify_otp', 'verify_otp_expiry', 'verify_attempts'):
+                session.pop(k, None)
+            generate_and_store_session_token(user)
+            login_user(user)
+            log_action("Email Verified", "User verified email after registration")
+            flash('Email verified! Welcome to DriveX 🎉', 'success')
+            return redirect(url_for('main.home'))
+        else:
+            session['verify_attempts'] = attempts + 1
+            remaining = 5 - session['verify_attempts']
+            flash(f'Incorrect code. {remaining} attempt(s) remaining.', 'danger')
+
+    uid = session.get('verify_user_id')
+    masked = ''
+    if uid:
+        u = User.query.get(uid)
+        if u:
+            parts  = u.email.split('@')
+            masked = parts[0][0] + '***@' + parts[1]
+
+    return render_template('verify_email_otp.html', masked_email=masked,
+                           resend_url=url_for('auth.resend_registration_otp'),
+                           page_title='Verify Your Email')
+
+
+@auth_bp.route('/verify-email/resend', methods=['POST'])
+@limiter.limit("3 per minute", methods=["POST"])
+def resend_registration_otp():
+    if 'verify_user_id' not in session:
+        return redirect(url_for('auth.login'))
+    user = User.query.get(session['verify_user_id'])
+    if not user:
+        return redirect(url_for('auth.login'))
+    otp_code = str(secrets.randbelow(900000) + 100000)
+    session['verify_otp']        = otp_code
+    session['verify_otp_expiry'] = time.time() + 600
+    session['verify_attempts']   = 0
+    send_otp_email(user.email, user.name, otp_code)
+    flash('A new code has been sent to your email.', 'info')
+    return redirect(url_for('auth.verify_registration_email'))
 
 
 # ── Register (Client / Partner) ───────────────────────────────────
@@ -294,9 +371,17 @@ def register_client():
         )
         db.session.add(new_user)
         db.session.commit()
-        login_user(new_user)
-        log_action("Register", "New Client account created")
-        return redirect(url_for('client.client_dashboard'))
+
+        # SECURITY: require email verification before full access
+        otp_code = str(secrets.randbelow(900000) + 100000)
+        session['verify_user_id']    = new_user.id
+        session['verify_otp']        = otp_code
+        session['verify_otp_expiry'] = time.time() + 600
+        session['verify_attempts']   = 0
+        send_otp_email(new_user.email, new_user.name, otp_code)
+        log_action("Register", "New Client account created — pending email verification")
+        flash('Account created! Please verify your email.', 'info')
+        return redirect(url_for('auth.verify_registration_email'))
     return render_template('register_client.html')
 
 

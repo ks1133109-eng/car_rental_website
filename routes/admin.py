@@ -2,13 +2,14 @@ import json
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
-from extensions import db
+from extensions import db, limiter
 from models.user import User
 from models.car import Car
 from models.booking import Booking
 from models.other_models import Review, Coupon, Offer, AuditLog, Notification, LoginAttempt
 from services.email_service import send_kyc_status_email, send_booking_cancellation_email
 from services.cloudinary_service import get_signed_kyc_url
+from models.user import decrypt_field
 from utils.helpers import log_action, push_notification
 
 admin_bp = Blueprint('admin', __name__)
@@ -181,6 +182,7 @@ def kyc_view_url(user_id, doc_type):
 
 @admin_bp.route('/admin/approve-kyc/<int:user_id>')
 @login_required
+@limiter.limit("30 per minute")
 def approve_kyc(user_id):
     if _admin_required(): return redirect(url_for('main.home'))
     user = User.query.get(user_id)
@@ -425,6 +427,7 @@ def user_booking_history(id):
 
 @admin_bp.route('/admin/users/delete/<int:id>')
 @login_required
+@limiter.limit("20 per minute")
 def delete_user(id):
     if _admin_required(): return redirect(url_for('main.home'))
     u = User.query.get(id)
@@ -519,6 +522,7 @@ def admin_logs():
 # After first run, DELETE or CHANGE the token to prevent re-use.
 
 @admin_bp.route('/reset-db')
+@limiter.limit("3 per hour")
 def reset_db():
     import os
     from flask import current_app
