@@ -1,6 +1,7 @@
 import os
 import resend
 from flask import Flask, request
+from sqlalchemy.exc import OperationalError
 
 from config import Config
 from extensions import db, login_manager, limiter, csrf, talisman
@@ -115,7 +116,7 @@ def create_app(config_class=Config):
     # ── Startup: create tables + PWA icons ───────────────────────
     with app.app_context():
         from models import User, Car, Booking  # noqa: F401
-        from models.other_models import Review, Coupon, Offer, AuditLog, Notification  # noqa: F401
+        from models.other_models import Review, Coupon, Offer, AuditLog, Notification, LoginAttempt  # noqa: F401
         db.create_all()
         create_pwa_icons(app.static_folder)
 
