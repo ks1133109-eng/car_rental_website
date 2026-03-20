@@ -109,10 +109,12 @@ def create_app(config_class=Config):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
-    # Webhook uses its own HMAC signature — exempt from CSRF
-    from routes.booking import razorpay_webhook
-    csrf.exempt(razorpay_webhook)
     app.register_blueprint(booking_bp)
+    # Webhook uses its own HMAC signature verification — exempt from CSRF
+    # Done after blueprint registration so the view function exists
+    webhook_view = app.view_functions.get('booking.razorpay_webhook')
+    if webhook_view:
+        csrf.exempt(webhook_view)
     app.register_blueprint(admin_bp)
     app.register_blueprint(client_bp)
 
