@@ -6,7 +6,7 @@ from extensions import db
 from models.user import User
 from models.car import Car
 from models.booking import Booking
-from models.other_models import Review, Coupon, Offer, AuditLog, Notification
+from models.other_models import Review, Coupon, Offer, AuditLog, Notification, LoginAttempt
 from services.email_service import send_kyc_status_email, send_booking_cancellation_email
 from services.cloudinary_service import get_signed_kyc_url
 from utils.helpers import log_action, push_notification
