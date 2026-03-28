@@ -38,12 +38,5 @@ greenlet==3.3.0
 packaging==25.0
 typing_extensions==4.15.0
 email_validator
-
-
-# ── REMOVED (no longer needed) ───────────────────────────────────
-# pyotp       -- was used for TOTP/QR code 2FA, replaced by email OTP
-# qrcode      -- QR code generation for authenticator app, no longer used
-# Pillow      -- was only needed by qrcode image generation
-
-
+redis>=4.0.0
 
